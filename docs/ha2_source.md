@@ -69,7 +69,7 @@ empty streams and rejection of invalid stream item types.
 
 ## Submission
 
-Use the exact shared branch `HomeworkAssignment2`. Each member uploads their
+Use the exact shared branch `Homeworkassignment002`. Each member uploads their
 own files. The shared README must eventually contain diagrams of the full
 implemented framework and a direct link to the team's five-minute video.
 This contribution does not include or claim that video or the other processors.
