@@ -214,3 +214,21 @@ and are not connected in the current example.
 ## Presentation Link
 
 The group video has not been recorded yet.
+
+
+## HA2 — Danial: stream source
+
+Branch: `HomeworkAssignment2`. Danial's input contribution provides validated
+`MeterEvent` objects, a single-pass `MeterStream` implementing `__iter__` and
+`__next__`, and a lazy sample generator using `yield`.
+
+![HA2 source UML](docs/uml/ha2_source.png)
+
+See [the event contract and source documentation](docs/ha2_source.md).
+Run `python3 demo_ha2.py` from the repository root.
+
+The remaining group implementation must add the explicit abstract processor
+contract, specialized filter/transform processors, operator-based pipeline
+composition and the five-minute presentation link. The original HA1 sections
+above describe the earlier implementation; this section documents only the
+current HA2 source contribution.
