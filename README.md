@@ -232,3 +232,24 @@ contract, specialized filter/transform processors, operator-based pipeline
 composition and the five-minute presentation link. The original HA1 sections
 above describe the earlier implementation; this section documents only the
 current HA2 source contribution.
+
+
+## HA3 — Danial: MySQL data access
+
+Branch: `Homeworkassignment003`. Danial's B contribution adds Database,
+BuildingRepository, MeterRepository and ReadingRepository. The shared domain
+classes and AnalyticsService read real stored readings through these repositories.
+
+![HA3 repository UML](docs/uml/ha3_repositories.png)
+
+![HA3 database relationships](docs/uml/ha3_schema.png)
+
+See [setup, storage behavior and the integration contract](docs/ha3_database.md).
+Install `requirements-ha3.txt`, create the schema with `sql/schema_ha3.sql`,
+configure local database credentials through environment variables if needed,
+and run `python demo_ha3.py` from the repository root.
+
+The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
+explicit sample factors. This section documents B only. Subsystem A must connect
+the repositories to the final Flask/Django response. The group's final README,
+complete diagrams and five-minute video link remain to be integrated.

@@ -1,0 +1,10 @@
+digraph HA3Schema {
+ graph [rankdir=LR,bgcolor="white",pad="0.4",nodesep="0.7",ranksep="1.0",fontname="Arial",fontsize=20,labelloc=t,label="HA3 — MySQL schema (database table relationships)"];
+ node [shape=record,fontname="Arial",fontsize=14,color="#087F79",style=filled,fillcolor="#F0F6F5",margin="0.2,0.12"];
+ edge [fontname="Arial",fontsize=13,color="#52656D",arrowhead=vee,labeldistance=2];
+ buildings [label="{buildings|PK building_id: INT\lname: VARCHAR(120) NOT NULL\l}"];
+ meters [label="{meters|PK meter_id: INT\lFK building_id: INT NOT NULL\lname: VARCHAR(120) NOT NULL\l}"];
+ readings [label="{readings|PK reading_id: BIGINT AUTO_INCREMENT\lFK meter_id: INT NOT NULL\lstart_utc: DATETIME(6) NOT NULL\lend_utc: DATETIME(6) NOT NULL\lenergy_kwh: DECIMAL(18,6) NOT NULL\lUNIQUE (meter_id, start_utc, end_utc)\l}"];
+ meters -> buildings [label="building_id",taillabel="0..*",headlabel="1"];
+ readings -> meters [label="meter_id",taillabel="0..*",headlabel="1"];
+}
