@@ -6,6 +6,5 @@ app = Flask(__name__)
 def home():
     energy =120
     return render_template("dashboard.html", energy =energy)
-
 if __name__ == "__main__":
     app.run(debug=True)
