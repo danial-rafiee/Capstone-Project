@@ -41,7 +41,7 @@ Capstone-Project/
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
-name. The HA1 submission branch remains `Homeassignment1`.
+name. The HA1 submission branch remains `Homeworkassignment001`.
 
 `web` and `coach` contain package placeholders for teammates' work. The
 `docs/uml` directory contains the B class diagram source, its rendered SVG/PNG
@@ -201,7 +201,7 @@ The demo calculates 3.0 + 2.0 = 5.0 kWh, 5.0 x 0.30 = EUR 1.50 and
 
 ## HA1 progress
 
-Local branch: `Homeassignment1`.
+Local branch: `Homeworkassignment001`.
 
 The complete group submission is still in progress. Five B classes are currently
 implemented at the OOP demonstration level, with a matching rendered B UML
@@ -218,7 +218,7 @@ The group video has not been recorded yet.
 
 ## HA2 — Danial: stream source
 
-Branch: `HomeworkAssignment2`. Danial's input contribution provides validated
+Branch: `Homeworkassignment002`. Danial's input contribution provides validated
 `MeterEvent` objects, a single-pass `MeterStream` implementing `__iter__` and
 `__next__`, and a lazy sample generator using `yield`.
 
