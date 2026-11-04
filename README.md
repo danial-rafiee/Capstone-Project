@@ -253,3 +253,29 @@ The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
 explicit sample factors. This section documents B only. Subsystem A must connect
 the repositories to the final Flask/Django response. The group's final README,
 complete diagrams and five-minute video link remain to be integrated.
+
+
+## HA4 — Danial: error handling and unit tests
+
+Branch: `Homeworkassignment004`. B adds AnalyticsError and AnalyticsErrorHandler.
+AnalyticsService now raises `no_readings` for missing data; Database.connect
+translates connector failures to `database_unavailable` while preserving the cause.
+
+![HA4 error-handling UML](docs/uml/ha4_errors.png)
+
+See [B's error contract, tests and integration guide](docs/ha4_analytics.md).
+
+```bash
+python -m pip install -r requirements-ha4.txt
+python demo_ha4.py
+python -m pytest tests/test_analytics_ha4.py -v
+```
+
+All five B unit tests pass. They use fresh in-memory readings and a mocked
+connection failure; they do not alter the project's MySQL data. The demo also
+shows these error responses without connecting to MySQL.
+
+This section documents B only. The complete group HA4 still requires A/C error
+handling, at least 15 different tests for the integrated application, current
+shared documentation and the five-minute team video link. Earlier README sections
+describe their respective homework stages; HA4 requires the dependencies above.

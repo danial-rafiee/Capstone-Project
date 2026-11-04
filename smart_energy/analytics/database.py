@@ -4,6 +4,8 @@ import os
 
 import mysql.connector
 
+from .errors import AnalyticsError
+
 
 class Database:
     def __init__(self):
@@ -19,4 +21,10 @@ class Database:
         }
 
     def connect(self):
-        return mysql.connector.connect(**self._config)
+        try:
+            return mysql.connector.connect(**self._config)
+        except mysql.connector.Error as error:
+            raise AnalyticsError(
+                "The energy database connection is unavailable.",
+                code="database_unavailable",
+            ) from error

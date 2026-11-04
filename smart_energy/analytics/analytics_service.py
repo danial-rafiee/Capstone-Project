@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from .energy_settings import EnergySettings
+from .errors import AnalyticsError
 from .reading import Reading
 
 
@@ -36,7 +37,10 @@ class AnalyticsService:
 
     def totals(self) -> dict:
         if not self._readings:
-            raise ValueError("No readings are available for calculation.")
+            raise AnalyticsError(
+                "No readings are available for calculation.",
+                code="no_readings",
+            )
 
         # Readings and settings are objects that can be updated through setters.
         # Recheck their relationships and intervals before calculating totals.

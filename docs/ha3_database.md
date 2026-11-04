@@ -148,8 +148,9 @@ from smart_energy.analytics.analytics_service import AnalyticsService
 4. Call `list_for_meter(meter)` to retrieve ordered Reading objects.
 5. Construct EnergySettings using that **same building object** and agreed
    Decimal factors, then call `AnalyticsService(settings, readings).totals()`.
-6. Handle no readings separately: AnalyticsService raises ValueError rather
-   than reporting an invented measured zero. Decide appropriate HTTP responses
+6. Handle no readings separately: In the HA3 version AnalyticsService raises ValueError rather
+   than reporting an invented measured zero. In this HA4 branch that case raises
+   AnalyticsError with code `no_readings`. Decide appropriate HTTP responses
    in the web layer. Convert Decimal output explicitly (e.g. decimal strings)
    when defining the JSON contract, and label units/currency clearly.
 

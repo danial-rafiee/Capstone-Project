@@ -1,0 +1,2 @@
+-r requirements-ha3.txt
+pytest>=9,<10
