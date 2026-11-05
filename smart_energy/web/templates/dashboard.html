@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Energy — HA1 example</title>
+  <style>
+    body { font: 17px/1.6 system-ui, sans-serif; color: #19302d; background: #f4f7f6; max-width: 960px; margin: 32px auto; padding: 0 20px; }
+    section { background: white; border: 1px solid #d4e1dd; border-radius: 10px; padding: 20px; margin: 20px 0; }
+    h1,h2 { line-height: 1.25; } dt { font-weight: 600; } dd { margin: 0 0 12px; }
+    .note { color: #495b55; } .score { font-size: 32px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Smart Energy Management</h1>
+  <p>{{ building_name }} · Group 18 · HA1</p>
+  <p class="note">Illustrative data for one ten-minute interval. Reference and off-hours energy are supplied sample inputs. This example has no live meter, MySQL or OpenAI connection.</p>
+  <section>
+    <h2>Time range</h2>
+    <p>{{ time_range.preset }}: {{ time_range.start.isoformat() }} to {{ time_range.end.isoformat() }}</p>
+  </section>
+  <section>
+    <h2>Energy summary</h2>
+    <dl>
+      <dt>Consumption</dt><dd>{{ summary.totals }} kWh</dd>
+      <dt>Reference consumption (sample)</dt><dd>{{ summary.reference }} kWh</dd>
+      <dt>Savings against reference</dt><dd>{{ summary.savings }} kWh (negative means higher consumption)</dd>
+      <dt>Estimated cost</dt><dd>{{ '%.2f'|format(estimated_cost_eur) }} EUR</dd>
+      <dt>Estimated CO2</dt><dd>{{ '%.2f'|format(estimated_co2_kg) }} kg</dd>
+      <dt>Off-hours consumption (sample)</dt><dd>{{ off_hours_energy_kwh }} kWh</dd>
+      <dt>Sustainability score</dt><dd class="score">{{ summary.score if summary.score is not none else 'Unavailable' }} /100</dd>
+      <dt>Penalty points</dt><dd>{{ summary.penalties }}</dd>
+    </dl>
+  </section>
+  <section>
+    <h2>Coach panel — sample response</h2>
+    <p><strong>Question:</strong> {{ coach.question }}</p>
+    <p><strong>Answer:</strong> {{ coach.answer }}</p>
+    <p class="note">The current coach returns a template response. A live AI integration is future work.</p>
+  </section>
+</body>
+</html>

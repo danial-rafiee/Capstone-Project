@@ -41,7 +41,7 @@ Capstone-Project/
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
-name. The HA1 submission branch remains `Homeworkassignment001`.
+name. The HA1 submission branch remains `Homeassignment1`.
 
 `web` and `coach` contain package placeholders for teammates' work. The
 `docs/uml` directory contains the B class diagram source, its rendered SVG/PNG
@@ -201,7 +201,7 @@ The demo calculates 3.0 + 2.0 = 5.0 kWh, 5.0 x 0.30 = EUR 1.50 and
 
 ## HA1 progress
 
-Local branch: `Homeworkassignment001`.
+Local branch: `Homeassignment1`.
 
 The complete group submission is still in progress. Five B classes are currently
 implemented at the OOP demonstration level, with a matching rendered B UML
@@ -218,7 +218,7 @@ The group video has not been recorded yet.
 
 ## HA2 — Danial: stream source
 
-Branch: `Homeworkassignment002`. Danial's input contribution provides validated
+Branch: `HomeworkAssignment2`. Danial's input contribution provides validated
 `MeterEvent` objects, a single-pass `MeterStream` implementing `__iter__` and
 `__next__`, and a lazy sample generator using `yield`.
 
@@ -253,3 +253,70 @@ The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
 explicit sample factors. This section documents B only. Subsystem A must connect
 the repositories to the final Flask/Django response. The group's final README,
 complete diagrams and five-minute video link remain to be integrated.
+
+
+
+## HA2 — Hananeh: Real-Time Stream Pipeline & AI Coach
+
+Branch: `Homeworkassignment002`. Subsystem C's contribution processes real-time event streams from IoT meters, evaluates operational penalties on the fly, computes live sustainability scores, and triggers instant AI coach intervention alerts.
+
+### Subsystem C Stream Architecture (Mermaid Class Diagram)
+
+```mermaid
+classDiagram
+    class BaseStreamProcessor {
+        <<abstract>>
+        +process(event: Any)* Optional[Any]
+        +__or__(other: BaseStreamProcessor) Pipeline
+    }
+
+    class Pipeline {
+        -stages: list[BaseStreamProcessor]
+        +__init__(stages: list)
+        +process(event: Any) Optional[Any]
+        +__or__(other: BaseStreamProcessor) Pipeline
+        +run(stream: Iterator) Iterator
+    }
+
+    class InactiveMeterFilter {
+        +min_threshold_kw: Decimal
+        +process(event: MeterEvent) Optional[MeterEvent]
+    }
+
+    class RealTimeScoreTransformer {
+        +reference_kw: Decimal
+        +allowance_share: Decimal
+        +process(event: MeterEvent) Optional[dict]
+    }
+
+    class RealTimeCoachAlerter {
+        +threshold: float
+        +process(event_data: dict) Optional[dict]
+    }
+
+    BaseStreamProcessor <|-- Pipeline : inherits & extends
+    BaseStreamProcessor <|-- InactiveMeterFilter : inherits
+    BaseStreamProcessor <|-- RealTimeScoreTransformer : inherits
+    BaseStreamProcessor <|-- RealTimeCoachAlerter : inherits
+
+Pipeline o-- BaseStreamProcessor : composes stages via pipe (|)
+```
+
+### HA2 Implementation Highlights
+- **Abstract Base Classes (ABCs):** `BaseStreamProcessor` enforces the `@abstractmethod` contract for `process()`.
+- **Inheritance & Polymorphism:** `InactiveMeterFilter`, `RealTimeScoreTransformer`, and `RealTimeCoachAlerter` adhere to a uniform streaming contract.
+- **Operator Overloading:** Overloaded `__or__` allows natural pipeline chaining:
+```python
+pipeline = filter_stage | transform_stage | alert_stage
+```
+- **Stream Consumption:** Evaluates stream events yielded by `MeterStream` iterator on the fly.
+
+### Running Subsystem C Demo
+Run the standalone real-time streaming demonstration:
+```bash
+python3 demo_ha2_coach.py
+```
+
+### HA2 Presentation Link
+The 5-minute video walkthrough link will be placed here:
+- **Presentation Video:** `[Pending Recording / Video Link]`
