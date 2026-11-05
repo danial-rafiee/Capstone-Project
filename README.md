@@ -131,37 +131,23 @@ Open your browser and navigate to http://127.0.0.1:5000.
 [Open the scalable diagram](docs/uml/web_classes.svg) ·
 [Diagram source](docs/uml/web_classes.dot)
 
-The diagram shows the core implemented classes, factory components, and domain/DTO models for Subsystem A (`smart_energy.web`).
+The diagram shows the core implemented domain and mock data classes for Subsystem A (`smart_energy.web`).
 
 - `+` marks public methods, including `__init__`.
-- Dashed arrows show usage and dependency associations.
+- `#` marks underscore-prefixed attributes, following Python's non-public convention.
 
-| Relationship | Meaning in the current code |
-| --- | --- |
-| `WebApplicationFactory` to `TimeRange` | The Flask app factory and views use time ranges to filter reporting windows. |
-| `WebApplicationFactory` to `EnergySummary` | The web layer encapsulates aggregated metrics into energy summary DTOs for rendering. |
-| `WebApplicationFactory` to `CoachPanel` | The web layer integrates score and penalty structures for UI display. |
-| `WebApplicationFactory` to `DemoData` | The web application loads mock buildings and readings for demonstration. |
-
-To regenerate the diagram source and images:
-```bash
-python3 docs/uml/generate_web_uml.py
-```
-Or using Graphviz directly:
-```bash
-dot -Tsvg docs/uml/web_classes.dot -o docs/uml/web_classes.svg
-dot -Tpng docs/uml/web_classes.dot -o docs/uml/web_classes.png
-```
 ### Implemented classes for Subsystem A
 
 Current implemented classes and components in `smart_energy.web`:
 
-- `WebApplicationFactory` (in `app.py`) provides `create_app()` to configure and initialize the Flask application instance, register routes, and wire services.
-- `TimeRange(preset, start, end)` (in `smart_energy/web/domain/time_range.py`) encapsulates datetime intervals and presets for filtering energy readings.
-- `EnergySummary(totals, savings, reference, score, penalties)` (in `smart_energy/web/domain/energy_summary.py`) aggregates calculated totals, cost, and carbon data into a unified DTO.
-- `CoachPanel(question, answer)` (in `smart_energy/web/domain/coach_panel.py`) structures sustainability advice, questions, and AI/coach responses for UI display.
-- `DemoData` (in `smart_energy/web/demo_data.py`) provides mock dataset generators for previewing building topologies.
-- **Dashboard UI** (`smart_energy/web/templates/dashboard.html`) renders summary cards and panels via Jinja2 templates.
+| Component / Class | Meaning in the current code |
+| --- | --- |
+| `TimeRange` | Encapsulates datetime intervals and preset ranges for filtering energy dashboard queries. |
+| `EnergySummary` | Acts as a DTO aggregating consumption totals, costs, carbon footprints, and scores. |
+| `CoachPanel` | Structures AI coaching prompts, answers, and sustainability advice for the UI. |
+| `DemoData` | Generates mock datasets and initial office building topologies for preview. |
+| `Flask App & Dashboard` | Configures application routes (`app.py`) and renders summary cards and panels via Jinja2 templates (`dashboard.html`). |
+
 
 ### Subsystem B class diagram
 
