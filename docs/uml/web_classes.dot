@@ -1,89 +1,11 @@
-digraph G {
-  fontname="Helvetica"
-  fontsize=10
-  node [fontname="Helvetica", fontsize=10, shape=record];
-  edge [fontname="Helvetica", fontsize=10];
-
-  TimeRange [
-    shape=none
-    label=<
-      <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" ALIGN="LEFT">
-        <TR><TD BGCOLOR="#113322" ALIGN="LEFT"><FONT COLOR="white"><B>TimeRange</B></FONT></TD></TR>
-        <TR><TD ALIGN="LEFT">
-          # _preset: str<br/>
-          # _start: datetime<br/>
-          # _end: datetime
-        </TD></TR>
-        <TR><TD ALIGN="LEFT">
-          + __init__(preset: str = '24h', start: datetime | None = None, end: datetime | None = None)<br/>
-          + configure(preset: str = '24h', start: datetime | None = None, end: datetime | None = None): None<br/>
-          # _utc(value: datetime): datetime<br/>
-          + get_preset(): str<br/>
-          + set_preset(value: str): None<br/>
-          + get_start(): datetime<br/>
-          + set_start(value: datetime): None<br/>
-          + get_end(): datetime<br/>
-          + set_end(value: datetime): None<br/>
-          + to_dict(): dict
-        </TD></TR>
-      </TABLE>
-    >
-  ];
-
-  CoachPanel [
-    shape=none
-    label=<
-      <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" ALIGN="LEFT">
-        <TR><TD BGCOLOR="#113322" ALIGN="LEFT"><FONT COLOR="white"><B>CoachPanel</B></FONT></TD></TR>
-        <TR><TD ALIGN="LEFT">
-          # _question: str<br/>
-          # _answer: str
-        </TD></TR>
-        <TR><TD ALIGN="LEFT">
-          + __init__(question: str = '', answer: str = '')<br/>
-          + configure(question: str = '', answer: str = ''): None<br/>
-          # _text(value: str): str<br/>
-          + get_question(): str<br/>
-          + set_question(value: str): None<br/>
-          + get_answer(): str<br/>
-          + set_answer(value: str): None<br/>
-          + submit_question(question: str): None<br/>
-          + set_response(answer: str): None<br/>
-          + to_dict(): dict
-        </TD></TR>
-      </TABLE>
-    >
-  ];
-
-  EnergySummary [
-    shape=none
-    label=<
-      <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" ALIGN="LEFT">
-        <TR><TD BGCOLOR="#113322" ALIGN="LEFT"><FONT COLOR="white"><B>EnergySummary</B></FONT></TD></TR>
-        <TR><TD ALIGN="LEFT">
-          # _totals: Decimal<br/>
-          # _savings: Decimal<br/>
-          # _reference: Decimal | None<br/>
-          # _score: Decimal | None<br/>
-          # _penalties: str
-        </TD></TR>
-        <TR><TD ALIGN="LEFT">
-          + __init__(totals = 0, savings = 0, reference = None, score = None, penalties = '')<br/>
-          + configure(totals = 0, savings = 0, reference = None, score = None, penalties = ''): None<br/>
-          # _number(value, label: str, minimum: Decimal | None = None, maximum: Decimal | None = None): Decimal<br/>
-          + get_totals(): Decimal<br/>
-          + set_totals(value): None<br/>
-          + get_savings(): Decimal<br/>
-          + set_savings(value): None<br/>
-          + get_reference(): Decimal | None<br/>
-          + set_reference(value): None<br/>
-          + get_score(): Decimal | None<br/>
-          + set_score(value): None<br/>
-          + get_penalties(): str<br/>
-          + set_penalties(value): None<br/>
-          + to_dict(): dict
-        </TD></TR>
-      </TABLE>
-    >
-  ];
+digraph WebUML {
+  graph [rankdir=BT, bgcolor="white", pad="0.4", nodesep="0.9", ranksep="1.0",
+    splines=polyline, outputorder=edgesfirst, fontname="Arial", fontsize=20,
+    labelloc=t, label="Subsystem A class diagram\nImplemented classes in smart_energy.web"];
+  node [shape=plain, fontname="Arial", fontsize=13];
+  edge [color="#087F79", fontname="Arial", fontsize=12, arrowhead=vee,
+    arrowsize=0.75, penwidth=1.2, labeldistance=2.0, labelangle=25];
+  TimeRange [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>TimeRange</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _preset: str<BR ALIGN="LEFT"/># _start: datetime<BR ALIGN="LEFT"/># _end: datetime<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(preset: str = &#x27;24h&#x27;, start: datetime | None = None, end: datetime | None = None)<BR ALIGN="LEFT"/>+ configure(preset: str = &#x27;24h&#x27;, start: datetime | None = None, end: datetime | None = None): None<BR ALIGN="LEFT"/># _utc(value: datetime): datetime<BR ALIGN="LEFT"/>+ get_preset(): str<BR ALIGN="LEFT"/>+ set_preset(value: str): None<BR ALIGN="LEFT"/>+ get_start(): datetime<BR ALIGN="LEFT"/>+ set_start(value: datetime): None<BR ALIGN="LEFT"/>+ get_end(): datetime<BR ALIGN="LEFT"/>+ set_end(value: datetime): None<BR ALIGN="LEFT"/>+ to_dict(): dict<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  EnergySummary [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>EnergySummary</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _totals: dict<BR ALIGN="LEFT"/># _savings: dict<BR ALIGN="LEFT"/># _reference: dict<BR ALIGN="LEFT"/># _score: float<BR ALIGN="LEFT"/># _penalties: list<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(totals = 0, savings = 0, reference = None, score = None, penalties: str = &#x27;&#x27;)<BR ALIGN="LEFT"/>+ configure(totals = 0, savings = 0, reference = None, score = None, penalties: str = &#x27;&#x27;): None<BR ALIGN="LEFT"/># _number(value, label: str, minimum: Decimal | None = None, maximum: Decimal | None = None): Decimal<BR ALIGN="LEFT"/>+ get_totals(): Decimal<BR ALIGN="LEFT"/>+ set_totals(value): None<BR ALIGN="LEFT"/>+ get_savings(): Decimal<BR ALIGN="LEFT"/>+ set_savings(value): None<BR ALIGN="LEFT"/>+ get_reference(): Decimal | None<BR ALIGN="LEFT"/>+ set_reference(value): None<BR ALIGN="LEFT"/>+ get_score(): Decimal | None<BR ALIGN="LEFT"/>+ set_score(value): None<BR ALIGN="LEFT"/>+ get_penalties(): str<BR ALIGN="LEFT"/>+ set_penalties(value: str): None<BR ALIGN="LEFT"/>+ to_dict(): dict<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  CoachPanel [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>CoachPanel</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _question: str<BR ALIGN="LEFT"/># _answer: str<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(question: str = &#x27;&#x27;, answer: str = &#x27;&#x27;)<BR ALIGN="LEFT"/>+ configure(question: str = &#x27;&#x27;, answer: str = &#x27;&#x27;): None<BR ALIGN="LEFT"/># _text(value: str): str<BR ALIGN="LEFT"/>+ get_question(): str<BR ALIGN="LEFT"/>+ set_question(value: str): None<BR ALIGN="LEFT"/>+ get_answer(): str<BR ALIGN="LEFT"/>+ set_answer(value: str): None<BR ALIGN="LEFT"/>+ submit_question(question: str): None<BR ALIGN="LEFT"/>+ set_response(answer: str): None<BR ALIGN="LEFT"/>+ to_dict(): dict<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
 }
