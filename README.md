@@ -1,34 +1,47 @@
 # AI-Powered Smart Energy Management System
 
-Group 18's capstone monitors electricity use in one demo office building,
-calculates consumption, cost and carbon, and provides sustainability scoring
-and AI advice. The current implementation is the initial OOP learning stage.
+Group 18's capstone monitors electricity use in demo office buildings, calculates consumption, cost, and carbon footprints, and provides sustainability scoring, web dashboard interfaces, and AI advice.
 
 ## Team Overview
 
 | Member | Subsystem | Package | Responsibility |
 | --- | --- | --- | --- |
-| Saeid Rafiei Taghanaki | A | `smart_energy/web` | Dashboard, Flask routes, service integration and web tests |
-| Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation and energy/cost/carbon calculations |
-| Hananeh Hajari | C | `smart_energy/coach` | Score and penalties, AI context, OpenAI integration and AI/scoring tests |
+| Saeid Rafiei Taghanaki | A | `smart_energy/web` | Web dashboard, Flask routes, domain logic, service integration, and web tests |
+| Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation, and energy/cost/carbon calculations |
+| Hananeh Hajari | C | `smart_energy/coach` | Score and penalties, AI context, OpenAI integration, and AI/scoring tests |
 
-## Project structure
+## Project Structure
 
 ```text
 Capstone-Project/
 ├── README.md
 ├── .gitignore
 ├── demo.py
+├── run_web.py
+├── requirements-web.txt
 ├── docs/
 │   └── uml/
 │       ├── analytics_classes.dot
-│       ├── analytics_classes.svg
 │       ├── analytics_classes.png
-│       └── generate_analytics_uml.py
+│       ├── analytics_classes.svg
+│       ├── generate_analytics_uml.py
+│       ├── web_classes.dot
+│       ├── web_classes.png
+│       ├── web_classes.svg
+│       └── generate_web_uml.py
 └── smart_energy/
     ├── __init__.py
     ├── web/
-    │   └── __init__.py
+    │   ├── __init__.py
+    │   ├── domain/
+    │   │   ├── __init__.py
+    │   │   ├── coach_panel.py
+    │   │   ├── energy_summary.py
+    │   │   └── time_range.py
+    │   ├── templates/
+    │   │   └── dashboard.html
+    │   ├── app.py
+    │   └── demo_data.py
     ├── analytics/
     │   ├── __init__.py
     │   ├── building.py
@@ -49,14 +62,16 @@ images and the generator that reads method signatures from the implementation.
 
 ## Run the current example
 
-Use Python 3. No external packages are required for the current example.
-
-From this folder, run:
+1. Run Console Demo
+To test the core OOP and data structures without external dependencies:
 
 ```bash
+# On Windows:
+python demo.py
+
+# On macOS / Linux:
 python3 demo.py
 ```
-
 In PyCharm, right-click `demo.py` in the project tree and choose **Run 'demo'**.
 Use that file rather than the earlier step-specific run configurations.
 
@@ -96,8 +111,57 @@ Estimated CO2: 2.00 kg
 Duplicate reading rejected: Duplicate or overlapping intervals for the same meter.
 Reading count after rejection: 2
 ```
+2. Run Web Dashboard
+To start the Flask-based web application interface:
+```bash
+# First, activate your virtual environment (.venv), then run:
+python run_web.py
+# (Or use python3 run_web.py on macOS/Linux)
+```
+Open your browser and navigate to http://127.0.0.1:5000.
+
 
 ## System Design
+
+
+### Subsystem A class diagram
+
+![Subsystem A UML class diagram](docs/uml/web_classes.png)
+
+[Open the scalable diagram](docs/uml/web_classes.svg) ·
+[Diagram source](docs/uml/web_classes.dot)
+
+The diagram shows the core implemented classes, factory components, and domain/DTO models for Subsystem A (`smart_energy.web`).
+
+- `+` marks public methods, including `__init__`.
+- Dashed arrows show usage and dependency associations.
+
+| Relationship | Meaning in the current code |
+| --- | --- |
+| `WebApplicationFactory` to `TimeRange` | The Flask app factory and views use time ranges to filter reporting windows. |
+| `WebApplicationFactory` to `EnergySummary` | The web layer encapsulates aggregated metrics into energy summary DTOs for rendering. |
+| `WebApplicationFactory` to `CoachPanel` | The web layer integrates score and penalty structures for UI display. |
+| `WebApplicationFactory` to `DemoData` | The web application loads mock buildings and readings for demonstration. |
+
+To regenerate the diagram source and images:
+```bash
+python3 docs/uml/generate_web_uml.py
+```
+Or using Graphviz directly:
+```bash
+dot -Tsvg docs/uml/web_classes.dot -o docs/uml/web_classes.svg
+dot -Tpng docs/uml/web_classes.dot -o docs/uml/web_classes.png
+```
+### Implemented classes for Subsystem A
+
+Current implemented classes and components in `smart_energy.web`:
+
+- `WebApplicationFactory` (in `app.py`) provides `create_app()` to configure and initialize the Flask application instance, register routes, and wire services.
+- `TimeRange(preset, start, end)` (in `smart_energy/web/domain/time_range.py`) encapsulates datetime intervals and presets for filtering energy readings.
+- `EnergySummary(totals, savings, reference, score, penalties)` (in `smart_energy/web/domain/energy_summary.py`) aggregates calculated totals, cost, and carbon data into a unified DTO.
+- `CoachPanel(question, answer)` (in `smart_energy/web/domain/coach_panel.py`) structures sustainability advice, questions, and AI/coach responses for UI display.
+- `DemoData` (in `smart_energy/web/demo_data.py`) provides mock dataset generators for previewing building topologies.
+- **Dashboard UI** (`smart_energy/web/templates/dashboard.html`) renders summary cards and panels via Jinja2 templates.
 
 ### Subsystem B class diagram
 
