@@ -25,29 +25,29 @@ def run_subsystem_c_ha2_demo():
     print("Subsystem C: Real-Time Event-Driven Streaming Pipeline Demo")
     print("=" * 68)
 
-    # 1. داده‌های ترکیبی زنده برای سنجش فیلترها و محاسبات
+    # 1. Synthetic live IoT smart meter events for filtering and scoring evaluation
     sample_events = [
-        # فیلتر می‌شود: مصرف ناچیز و زیر آستانه (0.2 kW <= 0.5 kW)
+        # Filtered out: sub-threshold consumption (0.2 kW <= 0.5 kW)
         MeterEvent(101, datetime(2026, 11, 5, 10, 0, tzinfo=timezone.utc), Decimal("0.2"), True),
-        # فیلتر می‌شود: کنتور غیرفعال (active = False)
+        # Filtered out: inactive meter reading (active = False)
         MeterEvent(102, datetime(2026, 11, 5, 11, 0, tzinfo=timezone.utc), Decimal("4.0"), False),
-        # عبور می‌کند: مصرف روزانه استاندارد
+        # Passed: normal daytime operational load
         MeterEvent(103, datetime(2026, 11, 5, 14, 0, tzinfo=timezone.utc), Decimal("4.5"), True),
-        # عبور می‌کند: اضافه مصرف در طول روز (Pg فعال می‌شود)
+        # Passed: daytime excess usage (triggers Growth Penalty Pg)
         MeterEvent(104, datetime(2026, 11, 5, 15, 0, tzinfo=timezone.utc), Decimal("8.0"), True),
-        # عبور می‌کند: مصرف در ساعات غیرکاری شب (Po فعال می‌شود)
+        # Passed: off-hours draw exceeding allowance (triggers Off-Hours Penalty Po)
         MeterEvent(105, datetime(2026, 11, 5, 23, 0, tzinfo=timezone.utc), Decimal("3.0"), True),
     ]
 
-    # 2. ایجاد استریم با استفاده از Iterator اختصاصی پروژه (MeterStream)
+    # 2. Instantiate stream using the custom project iterator (MeterStream)
     stream = MeterStream(sample_events)
 
-    # 3. ترکیب پایپ‌لاین با استفاده از Operator Overloading (|)
+    # 3. Pipeline composition via operator overloading (|)
     filter_stage = InactiveMeterFilter(min_threshold_kw=Decimal("0.5"))
     transform_stage = RealTimeScoreTransformer(reference_kw=Decimal("5.0"), allowance_share=Decimal("0.10"))
     alert_stage = RealTimeCoachAlerter(score_warning_threshold=75.0)
 
-    # ساخت زنجیره پایپ‌لاین با عملگر |
+    # Pipe stages together sequentially
     pipeline = filter_stage | transform_stage | alert_stage
 
     print(f"\n[Pipeline Architecture]")
@@ -55,7 +55,7 @@ def run_subsystem_c_ha2_demo():
     for idx, stage in enumerate(pipeline.stages, start=1):
         print(f"  Stage {idx}: {stage.__class__.__name__} (inherits BaseStreamProcessor)")
 
-    # 4. مصرف و اجرای زنده رویدادها
+    # 4. Stream consumption and real-time event transformation
     print(f"\n[Real-Time Streaming Output]")
     for record in pipeline.run(stream):
         print("-" * 68)
@@ -72,3 +72,5 @@ def run_subsystem_c_ha2_demo():
 
 if __name__ == "__main__":
     run_subsystem_c_ha2_demo()
+
+
