@@ -39,3 +39,4 @@ CREATE TABLE IF NOT EXISTS coach_evaluations (
     created_at DATETIME(6) NOT NULL,
     FOREIGN KEY (building_id) REFERENCES buildings(building_id)
 ) ENGINE=InnoDB;
+

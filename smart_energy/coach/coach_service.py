@@ -52,3 +52,4 @@ class CoachService:
             "period": "Selected Period",
             "status": self._last_status,
         }
+
