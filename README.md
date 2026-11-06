@@ -538,3 +538,28 @@ The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
 explicit sample factors. This section documents B only. Subsystem A must connect
 the repositories to the final Flask/Django response. The group's final README,
 complete diagrams and five-minute video link remain to be integrated.
+
+# =====HA4=====
+
+## HA4 — Exception Handling & Comprehensive Testing
+
+Branch: `Homeworkassignment004` (or current active branch). Subsystem implementation integrates robust cross-layer exception handling and a comprehensive automated testing suite.
+
+### HA4 Implementation Highlights
+
+* **Cross-Layer Exception Handling:** 
+  * Created dedicated error-handling classes and modules across subsystems to catch domain and database anomalies cleanly.
+  * Registered centralized error handlers in the Flask application (`register_web_error_handlers(app)`) to map internal errors to appropriate HTTP status codes (e.g., `404`, `503`).
+* **Comprehensive Test Suite (15 Tests):** 
+  * Implemented a robust suite of **15 distinct unit and integration tests** covering all major components:
+    * **Analytics Tests (`test_analytics_ha4.py`):** Validates energy calculations, zero/negative reading rejections, overlap checks, and connection failure handling.
+    * **Coach Tests (`test_ha4_coach.py`):** Tests score boundaries, building lookup exceptions, and evaluation API endpoints.
+    * **Web Tests (`test_web_ha4.py`):** Validates dashboard route accessibility, API analytics endpoints, time range conversions, decimal handling, and coach panel interactions.
+* **Environment-Agnostic Mocking:** Leveraged `unittest.mock` (`MagicMock` and `patch`) in test suites to ensure complete test isolation, high execution speed, and stability without requiring an active local MySQL database connection during test runs.
+
+### Running the Test Suite
+
+To run all 15 tests and verify the system state, execute the following command from the repository root:
+
+```bash
+python -m pytest tests -v

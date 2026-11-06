@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 import os
 
-# Import Danial MySQL and repository modules
+# Import database and repository modules
 from smart_energy.analytics.database import Database
 from smart_energy.analytics.building_repository import BuildingRepository
 from smart_energy.analytics.meter_repository import MeterRepository
@@ -18,6 +18,9 @@ from smart_energy.web.domain.time_range import TimeRange
 from smart_energy.web.domain.energy_summary import EnergySummary
 from smart_energy.web.domain.coach_panel import CoachPanel
 
+# Import web error handlers for cross-layer integration
+from smart_energy.web.errors import register_web_error_handlers
+
 
 def get_db_connection() -> Database:
     """Helper function to instantiate Database (it automatically reads from environment variables)."""
@@ -29,9 +32,12 @@ def create_app(test_config: dict | None = None):
     if test_config is not None:
         app.config.update(test_config)
 
+    # Register web error handlers
+    register_web_error_handlers(app)
+
     @app.get("/")
     def home():
-        # Connect to MySQL using Danial database class
+        # Connect to MySQL using database class
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
