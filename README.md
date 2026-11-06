@@ -24,11 +24,7 @@ Capstone-Project/
 │       ├── analytics_classes.dot
 │       ├── analytics_classes.png
 │       ├── analytics_classes.svg
-│       ├── generate_analytics_uml.py
-│       ├── web_classes.dot
-│       ├── web_classes.png
-│       ├── web_classes.svg
-│       └── generate_web_uml.py
+│       └── generate_analytics_uml.py
 └── smart_energy/
     ├── __init__.py
     ├── web/
