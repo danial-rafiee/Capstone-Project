@@ -96,3 +96,4 @@ def test_api_get_evaluations_empty():
     assert response.status_code == 200
     data = response.get_json()
     assert data["count"] == 0
+
