@@ -12,13 +12,15 @@ and AI advice. The current implementation is the initial OOP learning stage.
 | Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation and energy/cost/carbon calculations |
 | Hananeh Hajari | C | `smart_energy/coach` | Score and penalties, AI context, OpenAI integration and AI/scoring tests |
 
-## Project structure
+## Project Structure
 
 ```text
 Capstone-Project/
 ├── README.md
 ├── .gitignore
 ├── demo.py
+├── run_web.py
+├── requirements-web.txt
 ├── docs/
 │   └── uml/
 │       ├── analytics_classes.dot
@@ -28,7 +30,16 @@ Capstone-Project/
 └── smart_energy/
     ├── __init__.py
     ├── web/
-    │   └── __init__.py
+    │   ├── __init__.py
+    │   ├── domain/
+    │   │   ├── __init__.py
+    │   │   ├── coach_panel.py
+    │   │   ├── energy_summary.py
+    │   │   └── time_range.py
+    │   ├── templates/
+    │   │   └── dashboard.html
+    │   ├── app.py
+    │   └── demo_data.py
     ├── analytics/
     │   ├── __init__.py
     │   ├── building.py
@@ -49,14 +60,16 @@ images and the generator that reads method signatures from the implementation.
 
 ## Run the current example
 
-Use Python 3. No external packages are required for the current example.
-
-From this folder, run:
+1. Run Console Demo
+To test the core OOP and data structures without external dependencies:
 
 ```bash
+# On Windows:
+python demo.py
+
+# On macOS / Linux:
 python3 demo.py
 ```
-
 In PyCharm, right-click `demo.py` in the project tree and choose **Run 'demo'**.
 Use that file rather than the earlier step-specific run configurations.
 
@@ -96,8 +109,94 @@ Estimated CO2: 2.00 kg
 Duplicate reading rejected: Duplicate or overlapping intervals for the same meter.
 Reading count after rejection: 2
 ```
+2. Run Web Dashboard
+To start the Flask-based web application interface:
+```bash
+# First, activate your virtual environment (.venv), then run:
+python run_web.py
+# (Or use python3 run_web.py on macOS/Linux)
+```
+Open your browser and navigate to http://127.0.0.1:5000.
+
 
 ## System Design
+
+
+### Subsystem A class diagram
+
+```mermaid
+classDiagram
+    class TimeRange {
+        # _preset: str
+        # _start: datetime
+        # _end: datetime
+        + __init__(preset: str, start: datetime, end: datetime)
+        + configure(preset: str, start: datetime, end: datetime): None
+        # _utc(value: datetime): datetime
+        + get_preset(): str
+        + set_preset(value: str): None
+        + get_start(): datetime
+        + set_start(value: datetime): None
+        + get_end(): datetime
+        + set_end(value: datetime): None
+        + to_dict(): dict
+    }
+
+    class EnergySummary {
+        # _totals: dict
+        # _savings: dict
+        # _reference: dict
+        # _score: float
+        # _penalties: list
+        + __init__(totals: int, savings: int, reference: object, score: object, penalties: str)
+        + configure(totals: int, savings: int, reference: object, score: object, penalties: str): None
+        # _number(value, label, minimum, maximum): Decimal
+        + get_totals(): Decimal
+        + set_totals(value): None
+        + get_savings(): Decimal
+        + set_savings(value): None
+        + get_reference(): object
+        + set_reference(value): None
+        + get_score(): object
+        + set_score(value): None
+        + get_penalties(): str
+        + set_penalties(value): None
+        + to_dict(): dict
+    }
+
+    class CoachPanel {
+        # _question: str
+        # _answer: str
+        + __init__(question: str, answer: str)
+        + configure(question: str, answer: str): None
+        # _text(value): str
+        + get_question(): str
+        + set_question(value): None
+        + get_answer(): str
+        + set_answer(value): None
+        + submit_question(question: str): None
+        + set_response(answer: str): None
+        + to_dict(): dict
+    }
+```
+
+The diagram shows the core implemented domain and mock data classes for Subsystem A (`smart_energy.web`).
+
+- `+` marks public methods, including `__init__`.
+- `#` marks underscore-prefixed attributes, following Python's non-public convention.
+
+### Implemented classes for Subsystem A
+
+Current implemented classes and components in `smart_energy.web`:
+
+| Component / Class | Meaning in the current code |
+| --- | --- |
+| `TimeRange` | Encapsulates datetime intervals and preset ranges for filtering energy dashboard queries. |
+| `EnergySummary` | Acts as a DTO aggregating consumption totals, costs, carbon footprints, and scores. |
+| `CoachPanel` | Structures AI coaching prompts, answers, and sustainability advice for the UI. |
+| `DemoData` | Generates mock datasets and initial office building topologies for preview. |
+| `Flask App & Dashboard` | Configures application routes (`app.py`) and renders summary cards and panels via Jinja2 templates (`dashboard.html`). |
+
 
 ### Subsystem B class diagram
 
@@ -211,9 +310,46 @@ essential equipment and full period analytics remain further capstone work.
 MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
-## Presentation Link
+## HA1 Presentation Link
 
 The group video has not been recorded yet.
+# =====HA2=====
+## HA2 — Saeid: Pipeline & Stream Processing Integration
+
+Branch: `Homeworkassignment002`. Saeid's contribution implements the core stream processing **`Pipeline`** mechanism, supporting operator overloading (`|` and `+`) to chain multiple processors (such as filters and transformers) and execute real-time stream transformations sequentially.
+
+### Subsystem A Pipeline Architecture (Mermaid Class Diagram)
+```mermaid
+classDiagram
+    class Pipeline {
+        - stages: list
+        + __init__(stages: list)
+        + __or__(other) Pipeline
+        + __add__(other) Pipeline
+        + process(event: Any) Optional[Any]
+        + run(stream: MeterStream) Iterator[Any]
+    }
+
+    class InactiveMeterFilter {
+        + min_threshold_kw: Decimal
+        + process(event)
+    }
+
+    class RealTimeScoreTransformer {
+        + reference_kw: Decimal
+        + allowance_share: Decimal
+        + process(event)
+    }
+
+    Pipeline o-- InactiveMeterFilter : orchestrates stages via pipe (|)
+    Pipeline o-- RealTimeScoreTransformer : orchestrates stages via pipe (|)
+
+```
+### HA2 Implementation Highlights
+
+- **Pipeline Orchestration (`pipeline.py`):** Chains multiple processing stages sequentially and drops events early if any stage returns `None`.
+- **Operator Overloading:** Implements `__or__` and `__add__` to allow natural pipeline composition using `filter_stage | transform_stage`.
+- **Stream Execution:** Iterates through `MeterStream` events and yields processed results via `run()`.
 
 
 ## HA2 — Danial: stream source
@@ -232,53 +368,6 @@ contract, specialized filter/transform processors, operator-based pipeline
 composition and the five-minute presentation link. The original HA1 sections
 above describe the earlier implementation; this section documents only the
 current HA2 source contribution.
-
-
-## HA3 — Danial: MySQL data access
-
-Branch: `Homeworkassignment003`. Danial's B contribution adds Database,
-BuildingRepository, MeterRepository and ReadingRepository. The shared domain
-classes and AnalyticsService read real stored readings through these repositories.
-
-![HA3 repository UML](docs/uml/ha3_repositories.png)
-
-![HA3 database relationships](docs/uml/ha3_schema.png)
-
-See [setup, storage behavior and the integration contract](docs/ha3_database.md).
-Install `requirements-ha3.txt`, create the schema with `sql/schema_ha3.sql`,
-configure local database credentials through environment variables if needed,
-and run `python demo_ha3.py` from the repository root.
-
-The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
-explicit sample factors. This section documents B only. Subsystem A must connect
-the repositories to the final Flask/Django response. The group's final README,
-complete diagrams and five-minute video link remain to be integrated.
-
-
-## HA4 — Danial: error handling and unit tests
-
-Branch: `Homeworkassignment004`. B adds AnalyticsError and AnalyticsErrorHandler.
-AnalyticsService now raises `no_readings` for missing data; Database.connect
-translates connector failures to `database_unavailable` while preserving the cause.
-
-![HA4 error-handling UML](docs/uml/ha4_errors.png)
-
-See [B's error contract, tests and integration guide](docs/ha4_analytics.md).
-
-```bash
-python -m pip install -r requirements-ha4.txt
-python demo_ha4.py
-python -m pytest tests/test_analytics_ha4.py -v
-```
-
-All five B unit tests pass. They use fresh in-memory readings and a mocked
-connection failure; they do not alter the project's MySQL data. The demo also
-shows these error responses without connecting to MySQL.
-
-This section documents B only. The complete group HA4 still requires A/C error
-handling, at least 15 different tests for the integrated application, current
-shared documentation and the five-minute team video link. Earlier README sections
-describe their respective homework stages; HA4 requires the dependencies above.
 
 
 
@@ -346,3 +435,106 @@ python3 demo_ha2_coach.py
 ### HA2 Presentation Link
 The 5-minute video walkthrough link will be placed here:
 - **Presentation Video:** `[Pending Recording / Video Link]`
+
+# =====HA3=====
+
+## HA3 — Saeid: Flask Web & MySQL Integration
+
+Branch: `Homeworkassignment003`. Subsystem A's contribution integrates the Flask web application with the production MySQL relational database (`smart_energy_ha3`). It connects the repository architecture (`BuildingRepository`, `MeterRepository`, `ReadingRepository`) and `AnalyticsService` directly to the web layer, ensuring live data retrieval, dynamic metric calculations, and real-time dashboard rendering.
+```mermaid
+classDiagram
+    class FlaskApp {
+        +get_db_connection() Database
+        +dashboard() html
+        +api_analytics(building_id, meter_id) json
+    }
+
+    class TimeRange {
+        -preset: str
+        -start: datetime
+        -end: datetime
+        +to_dict() dict
+    }
+
+    class EnergySummary {
+        -totals: dict
+        -savings: dict
+        -reference: object
+        -score: float
+        -penalties: list
+        +to_dict() dict
+    }
+
+    class CoachPanel {
+        -question: str
+        -answer: str
+        +to_dict() dict
+    }
+
+    class Database {
+        +get_connection() pymysql.Connection
+    }
+
+    class BuildingRepository {
+        -db: Database
+        +get_by_id(building_id: int) Building
+    }
+
+    class MeterRepository {
+        -db: Database
+        +get_by_id(meter_id: int) Meter
+    }
+
+    class ReadingRepository {
+        -db: Database
+        +find_by_meter_and_time_range(meter_id: int, time_range: TimeRange) list~Reading~
+    }
+
+    class AnalyticsService {
+        -settings: EnergySettings
+        -readings: list~Reading~
+        +calculate_totals() dict
+    }
+
+    FlaskApp --> Database : instantiates
+    FlaskApp --> BuildingRepository : uses
+    FlaskApp --> MeterRepository : uses
+    FlaskApp --> ReadingRepository : uses
+    FlaskApp --> AnalyticsService : executes calculations
+    FlaskApp --> EnergySummary : instantiates & passes to template
+    FlaskApp --> CoachPanel : instantiates & passes to template
+    FlaskApp --> TimeRange : filters queries
+```
+### HA3 Implementation Highlights
+* **Application Factory & Database Integration:** Configured Flask routes (`app.py`) to instantiate database connections and fetch live building, meter, and reading records dynamically.
+* **Service & Domain Wiring:** Integrated `EnergySettings` with explicit `Decimal` parameters alongside `AnalyticsService` to compute real-time energy consumption, estimated costs, and carbon footprints.
+* **REST API & Dashboard Verification:** Added dedicated JSON API endpoints (e.g., `/api/analytics/<building_id>/<meter_id>`) for integration testing, successfully rendering live metrics and sustainability scores on the Jinja2 `dashboard.html` template.
+
+To run the integrated web application:
+1. Ensure your MySQL database is running and configured with the HA3 schema.
+2. Start the Flask development server from the repository root:
+```bash
+python run_web.py
+```
+Open your browser and navigate to http://127.0.0.1:5000/ or verify data flow via the API endpoint at http://127.0.0.1:5000/api/analytics/1/101.
+
+The application successfully retrieves live readings from the database, computes analytics totals, and displays the dynamic web dashboard. The group's final integration, complete diagrams, and five-minute video link remain to be finalized.
+## HA3 — Danial: MySQL data access
+
+Branch: `Homeworkassignment003`. Danial's B contribution adds Database,
+BuildingRepository, MeterRepository and ReadingRepository. The shared domain
+classes and AnalyticsService read real stored readings through these repositories.
+
+![HA3 repository UML](docs/uml/ha3_repositories.png)
+
+![HA3 database relationships](docs/uml/ha3_schema.png)
+
+See [setup, storage behavior and the integration contract](docs/ha3_database.md).
+Install `requirements-ha3.txt`, create the schema with `sql/schema_ha3.sql`,
+configure local database credentials through environment variables if needed,
+and run `python demo_ha3.py` from the repository root.
+
+The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
+explicit sample factors. This section documents B only. Subsystem A must connect
+the repositories to the final Flask/Django response. The group's final README,
+complete diagrams and five-minute video link remain to be integrated.
