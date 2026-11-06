@@ -312,7 +312,7 @@ essential equipment and full period analytics remain further capstone work.
 MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
-## Presentation Link
+## HA1 Presentation Link
 
 The group video has not been recorded yet.
 # =====HA2=====
