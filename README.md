@@ -126,10 +126,61 @@ Open your browser and navigate to http://127.0.0.1:5000.
 
 ### Subsystem A class diagram
 
-![Subsystem A UML class diagram](docs/uml/web_classes.png)
+```mermaid
+classDiagram
+    class TimeRange {
+        # _preset: str
+        # _start: datetime
+        # _end: datetime
+        + __init__(preset: str, start: datetime, end: datetime)
+        + configure(preset: str, start: datetime, end: datetime): None
+        # _utc(value: datetime): datetime
+        + get_preset(): str
+        + set_preset(value: str): None
+        + get_start(): datetime
+        + set_start(value: datetime): None
+        + get_end(): datetime
+        + set_end(value: datetime): None
+        + to_dict(): dict
+    }
 
-[Open the scalable diagram](docs/uml/web_classes.svg) ·
-[Diagram source](docs/uml/web_classes.dot)
+    class EnergySummary {
+        # _totals: dict
+        # _savings: dict
+        # _reference: dict
+        # _score: float
+        # _penalties: list
+        + __init__(totals: int, savings: int, reference: object, score: object, penalties: str)
+        + configure(totals: int, savings: int, reference: object, score: object, penalties: str): None
+        # _number(value, label, minimum, maximum): Decimal
+        + get_totals(): Decimal
+        + set_totals(value): None
+        + get_savings(): Decimal
+        + set_savings(value): None
+        + get_reference(): object
+        + set_reference(value): None
+        + get_score(): object
+        + set_score(value): None
+        + get_penalties(): str
+        + set_penalties(value): None
+        + to_dict(): dict
+    }
+
+    class CoachPanel {
+        # _question: str
+        # _answer: str
+        + __init__(question: str, answer: str)
+        + configure(question: str, answer: str): None
+        # _text(value): str
+        + get_question(): str
+        + set_question(value): None
+        + get_answer(): str
+        + set_answer(value): None
+        + submit_question(question: str): None
+        + set_response(answer: str): None
+        + to_dict(): dict
+    }
+```
 
 The diagram shows the core implemented domain and mock data classes for Subsystem A (`smart_energy.web`).
 
