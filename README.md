@@ -315,7 +315,50 @@ and are not connected in the current example.
 ## Presentation Link
 
 The group video has not been recorded yet.
+# =====HA2=====
+## HA2 — Saeid: Pipeline & Stream Processing Integration
 
+Branch: `Homeworkassignment002`. Saeid's contribution implements the core stream processing **`Pipeline`** mechanism, supporting operator overloading (`|` and `+`) to chain multiple processors (such as filters and transformers) and execute real-time stream transformations sequentially.
+
+### Subsystem A Pipeline Architecture (Mermaid Class Diagram)
+```mermaid
+classDiagram
+    class Pipeline {
+        - stages: list
+        + __init__(stages: list)
+        + __or__(other) Pipeline
+        + __add__(other) Pipeline
+        + process(event: Any) Optional[Any]
+        + run(stream: MeterStream) Iterator[Any]
+    }
+
+    class InactiveMeterFilter {
+        + min_threshold_kw: Decimal
+        + process(event)
+    }
+
+    class RealTimeScoreTransformer {
+        + reference_kw: Decimal
+        + allowance_share: Decimal
+        + process(event)
+    }
+
+    Pipeline o-- InactiveMeterFilter : orchestrates stages via pipe (|)
+    Pipeline o-- RealTimeScoreTransformer : orchestrates stages via pipe (|)
+
+```
+### HA2 Implementation Highlights
+
+- **Pipeline Orchestration (`pipeline.py`):** Chains multiple processing stages sequentially and drops events early if any stage returns `None`.
+- **Operator Overloading:** Implements `__or__` and `__add__` to allow natural pipeline composition using `filter_stage | transform_stage`.
+- **Stream Execution:** Iterates through `MeterStream` events and yields processed results via `run()`.
+
+### Subsystem A Pipeline Demo
+
+To execute the integration stream processing demonstration:
+```bash
+python3 demo_ha2_pipeline.py
+```
 
 ## HA2 — Danial: stream source
 
