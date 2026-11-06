@@ -443,6 +443,89 @@ python3 demo_ha2_coach.py
 The 5-minute video walkthrough link will be placed here:
 - **Presentation Video:** `[Pending Recording / Video Link]`
 
+# =====HA3=====
+
+## HA3 — Saeid: Flask Web & MySQL Integration
+
+Branch: `Homeworkassignment003`. Subsystem A's contribution integrates the Flask web application with the production MySQL relational database (`smart_energy_ha3`). It connects the repository architecture (`BuildingRepository`, `MeterRepository`, `ReadingRepository`) and `AnalyticsService` directly to the web layer, ensuring live data retrieval, dynamic metric calculations, and real-time dashboard rendering.
+```mermaid
+classDiagram
+    class FlaskApp {
+        +get_db_connection() Database
+        +dashboard() html
+        +api_analytics(building_id, meter_id) json
+    }
+
+    class TimeRange {
+        -preset: str
+        -start: datetime
+        -end: datetime
+        +to_dict() dict
+    }
+
+    class EnergySummary {
+        -totals: dict
+        -savings: dict
+        -reference: object
+        -score: float
+        -penalties: list
+        +to_dict() dict
+    }
+
+    class CoachPanel {
+        -question: str
+        -answer: str
+        +to_dict() dict
+    }
+
+    class Database {
+        +get_connection() pymysql.Connection
+    }
+
+    class BuildingRepository {
+        -db: Database
+        +get_by_id(building_id: int) Building
+    }
+
+    class MeterRepository {
+        -db: Database
+        +get_by_id(meter_id: int) Meter
+    }
+
+    class ReadingRepository {
+        -db: Database
+        +find_by_meter_and_time_range(meter_id: int, time_range: TimeRange) list~Reading~
+    }
+
+    class AnalyticsService {
+        -settings: EnergySettings
+        -readings: list~Reading~
+        +calculate_totals() dict
+    }
+
+    FlaskApp --> Database : instantiates
+    FlaskApp --> BuildingRepository : uses
+    FlaskApp --> MeterRepository : uses
+    FlaskApp --> ReadingRepository : uses
+    FlaskApp --> AnalyticsService : executes calculations
+    FlaskApp --> EnergySummary : instantiates & passes to template
+    FlaskApp --> CoachPanel : instantiates & passes to template
+    FlaskApp --> TimeRange : filters queries
+```
+### HA3 Implementation Highlights
+* **Application Factory & Database Integration:** Configured Flask routes (`app.py`) to instantiate database connections and fetch live building, meter, and reading records dynamically.
+* **Service & Domain Wiring:** Integrated `EnergySettings` with explicit `Decimal` parameters alongside `AnalyticsService` to compute real-time energy consumption, estimated costs, and carbon footprints.
+* **REST API & Dashboard Verification:** Added dedicated JSON API endpoints (e.g., `/api/analytics/<building_id>/<meter_id>`) for integration testing, successfully rendering live metrics and sustainability scores on the Jinja2 `dashboard.html` template.
+
+To run the integrated web application:
+1. Ensure your MySQL database is running and configured with the HA3 schema.
+2. Start the Flask development server from the repository root:
+```bash
+python run_web.py
+```
+Open your browser and navigate to http://127.0.0.1:5000/ or verify data flow via the API endpoint at http://127.0.0.1:5000/api/analytics/1/101.
+
+The application successfully retrieves live readings from the database, computes analytics totals, and displays the dynamic web dashboard. The group's final integration, complete diagrams, and five-minute video link remain to be finalized.
 ## HA3 — Danial: MySQL data access
 
 Branch: `Homeworkassignment003`. Danial's B contribution adds Database,
