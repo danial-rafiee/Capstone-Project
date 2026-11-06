@@ -19,6 +19,8 @@ Capstone-Project/
 ├── README.md
 ├── .gitignore
 ├── demo.py
+├── run_web.py
+├── requirements-web.txt
 ├── docs/
 │   └── uml/
 │       ├── analytics_classes.dot
@@ -28,7 +30,16 @@ Capstone-Project/
 └── smart_energy/
     ├── __init__.py
     ├── web/
-    │   └── __init__.py
+    │   ├── __init__.py
+    │   ├── domain/
+    │   │   ├── __init__.py
+    │   │   ├── coach_panel.py
+    │   │   ├── energy_summary.py
+    │   │   └── time_range.py
+    │   ├── templates/
+    │   │   └── dashboard.html
+    │   ├── app.py
+    │   └── demo_data.py
     ├── analytics/
     │   ├── __init__.py
     │   ├── building.py
@@ -49,11 +60,14 @@ images and the generator that reads method signatures from the implementation.
 
 ## Run the current example
 
-Use Python 3. No external packages are required for the current example.
-
-From this folder, run:
+1. Run Console Demo
+To test the core OOP and data structures without external dependencies:
 
 ```bash
+# On Windows:
+python demo.py
+
+# On macOS / Linux:
 python3 demo.py
 ```
 
@@ -96,8 +110,94 @@ Estimated CO2: 2.00 kg
 Duplicate reading rejected: Duplicate or overlapping intervals for the same meter.
 Reading count after rejection: 2
 ```
+2. Run Web Dashboard
+To start the Flask-based web application interface:
+```bash
+# First, activate your virtual environment (.venv), then run:
+python run_web.py
+# (Or use python3 run_web.py on macOS/Linux)
+```
+Open your browser and navigate to http://127.0.0.1:5000.
+
 
 ## System Design
+
+
+### Subsystem A class diagram
+
+```mermaid
+classDiagram
+    class TimeRange {
+        # _preset: str
+        # _start: datetime
+        # _end: datetime
+        + __init__(preset: str, start: datetime, end: datetime)
+        + configure(preset: str, start: datetime, end: datetime): None
+        # _utc(value: datetime): datetime
+        + get_preset(): str
+        + set_preset(value: str): None
+        + get_start(): datetime
+        + set_start(value: datetime): None
+        + get_end(): datetime
+        + set_end(value: datetime): None
+        + to_dict(): dict
+    }
+
+    class EnergySummary {
+        # _totals: dict
+        # _savings: dict
+        # _reference: dict
+        # _score: float
+        # _penalties: list
+        + __init__(totals: int, savings: int, reference: object, score: object, penalties: str)
+        + configure(totals: int, savings: int, reference: object, score: object, penalties: str): None
+        # _number(value, label, minimum, maximum): Decimal
+        + get_totals(): Decimal
+        + set_totals(value): None
+        + get_savings(): Decimal
+        + set_savings(value): None
+        + get_reference(): object
+        + set_reference(value): None
+        + get_score(): object
+        + set_score(value): None
+        + get_penalties(): str
+        + set_penalties(value): None
+        + to_dict(): dict
+    }
+
+    class CoachPanel {
+        # _question: str
+        # _answer: str
+        + __init__(question: str, answer: str)
+        + configure(question: str, answer: str): None
+        # _text(value): str
+        + get_question(): str
+        + set_question(value): None
+        + get_answer(): str
+        + set_answer(value): None
+        + submit_question(question: str): None
+        + set_response(answer: str): None
+        + to_dict(): dict
+    }
+```
+
+The diagram shows the core implemented domain and mock data classes for Subsystem A (`smart_energy.web`).
+
+- `+` marks public methods, including `__init__`.
+- `#` marks underscore-prefixed attributes, following Python's non-public convention.
+
+### Implemented classes for Subsystem A
+
+Current implemented classes and components in `smart_energy.web`:
+
+| Component / Class | Meaning in the current code |
+| --- | --- |
+| `TimeRange` | Encapsulates datetime intervals and preset ranges for filtering energy dashboard queries. |
+| `EnergySummary` | Acts as a DTO aggregating consumption totals, costs, carbon footprints, and scores. |
+| `CoachPanel` | Structures AI coaching prompts, answers, and sustainability advice for the UI. |
+| `DemoData` | Generates mock datasets and initial office building topologies for preview. |
+| `Flask App & Dashboard` | Configures application routes (`app.py`) and renders summary cards and panels via Jinja2 templates (`dashboard.html`). |
+
 
 ### Subsystem B class diagram
 
@@ -211,10 +311,53 @@ essential equipment and full period analytics remain further capstone work.
 MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
-## Presentation Link
+## HA1 Presentation Link
 
 The group video has not been recorded yet.
+# =====HA2=====
+## HA2 — Saeid: Pipeline & Stream Processing Integration
 
+Branch: `Homeworkassignment002`. Saeid's contribution implements the core stream processing **`Pipeline`** mechanism, supporting operator overloading (`|` and `+`) to chain multiple processors (such as filters and transformers) and execute real-time stream transformations sequentially.
+
+### Subsystem A Pipeline Architecture (Mermaid Class Diagram)
+```mermaid
+classDiagram
+    class Pipeline {
+        - stages: list
+        + __init__(stages: list)
+        + __or__(other) Pipeline
+        + __add__(other) Pipeline
+        + process(event: Any) Optional[Any]
+        + run(stream: MeterStream) Iterator[Any]
+    }
+
+    class InactiveMeterFilter {
+        + min_threshold_kw: Decimal
+        + process(event)
+    }
+
+    class RealTimeScoreTransformer {
+        + reference_kw: Decimal
+        + allowance_share: Decimal
+        + process(event)
+    }
+
+    Pipeline o-- InactiveMeterFilter : orchestrates stages via pipe (|)
+    Pipeline o-- RealTimeScoreTransformer : orchestrates stages via pipe (|)
+
+```
+### HA2 Implementation Highlights
+
+- **Pipeline Orchestration (`pipeline.py`):** Chains multiple processing stages sequentially and drops events early if any stage returns `None`.
+- **Operator Overloading:** Implements `__or__` and `__add__` to allow natural pipeline composition using `filter_stage | transform_stage`.
+- **Stream Execution:** Iterates through `MeterStream` events and yields processed results via `run()`.
+
+### Subsystem A Pipeline Demo
+
+To execute the integration stream processing demonstration:
+```bash
+python3 demo_ha2_pipeline.py
+```
 
 ## HA2 — Danial: stream source
 
@@ -233,6 +376,72 @@ composition and the five-minute presentation link. The original HA1 sections
 above describe the earlier implementation; this section documents only the
 current HA2 source contribution.
 
+
+
+## HA2 — Hananeh: Real-Time Stream Pipeline & AI Coach
+
+Branch: `Homeworkassignment002`. Subsystem C's contribution processes real-time event streams from IoT meters, evaluates operational penalties on the fly, computes live sustainability scores, and triggers instant AI coach intervention alerts.
+
+### Subsystem C Stream Architecture (Mermaid Class Diagram)
+
+```mermaid
+classDiagram
+    class BaseStreamProcessor {
+        <<abstract>>
+        +process(event: Any)* Optional[Any]
+        +__or__(other: BaseStreamProcessor) Pipeline
+    }
+
+    class Pipeline {
+        -stages: list[BaseStreamProcessor]
+        +__init__(stages: list)
+        +process(event: Any) Optional[Any]
+        +__or__(other: BaseStreamProcessor) Pipeline
+        +run(stream: Iterator) Iterator
+    }
+
+    class InactiveMeterFilter {
+        +min_threshold_kw: Decimal
+        +process(event: MeterEvent) Optional[MeterEvent]
+    }
+
+    class RealTimeScoreTransformer {
+        +reference_kw: Decimal
+        +allowance_share: Decimal
+        +process(event: MeterEvent) Optional[dict]
+    }
+
+    class RealTimeCoachAlerter {
+        +threshold: float
+        +process(event_data: dict) Optional[dict]
+    }
+
+    BaseStreamProcessor <|-- Pipeline : inherits & extends
+    BaseStreamProcessor <|-- InactiveMeterFilter : inherits
+    BaseStreamProcessor <|-- RealTimeScoreTransformer : inherits
+    BaseStreamProcessor <|-- RealTimeCoachAlerter : inherits
+
+Pipeline o-- BaseStreamProcessor : composes stages via pipe (|)
+```
+
+### HA2 Implementation Highlights
+- **Abstract Base Classes (ABCs):** `BaseStreamProcessor` enforces the `@abstractmethod` contract for `process()`.
+- **Inheritance & Polymorphism:** `InactiveMeterFilter`, `RealTimeScoreTransformer`, and `RealTimeCoachAlerter` adhere to a uniform streaming contract.
+- **Operator Overloading:** Overloaded `__or__` allows natural pipeline chaining:
+```python
+pipeline = filter_stage | transform_stage | alert_stage
+```
+- **Stream Consumption:** Evaluates stream events yielded by `MeterStream` iterator on the fly.
+
+### Running Subsystem C Demo
+Run the standalone real-time streaming demonstration:
+```bash
+python3 demo_ha2_coach.py
+```
+
+### HA2 Presentation Link
+The 5-minute video walkthrough link will be placed here:
+- **Presentation Video:** `[Pending Recording / Video Link]`
 
 ## HA3 — Danial: MySQL data access
 
