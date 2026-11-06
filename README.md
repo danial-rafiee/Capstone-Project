@@ -279,3 +279,70 @@ This section documents B only. The complete group HA4 still requires A/C error
 handling, at least 15 different tests for the integrated application, current
 shared documentation and the five-minute team video link. Earlier README sections
 describe their respective homework stages; HA4 requires the dependencies above.
+
+
+
+## HA2 — Hananeh: Real-Time Stream Pipeline & AI Coach
+
+Branch: `Homeworkassignment002`. Subsystem C's contribution processes real-time event streams from IoT meters, evaluates operational penalties on the fly, computes live sustainability scores, and triggers instant AI coach intervention alerts.
+
+### Subsystem C Stream Architecture (Mermaid Class Diagram)
+
+```mermaid
+classDiagram
+    class BaseStreamProcessor {
+        <<abstract>>
+        +process(event: Any)* Optional[Any]
+        +__or__(other: BaseStreamProcessor) Pipeline
+    }
+
+    class Pipeline {
+        -stages: list[BaseStreamProcessor]
+        +__init__(stages: list)
+        +process(event: Any) Optional[Any]
+        +__or__(other: BaseStreamProcessor) Pipeline
+        +run(stream: Iterator) Iterator
+    }
+
+    class InactiveMeterFilter {
+        +min_threshold_kw: Decimal
+        +process(event: MeterEvent) Optional[MeterEvent]
+    }
+
+    class RealTimeScoreTransformer {
+        +reference_kw: Decimal
+        +allowance_share: Decimal
+        +process(event: MeterEvent) Optional[dict]
+    }
+
+    class RealTimeCoachAlerter {
+        +threshold: float
+        +process(event_data: dict) Optional[dict]
+    }
+
+    BaseStreamProcessor <|-- Pipeline : inherits & extends
+    BaseStreamProcessor <|-- InactiveMeterFilter : inherits
+    BaseStreamProcessor <|-- RealTimeScoreTransformer : inherits
+    BaseStreamProcessor <|-- RealTimeCoachAlerter : inherits
+
+Pipeline o-- BaseStreamProcessor : composes stages via pipe (|)
+```
+
+### HA2 Implementation Highlights
+- **Abstract Base Classes (ABCs):** `BaseStreamProcessor` enforces the `@abstractmethod` contract for `process()`.
+- **Inheritance & Polymorphism:** `InactiveMeterFilter`, `RealTimeScoreTransformer`, and `RealTimeCoachAlerter` adhere to a uniform streaming contract.
+- **Operator Overloading:** Overloaded `__or__` allows natural pipeline chaining:
+```python
+pipeline = filter_stage | transform_stage | alert_stage
+```
+- **Stream Consumption:** Evaluates stream events yielded by `MeterStream` iterator on the fly.
+
+### Running Subsystem C Demo
+Run the standalone real-time streaming demonstration:
+```bash
+python3 demo_ha2_coach.py
+```
+
+### HA2 Presentation Link
+The 5-minute video walkthrough link will be placed here:
+- **Presentation Video:** `[Pending Recording / Video Link]`

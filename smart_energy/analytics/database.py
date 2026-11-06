@@ -13,7 +13,7 @@ class Database:
             "host": os.environ.get("SMART_ENERGY_DB_HOST", "127.0.0.1"),
             "port": int(os.environ.get("SMART_ENERGY_DB_PORT", "3306")),
             "user": os.environ.get("SMART_ENERGY_DB_USER", "root"),
-            "password": os.environ.get("SMART_ENERGY_DB_PASSWORD", ""),
+            "password": os.environ.get("SMART_ENERGY_DB_PASSWORD", "root"),
             "database": os.environ.get(
                 "SMART_ENERGY_DB_NAME", "smart_energy_ha3"
             ),
