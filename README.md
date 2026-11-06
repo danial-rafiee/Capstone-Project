@@ -12,7 +12,7 @@ and AI advice. The current implementation is the initial OOP learning stage.
 | Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation and energy/cost/carbon calculations |
 | Hananeh Hajari | C | `smart_energy/coach` | Score and penalties, AI context, OpenAI integration and AI/scoring tests |
 
-## Project structure
+## Project Structure
 
 ```text
 Capstone-Project/
@@ -70,7 +70,6 @@ python demo.py
 # On macOS / Linux:
 python3 demo.py
 ```
-
 In PyCharm, right-click `demo.py` in the project tree and choose **Run 'demo'**.
 Use that file rather than the earlier step-specific run configurations.
 
@@ -352,12 +351,6 @@ classDiagram
 - **Operator Overloading:** Implements `__or__` and `__add__` to allow natural pipeline composition using `filter_stage | transform_stage`.
 - **Stream Execution:** Iterates through `MeterStream` events and yields processed results via `run()`.
 
-### Subsystem A Pipeline Demo
-
-To execute the integration stream processing demonstration:
-```bash
-python3 demo_ha2_pipeline.py
-```
 
 ## HA2 — Danial: stream source
 

@@ -28,3 +28,15 @@ CREATE TABLE IF NOT EXISTS readings (
     UNIQUE KEY uq_reading_interval (meter_id, start_utc, end_utc),
     FOREIGN KEY (meter_id) REFERENCES meters(meter_id)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS coach_evaluations (
+    evaluation_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    building_id INT NOT NULL,
+    score DECIMAL(5,2) NOT NULL,
+    penalty_eur DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    peak_detected BOOLEAN NOT NULL DEFAULT FALSE,
+    advice_summary VARCHAR(255) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    FOREIGN KEY (building_id) REFERENCES buildings(building_id)
+) ENGINE=InnoDB;
+
