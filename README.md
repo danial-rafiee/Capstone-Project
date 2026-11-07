@@ -839,27 +839,31 @@ classDiagram
     CoachAPI ..> CoachEvaluationRepository : queries data
 ```
 
-## HA3 Implementation Highlights
-# Relational Database Persistence (coach_repository.py):
-Uses the shared Database connection layer for executing parameterized queries.
-save_evaluation(...):
-Persists sustainability evaluation records, including the final score, calculated monetary penalty (penalty_eur), peak load indicators, and coaching advice strings into MySQL.
+### HA3 Implementation Highlights
 
-list_for_building(building_id): Fetches past evaluation history for a given building and deserializes rows into structured dictionaries.
+- **Relational Database Persistence (`coach_repository.py`):**
+  - Uses the shared `Database` connection layer for executing parameterized queries.
+  - **`save_evaluation(...)`:** Persists sustainability evaluation records, including the final score, calculated monetary penalty (`penalty_eur`), peak load indicators, and coaching advice strings into MySQL.
+  - **`list_for_building(building_id)`:** Fetches past evaluation history for a given building and deserializes rows into structured dictionaries.
 
-# Flask Web API Integration (coach_api.py):
-Defines a modular Flask blueprint via create_coach_blueprint.
+- **Flask Web API Integration (`coach_api.py`):**
+  - Defines a modular Flask blueprint via `create_coach_blueprint`.
+  - Exposes `GET /api/coach/evaluations/<building_id>` returning HTTP `200` with JSON payloads.
+  - Bridges the persistence layer directly with external consumers (Subsystem A web dashboard).
 
-Exposes GET /api/coach/evaluations/<building_id> returning HTTP 200 with JSON payloads.
+### Running Subsystem C HA3 Demo
 
-Bridges the persistence layer directly with external consumers (Subsystem A web dashboard).
+To test the database insert/query operations and verify the Flask Web API endpoint:
 
-## Running Subsystem C HA3 Demo
-# To test the database insert/query operations and verify the Flask Web API endpoint:
+```bash
 # On Windows:
 python demo_ha3_coach.py
 
 # On macOS / Linux:
+python3 demo_ha3_coach.py
+
+```
+## Expected output:
 --- Starting HA3 Subsystem C Demonstration ---
 
 [1] Storing sustainability evaluations into MySQL...
@@ -878,14 +882,9 @@ Response JSON payload:
 --- Subsystem C HA3 Integration Completed Successfully ---
 
 
+
 ## Presentation Link HA3
 (https://drive.google.com/file/d/15Y6hLXHtuAzNbm8Nhgy-kLTWwZuFa5ae/view)
-
-
-
-
-
-
 
 
 
