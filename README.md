@@ -456,22 +456,32 @@ classDiagram
     CoachService ..> BuildingContext : uses in answer_question()
 ```
 
-HA1 Implementation Highlights
-Data Encapsulation & Guard Validations (building_context.py):
-Manages building schedule boundaries and critical equipment infrastructure (e.g., Server Room, Emergency Lighting).
-All attributes are protected with leading underscores (_building_id, _occupied_hours, _essential_loads).
-Access is mediated via explicit getters and setters enforcing non-empty string and positive identifier validations.
-High-Precision Penalty Arithmetic (score_calculator.py):
-Employs Python's Decimal module across all math operations to prevent floating-point inaccuracies.
-Enforces _allowance_share boundaries strictly between 0.0 and 1.0.
-Computes two distinct penalty metrics against baseline metrics:
-Pg (Growth Penalty): Evaluates excess consumption over historical baseline.
-Po (Off-Hours Penalty): Penalizes wasteful consumption outside occupied operational hours.
-Returns a normalized sustainability score bounded between 0.0 and 100.0.
-Dependency Injection & Coaching Logic (coach_service.py):
-Injects ScoreCalculator directly via the constructor with runtime type validation.
-In answer_question(), cross-evaluates user prompts with BuildingContext schedules and essential equipment to formulate targeted, non-destructive energy optimization advice.
-Running Subsystem C HA1 Demo
+### HA1 Implementation Highlights
+
+- **Data Encapsulation & Guard Validations (`building_context.py`):**
+  - Manages building schedule boundaries and critical equipment infrastructure (e.g., Server Room, Emergency Lighting).
+  - All attributes are protected with leading underscores (`_building_id`, `_occupied_hours`, `_essential_loads`).
+  - Access is mediated via explicit getters and setters enforcing non-empty string and positive identifier validations.
+
+- **High-Precision Penalty Arithmetic (`score_calculator.py`):**
+  - Employs Python's `Decimal` module across all math operations to prevent floating-point inaccuracies.
+  - Enforces `_allowance_share` boundaries strictly between `0.0` and `1.0`.
+  - Computes two distinct penalty metrics against baseline metrics:
+    - **$P_g$ (Growth Penalty):** Evaluates excess consumption over historical baseline.
+    - **$P_o$ (Off-Hours Penalty):** Penalizes wasteful consumption outside occupied operational hours.
+  - Returns a normalized sustainability score bounded between `0.0` and `100.0`.
+
+- **Dependency Injection & Coaching Logic (`coach_service.py`):**
+  - Injects `ScoreCalculator` directly via the constructor with runtime type validation.
+  - In `answer_question()`, cross-evaluates user prompts with `BuildingContext` schedules and essential equipment to formulate targeted, non-destructive energy optimization advice.
+
+### Running Subsystem C HA1 Demo
+
+Execute the standalone demonstration script from the repository root:
+
+```bash
+python demo_coach.py
+
 Execute the standalone demonstration script:
 # On Windows:
 python demo_coach.py
