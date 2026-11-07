@@ -17,6 +17,10 @@ Capstone-Project/
 ├── README.md
 ├── .gitignore
 ├── demo.py
+├── demo_coach.py
+├── demo_ha2.py
+├── demo_ha2_coach.py
+├── demo_ha2_pipeline.py
 ├── run_web.py
 ├── requirements-web.txt
 ├── docs/
@@ -24,29 +28,46 @@ Capstone-Project/
 │       ├── analytics_classes.dot
 │       ├── analytics_classes.png
 │       ├── analytics_classes.svg
-│       └── generate_analytics_uml.py
+│       ├── generate_analytics_uml.py
+│       ├── ha2_source.dot
+│       ├── ha2_source.png
+│       ├── ha2_source.svg
+│       └── ha2_source.md
 └── smart_energy/
     ├── __init__.py
-    ├── web/
-    │   ├── __init__.py
-    │   ├── domain/
-    │   │   ├── __init__.py
-    │   │   ├── coach_panel.py
-    │   │   ├── energy_summary.py
-    │   │   └── time_range.py
-    │   ├── templates/
-    │   │   └── dashboard.html
-    │   ├── app.py
-    │   └── demo_data.py
     ├── analytics/
     │   ├── __init__.py
+    │   ├── analytics_service.py
     │   ├── building.py
-    │   ├── meter.py
-    │   ├── reading.py
     │   ├── energy_settings.py
-    │   └── analytics_service.py
-    └── coach/
-        └── __init__.py
+    │   ├── meter.py
+    │   └── reading.py
+    ├── coach/
+    │   ├── __init__.py
+    │   ├── building_context.py
+    │   ├── coach_service.py
+    │   ├── realtime_coach.py
+    │   ├── score_calculator.py
+    │   └── stream_pipeline.py
+    ├── streaming/
+    │   ├── __init__.py
+    │   ├── pipeline.py
+    │   └── source/
+    │       ├── __init__.py
+    │       ├── meter_event.py
+    │       ├── meter_stream.py
+    │       └── sample_source.py
+    └── web/
+        ├── __init__.py
+        ├── app.py
+        ├── demo_data.py
+        ├── domain/
+        │   ├── __init__.py
+        │   ├── coach_panel.py
+        │   ├── energy_summary.py
+        │   └── time_range.py
+        └── templates/
+            └── dashboard.html
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
