@@ -487,7 +487,8 @@ classDiagram
 
 Execute the standalone demonstration script from the repository root:
 
-```bash
+```
+bash
 # On Windows:
 python demo_coach.py
 
@@ -496,9 +497,10 @@ python3 demo_coach.py
 
 ```
 
-==================================================
-Subsystem C: Sustainability Scoring & AI Coach Demo
-==================================================
+
+### Subsystem C: Sustainability Scoring & AI Coach Demo
+
+
 Context building ID: 1
 Occupied hours: Mon-Fri 08:00-18:00
 Essential loads: ['Server Room', 'Emergency Lighting']
