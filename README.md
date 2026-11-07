@@ -14,47 +14,51 @@ Group 18's capstone monitors electricity use in demo office buildings, calculate
 
 ```text
 Capstone-Project/
-├── README.md
-├── .gitignore
-├── demo.py
-├── run_web.py
-├── requirements-web.txt
 ├── docs/
 │   └── uml/
 │       ├── analytics_classes.dot
+│       ├── analytics_classes.mmd
 │       ├── analytics_classes.png
 │       ├── analytics_classes.svg
-│       └──generate_analytics_uml.py
-└── smart_energy/
-    ├── __init__.py
-    ├── web/
-    │   ├── __init__.py
-    │   ├── domain/
-    │   │   ├── __init__.py
-    │   │   ├── coach_panel.py
-    │   │   ├── energy_summary.py
-    │   │   └── time_range.py
-    │   ├── templates/
-    │   │   └── dashboard.html
-    │   ├── app.py
-    │   └── demo_data.py
-    ├── analytics/
-    │   ├── __init__.py
-    │   ├── building.py
-    │   ├── meter.py
-    │   ├── reading.py
-    │   ├── energy_settings.py
-    │   └── analytics_service.py
-    └── coach/
-        └── __init__.py
+│       ├── generate_analytics_uml.py
+│       └── generate_b_mermaid.py
+├── smart_energy/
+│   ├── analytics/
+│   │   ├── __init__.py
+│   │   ├── analytics_service.py
+│   │   ├── building.py
+│   │   ├── energy_settings.py
+│   │   ├── meter.py
+│   │   └── reading.py
+│   ├── coach/
+│   │   ├── __init__.py
+│   │   ├── building_context.py
+│   │   ├── coach_service.py
+│   │   └── score_calculator.py
+│   ├── web/
+│   │   ├── domain/
+│   │   │   ├── __init__.py
+│   │   │   ├── coach_panel.py
+│   │   │   ├── energy_summary.py
+│   │   │   └── time_range.py
+│   │   ├── templates/
+│   │   │   └── dashboard.html
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   └── demo_data.py
+│   └── __init__.py
+├── .gitignore
+├── README.md
+├── demo.py
+├── demo_coach.py
+├── requirements-web.txt
+└── run_web.py
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
 name. The HA1 submission branch remains `Homeworkassignment001`.
 
-`web` and `coach` contain package placeholders for teammates' work. The
-`docs/uml` directory contains the B class diagram source, its rendered SVG/PNG
-images and the generator that reads method signatures from the implementation.
+This tree lists the versioned project files in `Homeworkassignment001`. Local virtual environments and IDE settings are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports. A/C documentation is maintained by their respective authors.
 
 ## Run the current example
 
@@ -198,45 +202,86 @@ Current implemented classes and components in `smart_energy.web`:
 
 ### Subsystem B class diagram
 
-![Subsystem B UML class diagram](docs/uml/analytics_classes.png)
+```mermaid
+classDiagram
+    class Building {
+        #int _building_id
+        #str _name
+        +__init__(building_id: int, name: str)
+        +get_building_id() int
+        +set_building_id(building_id: int) None
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Meter {
+        #int _meter_id
+        #Building _building
+        #str _name
+        +__init__(meter_id: int, building: Building, name: str)
+        +get_meter_id() int
+        +set_meter_id(meter_id: int) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Reading {
+        #Meter _meter
+        #datetime _start
+        #datetime _end
+        #Decimal _energy_kwh
+        +__init__(meter: Meter, start: datetime, end: datetime, energy_kwh: Decimal)
+        +get_meter() Meter
+        +set_meter(meter: Meter) None
+        +get_meter_id() int
+        +get_interval() tuple~datetime_datetime~
+        +set_interval(start: datetime, end: datetime) None
+        +get_energy_kwh() Decimal
+        +set_energy_kwh(energy_kwh: Decimal) None
+    }
+    class EnergySettings {
+        #Building _building
+        #Decimal _tariff
+        #Decimal _carbon_factor
+        #Decimal _off_hours_share
+        +__init__(building: Building, tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal)
+        +configure(tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_tariff() Decimal
+        +set_tariff(tariff: Decimal) None
+        +get_carbon_factor() Decimal
+        +set_carbon_factor(carbon_factor: Decimal) None
+        +get_off_hours_share() Decimal
+        +set_off_hours_share(off_hours_share: Decimal) None
+        #_validate_factor(value: Decimal, label: str) None
+        #_validate_share(off_hours_share: Decimal) None
+    }
+    class AnalyticsService {
+        #list~Reading~ _readings
+        #EnergySettings _settings
+        +__init__(settings: EnergySettings, readings)
+        +get_settings() EnergySettings
+        +set_settings(settings: EnergySettings) None
+        +get_readings() list~Reading~
+        +set_readings(readings: list~Reading~) None
+        +add_reading(reading: Reading) None
+        +totals() dict
+        #_validate_readings(readings: list~Reading~, settings: EnergySettings) None
+    }
 
-[Open the scalable diagram](docs/uml/analytics_classes.svg) ·
-[Diagram source](docs/uml/analytics_classes.dot)
-
-The diagram shows the five currently implemented B classes, their attributes,
-constructor signatures, getters/setters, configuration and calculation methods.
-It does not include unimplemented database, web or AI classes.
-
-- `+` marks public methods, including `__init__`.
-- `#` marks underscore-prefixed attributes/helpers, following Python's
-  non-public convention; it does not imply enforced access protection.
-- Solid arrows show navigable associations, not inheritance or composition.
-- `1` means exactly one related object; `0..*` means zero or more.
-
-| Relationship | Meaning in the current code |
-| --- | --- |
-| `Meter` to `Building` | Each meter references one building. Multiple meters may reference the same building. |
-| `Reading` to `Meter` | Each reading references one meter. A meter may have multiple readings. |
-| `EnergySettings` to `Building` | Each configuration references one building. The classes do not enforce a unique configuration per building; the demo uses one. |
-| `AnalyticsService` to `EnergySettings` | Each service references one configuration. A configuration may be shared by services. |
-| `AnalyticsService` to `Reading` | A service holds zero or more reading references. A reading may be used by multiple services. |
-
-The diagram generator checks the attribute names and reads all method
-signatures directly from the five Python classes. To update the source:
-
-```bash
-python3 docs/uml/generate_analytics_uml.py
+    Meter "0..*" --> "1" Building : _building
+    Reading "0..*" --> "1" Meter : _meter
+    EnergySettings "0..*" --> "1" Building : _building
+    AnalyticsService "0..*" --> "1" EnergySettings : _settings
+    AnalyticsService "0..*" --> "0..*" Reading : _readings
 ```
 
-To regenerate the images with a separately installed Graphviz renderer:
+The diagram is generated from the B implementation in this branch. `+` denotes public members and `#` Python non-public convention. Arrows show stored references; multiplicities describe those references.
 
-```bash
-dot -Tsvg docs/uml/analytics_classes.dot -o docs/uml/analytics_classes.svg
-dot -Tpng docs/uml/analytics_classes.dot -o docs/uml/analytics_classes.png
-```
-
-Graphviz is only needed to regenerate the diagram images. Running `demo.py`
-requires no external packages.
+[Mermaid source](docs/uml/analytics_classes.mmd). Regenerate with `python docs/uml/generate_b_mermaid.py`; GitHub renders the embedded Mermaid blocks directly.
 
 ### Implemented classes
 

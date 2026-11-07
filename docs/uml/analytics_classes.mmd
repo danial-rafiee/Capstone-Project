@@ -1,0 +1,74 @@
+classDiagram
+    class Building {
+        #int _building_id
+        #str _name
+        +__init__(building_id: int, name: str)
+        +get_building_id() int
+        +set_building_id(building_id: int) None
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Meter {
+        #int _meter_id
+        #Building _building
+        #str _name
+        +__init__(meter_id: int, building: Building, name: str)
+        +get_meter_id() int
+        +set_meter_id(meter_id: int) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Reading {
+        #Meter _meter
+        #datetime _start
+        #datetime _end
+        #Decimal _energy_kwh
+        +__init__(meter: Meter, start: datetime, end: datetime, energy_kwh: Decimal)
+        +get_meter() Meter
+        +set_meter(meter: Meter) None
+        +get_meter_id() int
+        +get_interval() tuple~datetime_datetime~
+        +set_interval(start: datetime, end: datetime) None
+        +get_energy_kwh() Decimal
+        +set_energy_kwh(energy_kwh: Decimal) None
+    }
+    class EnergySettings {
+        #Building _building
+        #Decimal _tariff
+        #Decimal _carbon_factor
+        #Decimal _off_hours_share
+        +__init__(building: Building, tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal)
+        +configure(tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_tariff() Decimal
+        +set_tariff(tariff: Decimal) None
+        +get_carbon_factor() Decimal
+        +set_carbon_factor(carbon_factor: Decimal) None
+        +get_off_hours_share() Decimal
+        +set_off_hours_share(off_hours_share: Decimal) None
+        #_validate_factor(value: Decimal, label: str) None
+        #_validate_share(off_hours_share: Decimal) None
+    }
+    class AnalyticsService {
+        #list~Reading~ _readings
+        #EnergySettings _settings
+        +__init__(settings: EnergySettings, readings)
+        +get_settings() EnergySettings
+        +set_settings(settings: EnergySettings) None
+        +get_readings() list~Reading~
+        +set_readings(readings: list~Reading~) None
+        +add_reading(reading: Reading) None
+        +totals() dict
+        #_validate_readings(readings: list~Reading~, settings: EnergySettings) None
+    }
+
+    Meter "0..*" --> "1" Building : _building
+    Reading "0..*" --> "1" Meter : _meter
+    EnergySettings "0..*" --> "1" Building : _building
+    AnalyticsService "0..*" --> "1" EnergySettings : _settings
+    AnalyticsService "0..*" --> "0..*" Reading : _readings
