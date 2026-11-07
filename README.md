@@ -481,6 +481,7 @@ Execute the standalone demonstration script from the repository root:
 
 ```bash
 python demo_coach.py
+---
 
 Execute the standalone demonstration script:
 # On Windows:
