@@ -412,75 +412,9 @@ and are not connected in the current example.
 
 
 
-### HA1 — Hananeh: Sustainability Scoring & AI Coach (Core OOP)
-Branch: Homeassignment1 (or main branch). Subsystem C establishes the foundational domain models for building operational contexts, exact mathematical penalty scoring, and interactive AI energy coaching using strict Object-Oriented Programming (OOP) principles.
-Subsystem C Architecture (Mermaid Class Diagram)
-```mermaid
-classDiagram
-    class BuildingContext {
-        #int _building_id
-        #str _occupied_hours
-        #list~str~ _essential_loads
-        +__init__(building_id: int, occupied_hours: str, essential_loads: list)
-        +get_building_id() int
-        +set_building_id(building_id: int) None
-        +get_occupied_hours() str
-        +set_occupied_hours(hours: str) None
-        +get_essential_loads() list~str~
-        +add_essential_load(load_name: str) None
-    }
 
 
-    class ScoreCalculator {
-        #Decimal _allowance_share
-        +__init__(allowance_share: Decimal)
-        +get_allowance_share() Decimal
-        +set_allowance_share(share: Decimal) None
-        +calculate(current_energy: Decimal, reference_energy: Decimal, off_hours_energy: Decimal) dict
-    }
-
-
-    class CoachService {
-        #ScoreCalculator _calculator
-        #str _last_status
-        +__init__(calculator: ScoreCalculator)
-        +get_calculator() ScoreCalculator
-        +set_calculator(calculator: ScoreCalculator) None
-        +get_status() str
-        +assess_sustainability(current_e: Decimal, ref_e: Decimal, off_hours_e: Decimal) dict
-        +answer_question(question: str, context: BuildingContext, period_summary: dict) dict
-    }
-
-
-    CoachService --> ScoreCalculator : _calculator (delegates calculation)
-    CoachService ..> BuildingContext : uses in answer_question()
-```
-
-### HA1 Implementation Highlights
-
-- **Data Encapsulation & Guard Validations (`building_context.py`):**
-  - Manages building schedule boundaries and critical equipment infrastructure (e.g., Server Room, Emergency Lighting).
-  - All attributes are protected with leading underscores (`_building_id`, `_occupied_hours`, `_essential_loads`).
-  - Access is mediated via explicit getters and setters enforcing non-empty string and positive identifier validations.
-
-- **High-Precision Penalty Arithmetic (`score_calculator.py`):**
-  - Employs Python's `Decimal` module across all math operations to prevent floating-point inaccuracies.
-  - Enforces `_allowance_share` boundaries strictly between `0.0` and `1.0`.
-  - Computes two distinct penalty metrics against baseline metrics:
-    - **$P_g$ (Growth Penalty):** Evaluates excess consumption over historical baseline.
-    - **$P_o$ (Off-Hours Penalty):** Penalizes wasteful consumption outside occupied operational hours.
-  - Returns a normalized sustainability score bounded between `0.0` and `100.0`.
-
-- **Dependency Injection & Coaching Logic (`coach_service.py`):**
-  - Injects `ScoreCalculator` directly via the constructor with runtime type validation.
-  - In `answer_question()`, cross-evaluates user prompts with `BuildingContext` schedules and essential equipment to formulate targeted, non-destructive energy optimization advice.
-
-### Running Subsystem C HA1 Demo
-
-Execute the standalone demonstration script from the repository root:
-
-```bash
-python demo_coach.py```
+ 
 
 
 
@@ -492,6 +426,9 @@ python demo_coach.py```
 
 ## Presentation Link
 (https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
+
+
+
 
 =====HA2=====
 
