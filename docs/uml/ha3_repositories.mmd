@@ -1,0 +1,33 @@
+classDiagram
+    class Database {
+        #dict _config
+        +__init__()
+        +connect()
+    }
+    class BuildingRepository {
+        #Database _database
+        +__init__(database: Database)
+        +save(building: Building) None
+        +get_by_id(building_id: int) Optional~Building~
+    }
+    class MeterRepository {
+        #Database _database
+        +__init__(database: Database)
+        +save(meter: Meter) None
+        +get_by_id(meter_id: int, building: Building) Optional~Meter~
+    }
+    class ReadingRepository {
+        #Database _database
+        +__init__(database: Database)
+        +add(reading: Reading) None
+        +list_for_meter(meter: Meter) list~Reading~
+    }
+
+    BuildingRepository "0..*" --> "1" Database : _database
+    MeterRepository "0..*" --> "1" Database : _database
+    ReadingRepository "0..*" --> "1" Database : _database
+    BuildingRepository ..> Building : saves and returns
+    MeterRepository ..> Meter : saves and returns
+    MeterRepository ..> Building : reuses supplied object
+    ReadingRepository ..> Meter : reuses supplied object
+    ReadingRepository ..> Reading : inserts and returns

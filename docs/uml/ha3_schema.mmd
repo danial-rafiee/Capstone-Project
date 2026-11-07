@@ -1,0 +1,19 @@
+erDiagram
+    buildings ||--o{ meters : contains
+    meters ||--o{ readings : records
+    buildings {
+        int building_id PK
+        varchar name
+    }
+    meters {
+        int meter_id PK
+        int building_id FK
+        varchar name
+    }
+    readings {
+        bigint reading_id PK
+        int meter_id FK
+        datetime start_utc
+        datetime end_utc
+        decimal energy_kwh
+    }

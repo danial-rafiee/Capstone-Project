@@ -13,9 +13,28 @@ member is a team coordination choice, not an instructor-imposed allocation.
 - `AnalyticsErrorHandler.handle(error)`: converts an exception to an error
   dictionary with consistent `code` and `message` fields.
 
-![Subsystem B error-handling UML](uml/ha4_errors.png)
+```mermaid
+classDiagram
+    class AnalyticsError {
+        +str code
+        +__init__(message: str, code: str)
+    }
+    class AnalyticsErrorHandler {
+        +handle(error: Exception) dict
+    }
+    class AnalyticsService {
+        +totals() dict
+    }
+    class Database {
+        +connect()
+    }
+    Exception <|-- AnalyticsError
+    AnalyticsErrorHandler ..> AnalyticsError : formats
+    AnalyticsService ..> AnalyticsError : raises no_readings
+    Database ..> AnalyticsError : raises database_unavailable
+```
 
-[Scalable diagram](uml/ha4_errors.svg) · [Source](uml/ha4_errors.dot)
+[Mermaid source](uml/ha4_errors.mmd)
 
 The new classes are shown with their current fields/methods. Existing Database
 and AnalyticsService are abbreviated to the operations involved in this change.

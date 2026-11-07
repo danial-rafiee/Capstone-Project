@@ -1,0 +1,18 @@
+classDiagram
+    class AnalyticsError {
+        +str code
+        +__init__(message: str, code: str)
+    }
+    class AnalyticsErrorHandler {
+        +handle(error: Exception) dict
+    }
+    class AnalyticsService {
+        +totals() dict
+    }
+    class Database {
+        +connect()
+    }
+    Exception <|-- AnalyticsError
+    AnalyticsErrorHandler ..> AnalyticsError : formats
+    AnalyticsService ..> AnalyticsError : raises no_readings
+    Database ..> AnalyticsError : raises database_unavailable
