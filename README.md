@@ -736,6 +736,16 @@ classDiagram
     WebAppErrorHandler ..> WebAppError : formats
     FlaskApp ..> WebAppError : catches and maps to HTTP status
 ```
+### Subsystem A Implementation Highlights
+- **Web Tests (`test_web_ha4.py`):** 
+      - Implemented a robust suite of **5 distinct unit and integration tests** in `tests/test_web_ha4.py` covering:
+        - Dashboard route accessibility (`test_dashboard_route_status`).
+        - API analytics endpoints (`test_api_analytics_endpoint`).
+        - Time range and decimal conversions (`test_time_range_and_energy_summary`).
+        - Coach panel interactions (`test_coach_panel_interactions`).
+        - Custom `WebAppError` handling and routing integration (`test_web_app_error_handling_and_routing`).
+
+
 ### Subsystem B error-handling class diagram
 
 ```mermaid
