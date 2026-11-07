@@ -457,9 +457,9 @@ python demo_coach.py
 # On macOS / Linux:
 python3 demo_coach.py
 Expected output:
-==================================================
-Subsystem C: Sustainability Scoring & AI Coach Demo
-==================================================
+
+## Subsystem C: Sustainability Scoring & AI Coach Demo
+
 Context building ID: 1
 Occupied hours: Mon-Fri 08:00-18:00
 Essential loads: ['Server Room', 'Emergency Lighting']
