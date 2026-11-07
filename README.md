@@ -353,11 +353,6 @@ essential equipment and full period analytics remain further capstone work.
 MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
-## Presentation Link
-
-[Watch the HA1 presentation on Google Drive](https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
-
-
 
 
 ### HA1 — Hananeh: Sustainability Scoring & AI Coach (Core OOP)
@@ -447,5 +442,10 @@ Question: Why is the score 60 and what can we improve?
 Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon-Fri 08:00-18:00) and essential equipment (Server Room, Emergency Lighting) are strictly respected. Review non-essential off-hours consumption.
 Status: ready
 Empty question rejected: Question cannot be empty.
+
+
+## Presentation Link
+
+[Watch the HA1 presentation on Google Drive](https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
 
 
