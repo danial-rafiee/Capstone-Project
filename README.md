@@ -786,7 +786,7 @@ python -m pytest tests -v
 
 
 
-HA4 — Hananeh: Coach Error Handling & Automated Test Suite
+### HA4 — Hananeh: Coach Error Handling & Automated Test Suite
 Branch: Homeworkassignment004. Subsystem C introduces domain-specific custom exception hierarchies, robust input and boundary validation safeguards, and an automated test suite leveraging unittest.mock to ensure complete test isolation without requiring an active MySQL database connection.
 Subsystem C Error Architecture (Mermaid Class Diagram)
 ```mermaid
