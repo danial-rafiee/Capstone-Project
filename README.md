@@ -484,66 +484,36 @@ Branch: `Homeworkassignment003`. Subsystem A's contribution integrates the Flask
 ```mermaid
 classDiagram
     class FlaskApp {
+        <<module>>
         +get_db_connection() Database
-        +dashboard() html
-        +api_analytics(building_id, meter_id) json
+        +create_app(test_config) Flask
+        +home() HTML
+        +api_analytics(building_id, meter_id) JSON
     }
-
-    class TimeRange {
-        -preset: str
-        -start: datetime
-        -end: datetime
-        +to_dict() dict
-    }
-
-    class EnergySummary {
-        -totals: dict
-        -savings: dict
-        -reference: object
-        -score: float
-        -penalties: list
-        +to_dict() dict
-    }
-
-    class CoachPanel {
-        -question: str
-        -answer: str
-        +to_dict() dict
-    }
-
     class Database {
-        +get_connection() pymysql.Connection
+        +connect()
     }
-
     class BuildingRepository {
-        -db: Database
-        +get_by_id(building_id: int) Building
+        +get_by_id(building_id) Optional~Building~
     }
-
     class MeterRepository {
-        -db: Database
-        +get_by_id(meter_id: int) Meter
+        +get_by_id(meter_id, building) Optional~Meter~
     }
-
     class ReadingRepository {
-        -db: Database
-        +find_by_meter_and_time_range(meter_id: int, time_range: TimeRange) list~Reading~
+        +list_for_meter(meter) list~Reading~
     }
-
     class AnalyticsService {
-        -settings: EnergySettings
-        -readings: list~Reading~
-        +calculate_totals() dict
+        +totals() dict
     }
-
-    FlaskApp --> Database : instantiates
-    FlaskApp --> BuildingRepository : uses
-    FlaskApp --> MeterRepository : uses
-    FlaskApp --> ReadingRepository : uses
-    FlaskApp --> AnalyticsService : executes calculations
-    FlaskApp --> EnergySummary : instantiates & passes to template
-    FlaskApp --> CoachPanel : instantiates & passes to template
-    FlaskApp --> TimeRange : filters queries
+    FlaskApp ..> Database : constructs
+    FlaskApp ..> BuildingRepository : loads building
+    FlaskApp ..> MeterRepository : loads meter with same building
+    FlaskApp ..> ReadingRepository : loads readings
+    FlaskApp ..> EnergySettings : supplies sample factors
+    FlaskApp ..> AnalyticsService : calculates totals
+    FlaskApp ..> TimeRange : creates display object
+    FlaskApp ..> EnergySummary : prepares template data
+    FlaskApp ..> CoachPanel : prepares template data
 ```
 ### HA3 Implementation Highlights
 * **Application Factory & Database Integration:** Configured Flask routes (`app.py`) to instantiate database connections and fetch live building, meter, and reading records dynamically.
