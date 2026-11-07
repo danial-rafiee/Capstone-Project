@@ -1011,42 +1011,38 @@ classDiagram
     CoachService ..> CoachError : raises on empty question
     CoachEvaluationRepository ..> BuildingNotFoundError : raises on missing context
 ```
+### HA4 Implementation Highlights
 
-HA4 Implementation Highlights
-Domain-Specific Exceptions (coach_exceptions.py):
-CoachError: Base exception for all coaching and sustainability evaluation domain anomalies.
-BuildingNotFoundError: Raised when attempting to fetch evaluations or answer questions for non-existent or unconfigured buildings.
-InvalidEvaluationDataError: Raised when sustainability metrics, allowance ratios, or penalty boundaries fall outside valid operational limits.
-Boundary & Guard Validations:
-Strict boundary enforcement ensuring energy scores are bounded within [0.0, 100.0].
-Input sanitization guarding against negative power values, non-decimal inputs, and empty prompt queries.
-Automated Unit & Integration Tests (tests/test_ha4_coach.py):
-Subsystem C contributes 5 dedicated tests to the team's comprehensive 15-test suite:
-test_score_calculator_valid_range: Asserts that normal inputs yield accurate scores and penalty calculations.
-test_score_calculator_boundary_rejection: Asserts that invalid inputs (e.g., negative allowance share or out-of-range figures) raise InvalidEvaluationDataError.
-test_coach_service_empty_question: Verifies that blank or whitespace-only user questions raise CoachError.
-test_coach_repository_database_failure: Uses unittest.mock.patch to simulate unexpected database dropouts and verifies safe error propagation.
-test_coach_api_building_not_found: Verifies that requests for unrecorded building IDs yield a structured JSON error response with an HTTP 404 status code.
-Environment-Agnostic Isolation:
-Uses unittest.mock (MagicMock, patch) to mock database cursors and connections, enabling rapid, zero-dependency testing during CI/CD without spinning up local MySQL instances.
-Running Subsystem C Tests Standalone
+- **Domain-Specific Exceptions (`coach_exceptions.py`):**
+  - **`CoachError`:** Base exception for all coaching and sustainability evaluation domain anomalies.
+  - **`BuildingNotFoundError`:** Raised when attempting to fetch evaluations or answer questions for non-existent or unconfigured buildings.
+  - **`InvalidEvaluationDataError`:** Raised when sustainability metrics, allowance ratios, or penalty boundaries fall outside valid operational limits.
+
+- **Boundary & Guard Validations:**
+  - Strict boundary enforcement ensuring energy scores are bounded within `[0.0, 100.0]`.
+  - Input sanitization guarding against negative power values, non-decimal inputs, and empty prompt queries.
+
+- **Automated Unit & Integration Tests (`tests/test_ha4_coach.py`):**
+  Subsystem C contributes **5 dedicated tests** to the team's comprehensive 15-test suite:
+  1. `test_score_calculator_valid_range`: Asserts that normal inputs yield accurate scores and penalty calculations.
+  2. `test_score_calculator_boundary_rejection`: Asserts that invalid inputs (e.g., negative allowance share or out-of-range figures) raise `InvalidEvaluationDataError`.
+  3. `test_coach_service_empty_question`: Verifies that blank or whitespace-only user questions raise `CoachError`.
+  4. `test_coach_repository_database_failure`: Uses `unittest.mock.patch` to simulate unexpected database dropouts and verifies safe error propagation.
+  5. `test_coach_api_building_not_found`: Verifies that requests for unrecorded building IDs yield a structured JSON error response with an HTTP `404` status code.
+
+- **Environment-Agnostic Isolation:**
+  - Uses `unittest.mock` (`MagicMock`, `patch`) to mock database cursors and connections, enabling rapid, zero-dependency testing during CI/CD without spinning up local MySQL instances.
+
+### Running Subsystem C Tests Standalone
+
 To run only the Subsystem C automated test suite with verbose reporting:
-# On Windows:
+
+```bash
+# Using module execution (recommended):
 python -m pytest tests/test_ha4_coach.py -v
 
-# On macOS / Linux:
-python3 -m pytest tests/test_ha4_coach.py -v
-Expected output:
-============================= test session starts ==============================
-collected 5 items
-
-tests/test_ha4_coach.py::test_score_calculator_valid_range PASSED       [ 20%]
-tests/test_ha4_coach.py::test_score_calculator_boundary_rejection PASSED [ 40%]
-tests/test_ha4_coach.py::test_coach_service_empty_question PASSED       [ 60%]
-tests/test_ha4_coach.py::test_coach_repository_database_failure PASSED  [ 80%]
-tests/test_ha4_coach.py::test_coach_api_building_not_found PASSED      [100%]
-
-============================== 5 passed in 0.12s ===============================
+# Or directly with pytest:
+pytest tests/test_ha4_coach.py -v
 
 
 ## HA4 Presentation Link
