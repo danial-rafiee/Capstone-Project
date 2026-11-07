@@ -389,12 +389,6 @@ essential equipment and full period analytics remain further capstone work.
 MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
-## HA1 Presentation Link
-(https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
-
-
-
-
 
 ### HA1 — Hananeh: Sustainability Scoring & AI Coach (Core OOP)
 Branch: Homeassignment1 (or main branch). Subsystem C establishes the foundational domain models for building operational contexts, exact mathematical penalty scoring, and interactive AI energy coaching using strict Object-Oriented Programming (OOP) principles.
@@ -484,6 +478,10 @@ Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon
 Status: ready
 Empty question rejected: Question cannot be empty.
 
+
+
+## HA1 Presentation Link
+(https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
 
 
 
