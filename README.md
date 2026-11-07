@@ -355,4 +355,4 @@ and are not connected in the current example.
 
 ## Presentation Link
 
-The group video has not been recorded yet.
+[Watch the HA1 presentation on Google Drive](https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
