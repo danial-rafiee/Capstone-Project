@@ -745,7 +745,6 @@ classDiagram
         - Coach panel interactions (`test_coach_panel_interactions`).
         - Custom `WebAppError` handling and routing integration (`test_web_app_error_handling_and_routing`).
 
-
 ### Subsystem B error-handling class diagram
 
 ```mermaid
