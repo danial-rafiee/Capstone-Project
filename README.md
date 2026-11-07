@@ -682,3 +682,70 @@ The two retrieved demo readings total 5.0 kWh, EUR 1.50 and 2.00 kg CO2 with
 explicit sample factors. This section documents B only. Subsystem A must connect
 the repositories to the final Flask/Django response. The group's final README,
 complete diagrams and five-minute video link remain to be integrated.
+
+
+
+
+HA3 — Hananeh: Coach Persistence & Web API
+Branch: Homeworkassignment003. Subsystem C connects the AI sustainability coach and scoring evaluation engine to MySQL storage and exposes a RESTful Web API for downstream services and dashboard consumption.
+Subsystem C Database & API Architecture (Mermaid Class Diagram)
+```mermaid
+classDiagram
+    class Database {
+        +connect() connection
+    }
+
+
+    class CoachEvaluationRepository {
+        -Database _database
+        +__init__(database: Database)
+        +save_evaluation(building_id: int, score: Decimal, penalty_eur: Decimal, peak_detected: bool, advice_summary: str) int
+        +list_for_building(building_id: int) list~dict~
+    }
+
+
+    class CoachAPI {
+        <<module>>
+        +create_coach_blueprint(repository: CoachEvaluationRepository) Blueprint
+        +get_evaluations(building_id: int) Response
+    }
+
+
+    CoachEvaluationRepository --> Database : uses connection
+    CoachAPI ..> CoachEvaluationRepository : queries data
+```
+
+HA3 Implementation Highlights
+Relational Database Persistence (coach_repository.py):
+Uses the shared Database connection layer for executing parameterized queries.
+save_evaluation(...): Persists sustainability evaluation records, including the final score, calculated monetary penalty (penalty_eur), peak load indicators, and coaching advice strings into MySQL.
+list_for_building(building_id): Fetches past evaluation history for a given building and deserializes rows into structured dictionaries.
+Flask Web API Integration (coach_api.py):
+Defines a modular Flask blueprint via create_coach_blueprint.
+Exposes GET /api/coach/evaluations/<building_id> returning HTTP 200 with JSON payloads.
+Bridges the persistence layer directly with external consumers (Subsystem A web dashboard).
+Running Subsystem C HA3 Demo
+To test the database insert/query operations and verify the Flask Web API endpoint:
+# On Windows:
+python demo_ha3_coach.py
+
+# On macOS / Linux:
+python3 demo_ha3_coach.py
+Expected output:
+--- Starting HA3 Subsystem C Demonstration ---
+
+[1] Storing sustainability evaluations into MySQL...
+Persisted evaluation IDs: 1, 2
+
+[2] Reading evaluations from MySQL via CoachEvaluationRepository...
+Total retrieved records for building 1: 2
+ - ID: 1 | Score: 87.50 | Penalty: EUR 1.25 | Advice: Optimal consumption. Keep operating within standard threshold.
+ - ID: 2 | Score: 62.00 | Penalty: EUR 4.80 | Advice: Peak consumption detected during off-hours. Shift cooling load.
+
+[3] Testing Web API endpoint with Flask test client...
+HTTP GET /api/coach/evaluations/1 -> Status: 200
+Response JSON payload:
+[...]
+
+--- Subsystem C HA3 Integration Completed Successfully ---
+
