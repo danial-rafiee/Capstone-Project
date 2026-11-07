@@ -14,51 +14,51 @@ Group 18's capstone monitors electricity use in demo office buildings, calculate
 
 ```text
 Capstone-Project/
-├── README.md
-├── .gitignore
-├── demo.py
-├── run_web.py
-├── requirements-web.txt
 ├── docs/
 │   └── uml/
 │       ├── analytics_classes.dot
+│       ├── analytics_classes.mmd
 │       ├── analytics_classes.png
 │       ├── analytics_classes.svg
 │       ├── generate_analytics_uml.py
-│       ├── web_classes.dot
-│       ├── web_classes.png
-│       ├── web_classes.svg
-│       └── generate_web_uml.py
-└── smart_energy/
-    ├── __init__.py
-    ├── web/
-    │   ├── __init__.py
-    │   ├── domain/
-    │   │   ├── __init__.py
-    │   │   ├── coach_panel.py
-    │   │   ├── energy_summary.py
-    │   │   └── time_range.py
-    │   ├── templates/
-    │   │   └── dashboard.html
-    │   ├── app.py
-    │   └── demo_data.py
-    ├── analytics/
-    │   ├── __init__.py
-    │   ├── building.py
-    │   ├── meter.py
-    │   ├── reading.py
-    │   ├── energy_settings.py
-    │   └── analytics_service.py
-    └── coach/
-        └── __init__.py
+│       └── generate_b_mermaid.py
+├── smart_energy/
+│   ├── analytics/
+│   │   ├── __init__.py
+│   │   ├── analytics_service.py
+│   │   ├── building.py
+│   │   ├── energy_settings.py
+│   │   ├── meter.py
+│   │   └── reading.py
+│   ├── coach/
+│   │   ├── __init__.py
+│   │   ├── building_context.py
+│   │   ├── coach_service.py
+│   │   └── score_calculator.py
+│   ├── web/
+│   │   ├── domain/
+│   │   │   ├── __init__.py
+│   │   │   ├── coach_panel.py
+│   │   │   ├── energy_summary.py
+│   │   │   └── time_range.py
+│   │   ├── templates/
+│   │   │   └── dashboard.html
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   └── demo_data.py
+│   └── __init__.py
+├── .gitignore
+├── README.md
+├── demo.py
+├── demo_coach.py
+├── requirements-web.txt
+└── run_web.py
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
 name. The HA1 submission branch remains `Homeworkassignment001`.
 
-`web` and `coach` contain package placeholders for teammates' work. The
-`docs/uml` directory contains the B class diagram source, its rendered SVG/PNG
-images and the generator that reads method signatures from the implementation.
+This tree lists the versioned project files in `Homeworkassignment001`. Local virtual environments and IDE settings are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports. A/C documentation is maintained by their respective authors.
 
 ## Run the current example
 
@@ -126,84 +126,162 @@ Open your browser and navigate to http://127.0.0.1:5000.
 
 ### Subsystem A class diagram
 
-![Subsystem A UML class diagram](docs/uml/web_classes.png)
+```mermaid
+classDiagram
+    class TimeRange {
+        # _preset: str
+        # _start: datetime
+        # _end: datetime
+        + __init__(preset: str, start: datetime, end: datetime)
+        + configure(preset: str, start: datetime, end: datetime): None
+        # _utc(value: datetime): datetime
+        + get_preset(): str
+        + set_preset(value: str): None
+        + get_start(): datetime
+        + set_start(value: datetime): None
+        + get_end(): datetime
+        + set_end(value: datetime): None
+        + to_dict(): dict
+    }
 
-[Open the scalable diagram](docs/uml/web_classes.svg) ·
-[Diagram source](docs/uml/web_classes.dot)
+    class EnergySummary {
+        # _totals: dict
+        # _savings: dict
+        # _reference: dict
+        # _score: float
+        # _penalties: list
+        + __init__(totals: int, savings: int, reference: object, score: object, penalties: str)
+        + configure(totals: int, savings: int, reference: object, score: object, penalties: str): None
+        # _number(value, label, minimum, maximum): Decimal
+        + get_totals(): Decimal
+        + set_totals(value): None
+        + get_savings(): Decimal
+        + set_savings(value): None
+        + get_reference(): object
+        + set_reference(value): None
+        + get_score(): object
+        + set_score(value): None
+        + get_penalties(): str
+        + set_penalties(value): None
+        + to_dict(): dict
+    }
 
-The diagram shows the core implemented classes, factory components, and domain/DTO models for Subsystem A (`smart_energy.web`).
+    class CoachPanel {
+        # _question: str
+        # _answer: str
+        + __init__(question: str, answer: str)
+        + configure(question: str, answer: str): None
+        # _text(value): str
+        + get_question(): str
+        + set_question(value): None
+        + get_answer(): str
+        + set_answer(value): None
+        + submit_question(question: str): None
+        + set_response(answer: str): None
+        + to_dict(): dict
+    }
+```
+
+The diagram shows the core implemented domain and mock data classes for Subsystem A (`smart_energy.web`).
 
 - `+` marks public methods, including `__init__`.
-- Dashed arrows show usage and dependency associations.
+- `#` marks underscore-prefixed attributes, following Python's non-public convention.
 
-| Relationship | Meaning in the current code |
-| --- | --- |
-| `WebApplicationFactory` to `TimeRange` | The Flask app factory and views use time ranges to filter reporting windows. |
-| `WebApplicationFactory` to `EnergySummary` | The web layer encapsulates aggregated metrics into energy summary DTOs for rendering. |
-| `WebApplicationFactory` to `CoachPanel` | The web layer integrates score and penalty structures for UI display. |
-| `WebApplicationFactory` to `DemoData` | The web application loads mock buildings and readings for demonstration. |
-
-To regenerate the diagram source and images:
-```bash
-python3 docs/uml/generate_web_uml.py
-```
-Or using Graphviz directly:
-```bash
-dot -Tsvg docs/uml/web_classes.dot -o docs/uml/web_classes.svg
-dot -Tpng docs/uml/web_classes.dot -o docs/uml/web_classes.png
-```
 ### Implemented classes for Subsystem A
 
 Current implemented classes and components in `smart_energy.web`:
 
-- `WebApplicationFactory` (in `app.py`) provides `create_app()` to configure and initialize the Flask application instance, register routes, and wire services.
-- `TimeRange(preset, start, end)` (in `smart_energy/web/domain/time_range.py`) encapsulates datetime intervals and presets for filtering energy readings.
-- `EnergySummary(totals, savings, reference, score, penalties)` (in `smart_energy/web/domain/energy_summary.py`) aggregates calculated totals, cost, and carbon data into a unified DTO.
-- `CoachPanel(question, answer)` (in `smart_energy/web/domain/coach_panel.py`) structures sustainability advice, questions, and AI/coach responses for UI display.
-- `DemoData` (in `smart_energy/web/demo_data.py`) provides mock dataset generators for previewing building topologies.
-- **Dashboard UI** (`smart_energy/web/templates/dashboard.html`) renders summary cards and panels via Jinja2 templates.
+| Component / Class | Meaning in the current code |
+| --- | --- |
+| `TimeRange` | Encapsulates datetime intervals and preset ranges for filtering energy dashboard queries. |
+| `EnergySummary` | Acts as a DTO aggregating consumption totals, costs, carbon footprints, and scores. |
+| `CoachPanel` | Structures AI coaching prompts, answers, and sustainability advice for the UI. |
+| `DemoData` | Generates mock datasets and initial office building topologies for preview. |
+| `Flask App & Dashboard` | Configures application routes (`app.py`) and renders summary cards and panels via Jinja2 templates (`dashboard.html`). |
+
 
 ### Subsystem B class diagram
 
-![Subsystem B UML class diagram](docs/uml/analytics_classes.png)
+```mermaid
+classDiagram
+    class Building {
+        #int _building_id
+        #str _name
+        +__init__(building_id: int, name: str)
+        +get_building_id() int
+        +set_building_id(building_id: int) None
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Meter {
+        #int _meter_id
+        #Building _building
+        #str _name
+        +__init__(meter_id: int, building: Building, name: str)
+        +get_meter_id() int
+        +set_meter_id(meter_id: int) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Reading {
+        #Meter _meter
+        #datetime _start
+        #datetime _end
+        #Decimal _energy_kwh
+        +__init__(meter: Meter, start: datetime, end: datetime, energy_kwh: Decimal)
+        +get_meter() Meter
+        +set_meter(meter: Meter) None
+        +get_meter_id() int
+        +get_interval() tuple~datetime_datetime~
+        +set_interval(start: datetime, end: datetime) None
+        +get_energy_kwh() Decimal
+        +set_energy_kwh(energy_kwh: Decimal) None
+    }
+    class EnergySettings {
+        #Building _building
+        #Decimal _tariff
+        #Decimal _carbon_factor
+        #Decimal _off_hours_share
+        +__init__(building: Building, tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal)
+        +configure(tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_tariff() Decimal
+        +set_tariff(tariff: Decimal) None
+        +get_carbon_factor() Decimal
+        +set_carbon_factor(carbon_factor: Decimal) None
+        +get_off_hours_share() Decimal
+        +set_off_hours_share(off_hours_share: Decimal) None
+        #_validate_factor(value: Decimal, label: str) None
+        #_validate_share(off_hours_share: Decimal) None
+    }
+    class AnalyticsService {
+        #list~Reading~ _readings
+        #EnergySettings _settings
+        +__init__(settings: EnergySettings, readings)
+        +get_settings() EnergySettings
+        +set_settings(settings: EnergySettings) None
+        +get_readings() list~Reading~
+        +set_readings(readings: list~Reading~) None
+        +add_reading(reading: Reading) None
+        +totals() dict
+        #_validate_readings(readings: list~Reading~, settings: EnergySettings) None
+    }
 
-[Open the scalable diagram](docs/uml/analytics_classes.svg) ·
-[Diagram source](docs/uml/analytics_classes.dot)
-
-The diagram shows the five currently implemented B classes, their attributes,
-constructor signatures, getters/setters, configuration and calculation methods.
-It does not include unimplemented database, web or AI classes.
-
-- `+` marks public methods, including `__init__`.
-- `#` marks underscore-prefixed attributes/helpers, following Python's
-  non-public convention; it does not imply enforced access protection.
-- Solid arrows show navigable associations, not inheritance or composition.
-- `1` means exactly one related object; `0..*` means zero or more.
-
-| Relationship | Meaning in the current code |
-| --- | --- |
-| `Meter` to `Building` | Each meter references one building. Multiple meters may reference the same building. |
-| `Reading` to `Meter` | Each reading references one meter. A meter may have multiple readings. |
-| `EnergySettings` to `Building` | Each configuration references one building. The classes do not enforce a unique configuration per building; the demo uses one. |
-| `AnalyticsService` to `EnergySettings` | Each service references one configuration. A configuration may be shared by services. |
-| `AnalyticsService` to `Reading` | A service holds zero or more reading references. A reading may be used by multiple services. |
-
-The diagram generator checks the attribute names and reads all method
-signatures directly from the five Python classes. To update the source:
-
-```bash
-python3 docs/uml/generate_analytics_uml.py
+    Meter "0..*" --> "1" Building : _building
+    Reading "0..*" --> "1" Meter : _meter
+    EnergySettings "0..*" --> "1" Building : _building
+    AnalyticsService "0..*" --> "1" EnergySettings : _settings
+    AnalyticsService "0..*" --> "0..*" Reading : _readings
 ```
 
-To regenerate the images with a separately installed Graphviz renderer:
+The diagram is generated from the B implementation in this branch. `+` denotes public members and `#` Python non-public convention. Arrows show stored references; multiplicities describe those references.
 
-```bash
-dot -Tsvg docs/uml/analytics_classes.dot -o docs/uml/analytics_classes.svg
-dot -Tpng docs/uml/analytics_classes.dot -o docs/uml/analytics_classes.png
-```
-
-Graphviz is only needed to regenerate the diagram images. Running `demo.py`
-requires no external packages.
+[Mermaid source](docs/uml/analytics_classes.mmd). Regenerate with `python docs/uml/generate_b_mermaid.py`; GitHub renders the embedded Mermaid blocks directly.
 
 ### Implemented classes
 
