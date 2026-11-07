@@ -549,7 +549,7 @@ python3 demo_ha2_coach.py
 ### HA2 Presentation Link
 The 5-minute video walkthrough link will be placed here:
 - **Presentation Video:**
-  `https://drive.google.com/file/d/1vYB3aE7WqsG4FAJu_6TVr_oyBfuySTyQ/view?usp=sharing`
+  (https://drive.google.com/file/d/1vYB3aE7WqsG4FAJu_6TVr_oyBfuySTyQ/view?usp=sharing)
 
 # =====HA3=====
 
