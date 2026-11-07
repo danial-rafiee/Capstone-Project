@@ -551,6 +551,10 @@ The 5-minute video walkthrough link will be placed here:
 
 # =====HA3=====
 
+## HA3 Presentation Link
+
+[Watch the HA3 presentation on Google Drive](https://drive.google.com/file/d/15Y6hLXHtuAzNbm8Nhgy-kLTWwZuFa5ae/view?usp=sharing)
+
 ## HA3 — Saeid: Flask Web & MySQL Integration
 
 Branch: `Homeworkassignment003`. Subsystem A's contribution integrates the Flask web application with the production MySQL relational database (`smart_energy_ha3`). It connects the repository architecture (`BuildingRepository`, `MeterRepository`, `ReadingRepository`) and `AnalyticsService` directly to the web layer, ensuring live data retrieval, dynamic metric calculations, and real-time dashboard rendering.
