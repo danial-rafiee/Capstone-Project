@@ -678,7 +678,8 @@ python3 demo_ha2_coach.py
 
   (https://drive.google.com/file/d/1vYB3aE7WqsG4FAJu_6TVr_oyBfuySTyQ/view?usp=sharing)
 
-# =====HA3=====
+
+### HA3
 
 ## HA3 — Saeid: Flask Web & MySQL Integration
 
