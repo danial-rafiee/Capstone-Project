@@ -547,15 +547,10 @@ python3 demo_ha2_coach.py
 ```
 
 ### HA2 Presentation Link
-The 5-minute video walkthrough link will be placed here:
-- **Presentation Video:**
+
   (https://drive.google.com/file/d/1vYB3aE7WqsG4FAJu_6TVr_oyBfuySTyQ/view?usp=sharing)
 
 # =====HA3=====
-
-## HA3 Presentation Link
-
-https://drive.google.com/file/d/15Y6hLXHtuAzNbm8Nhgy-kLTWwZuFa5ae/view?usp=sharing
 
 ## HA3 — Saeid: Flask Web & MySQL Integration
 
@@ -749,3 +744,9 @@ Response JSON payload:
 [...]
 
 --- Subsystem C HA3 Integration Completed Successfully ---
+
+
+## HA3 Presentation Link
+
+(https://drive.google.com/file/d/15Y6hLXHtuAzNbm8Nhgy-kLTWwZuFa5ae/view?usp=sharing)
+
