@@ -534,3 +534,7 @@ Run the standalone real-time streaming demonstration:
 ```bash
 python3 demo_ha2_coach.py
 ```
+
+## HA2 Presentation Link
+https://drive.google.com/file/d/1vYB3aE7WqsG4FAJu_6TVr_oyBfuySTyQ/view?usp=sharing
+
