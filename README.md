@@ -473,6 +473,7 @@ current HA2 source contribution.
 
 
 
+
 ## HA2 — Hananeh: Real-Time Stream Pipeline & AI Coach
 
 Branch: `Homeworkassignment002`. Subsystem C's contribution processes real-time event streams from IoT meters, evaluates operational penalties on the fly, computes live sustainability scores, and triggers instant AI coach intervention alerts.
@@ -533,7 +534,3 @@ Run the standalone real-time streaming demonstration:
 ```bash
 python3 demo_ha2_coach.py
 ```
-
-### HA2 Presentation Link
-
-[Watch the HA2 presentation on Google Drive](https://drive.google.com/file/d/1vYB3aE7WqsG4FAJu_6TVr_oyBfuySTyQ/view?usp=sharing)
