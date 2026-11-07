@@ -731,8 +731,6 @@ Running Subsystem C HA3 Demo
 python demo_ha3_coach.py
 
 # On macOS / Linux:
-python3 demo_ha3_coach.py
-Expected output:
 --- Starting HA3 Subsystem C Demonstration ---
 
 [1] Storing sustainability evaluations into MySQL...
@@ -749,4 +747,3 @@ Response JSON payload:
 [...]
 
 --- Subsystem C HA3 Integration Completed Successfully ---
-
