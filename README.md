@@ -643,6 +643,7 @@ pipeline = filter_stage | transform_stage | alert_stage
 Run the standalone real-time streaming demonstration:
 ```bash
 python3 demo_ha2_coach.py
+
 ```
 
 ### HA2 Presentation Link
