@@ -480,6 +480,42 @@ Empty question rejected: Question cannot be empty.
 
 
 
+
+### Running Subsystem C HA1 Demo
+
+Execute the standalone demonstration script from the repository root:
+
+```bash
+# On Windows:
+python demo_coach.py
+
+# On macOS / Linux:
+python3 demo_coach.py
+
+## Expected output:
+
+==================================================
+Subsystem C: Sustainability Scoring & AI Coach Demo
+==================================================
+Context building ID: 1
+Occupied hours: Mon-Fri 08:00-18:00
+Essential loads: ['Server Room', 'Emergency Lighting']
+Invalid occupied hours rejected: Occupied hours must be a valid non-empty string.
+
+Sustainability Scoring:
+Score: 60.0 / 100
+Growth penalty (Pg): 20.0
+Off-hours penalty (Po): 20.0
+Status: ready
+Invalid allowance share rejected: Allowance share must be between 0.0 and 1.0.
+
+AI Coach Panel:
+Question: Why is the score 60 and what can we improve?
+Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon-Fri 08:00-18:00) and essential equipment (Server Room, Emergency Lighting) are strictly respected. Review non-essential off-hours consumption.
+Status: ready
+
+
+
 ## HA1 Presentation Link
 (https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
 
