@@ -716,13 +716,19 @@ classDiagram
 ## HA3 Implementation Highlights
 # Relational Database Persistence (coach_repository.py):
 Uses the shared Database connection layer for executing parameterized queries.
-save_evaluation(...): Persists sustainability evaluation records, including the final score, calculated monetary penalty (penalty_eur), peak load indicators, and coaching advice strings into MySQL.
+save_evaluation(...):
+Persists sustainability evaluation records, including the final score, calculated monetary penalty (penalty_eur), peak load indicators, and coaching advice strings into MySQL.
+
 list_for_building(building_id): Fetches past evaluation history for a given building and deserializes rows into structured dictionaries.
-#Flask Web API Integration (coach_api.py):
+
+# Flask Web API Integration (coach_api.py):
 Defines a modular Flask blueprint via create_coach_blueprint.
+
 Exposes GET /api/coach/evaluations/<building_id> returning HTTP 200 with JSON payloads.
+
 Bridges the persistence layer directly with external consumers (Subsystem A web dashboard).
-Running Subsystem C HA3 Demo
+
+## Running Subsystem C HA3 Demo
 # To test the database insert/query operations and verify the Flask Web API endpoint:
 # On Windows:
 python demo_ha3_coach.py
