@@ -390,8 +390,6 @@ MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
 ## HA1 Presentation Link
-(
-
 `https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing`
 
 # =====HA2=====
