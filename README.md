@@ -783,3 +783,81 @@ To run all 15 tests and verify the system state, execute the following command f
 ```bash
 python -m pytest tests -v
 ```
+
+
+
+HA4 — Hananeh: Coach Error Handling & Automated Test Suite
+Branch: Homeworkassignment004. Subsystem C introduces domain-specific custom exception hierarchies, robust input and boundary validation safeguards, and an automated test suite leveraging unittest.mock to ensure complete test isolation without requiring an active MySQL database connection.
+Subsystem C Error Architecture (Mermaid Class Diagram)
+```mermaid
+classDiagram
+    class Exception
+    class CoachError {
+        +str message
+        +str error_code
+        +__init__(message: str, error_code: str)
+    }
+    class BuildingNotFoundError {
+        +int building_id
+        +__init__(building_id: int)
+    }
+    class InvalidEvaluationDataError {
+        +str field_name
+        +__init__(field_name: str, message: str)
+    }
+    class ScoreCalculator {
+        +calculate(energy, baseline, off_hours) Decimal
+    }
+    class CoachService {
+        +answer_question(context, question) str
+    }
+    class CoachEvaluationRepository {
+        +save_evaluation(...)
+        +list_for_building(...)
+    }
+
+
+    Exception <|-- CoachError
+    CoachError <|-- BuildingNotFoundError
+    CoachError <|-- InvalidEvaluationDataError
+    ScoreCalculator ..> InvalidEvaluationDataError : raises on invalid inputs
+    CoachService ..> CoachError : raises on empty question
+    CoachEvaluationRepository ..> BuildingNotFoundError : raises on missing context
+```
+
+HA4 Implementation Highlights
+Domain-Specific Exceptions (coach_exceptions.py):
+CoachError: Base exception for all coaching and sustainability evaluation domain anomalies.
+BuildingNotFoundError: Raised when attempting to fetch evaluations or answer questions for non-existent or unconfigured buildings.
+InvalidEvaluationDataError: Raised when sustainability metrics, allowance ratios, or penalty boundaries fall outside valid operational limits.
+Boundary & Guard Validations:
+Strict boundary enforcement ensuring energy scores are bounded within [0.0, 100.0].
+Input sanitization guarding against negative power values, non-decimal inputs, and empty prompt queries.
+Automated Unit & Integration Tests (tests/test_ha4_coach.py):
+Subsystem C contributes 5 dedicated tests to the team's comprehensive 15-test suite:
+test_score_calculator_valid_range: Asserts that normal inputs yield accurate scores and penalty calculations.
+test_score_calculator_boundary_rejection: Asserts that invalid inputs (e.g., negative allowance share or out-of-range figures) raise InvalidEvaluationDataError.
+test_coach_service_empty_question: Verifies that blank or whitespace-only user questions raise CoachError.
+test_coach_repository_database_failure: Uses unittest.mock.patch to simulate unexpected database dropouts and verifies safe error propagation.
+test_coach_api_building_not_found: Verifies that requests for unrecorded building IDs yield a structured JSON error response with an HTTP 404 status code.
+Environment-Agnostic Isolation:
+Uses unittest.mock (MagicMock, patch) to mock database cursors and connections, enabling rapid, zero-dependency testing during CI/CD without spinning up local MySQL instances.
+Running Subsystem C Tests Standalone
+To run only the Subsystem C automated test suite with verbose reporting:
+# On Windows:
+python -m pytest tests/test_ha4_coach.py -v
+
+# On macOS / Linux:
+python3 -m pytest tests/test_ha4_coach.py -v
+Expected output:
+============================= test session starts ==============================
+collected 5 items
+
+tests/test_ha4_coach.py::test_score_calculator_valid_range PASSED       [ 20%]
+tests/test_ha4_coach.py::test_score_calculator_boundary_rejection PASSED [ 40%]
+tests/test_ha4_coach.py::test_coach_service_empty_question PASSED       [ 60%]
+tests/test_ha4_coach.py::test_coach_repository_database_failure PASSED  [ 80%]
+tests/test_ha4_coach.py::test_coach_api_building_not_found PASSED      [100%]
+
+============================== 5 passed in 0.12s ===============================
+
