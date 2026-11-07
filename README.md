@@ -496,9 +496,6 @@ python3 demo_coach.py
 
 ```
 
-# On macOS / Linux:
-python3 demo_coach.py
-Expected output:
 ==================================================
 Subsystem C: Sustainability Scoring & AI Coach Demo
 ==================================================
