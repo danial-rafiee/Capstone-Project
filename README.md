@@ -517,7 +517,7 @@ Status: ready
 
 
 
-# =====HA2=====
+=====HA2=====
 ## HA2 — Saeid: Pipeline & Stream Processing Integration
 
 Branch: `Homeworkassignment002`. Saeid's contribution implements the core stream processing **`Pipeline`** mechanism, supporting operator overloading (`|` and `+`) to chain multiple processors (such as filters and transformers) and execute real-time stream transformations sequentially.
