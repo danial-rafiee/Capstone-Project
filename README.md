@@ -475,10 +475,12 @@ classDiagram
   - Injects `ScoreCalculator` directly via the constructor with runtime type validation.
   - In `answer_question()`, cross-evaluates user prompts with `BuildingContext` schedules and essential equipment to formulate targeted, non-destructive energy optimization advice.
 
+### Running Subsystem C HA1 Demo
 
+Execute the standalone demonstration script from the repository root:
 
-
-
+```bash
+python demo_coach.py```
 
 
 
