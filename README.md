@@ -390,8 +390,10 @@ MySQL, Flask and OpenAI are planned project capabilities
 and are not connected in the current example.
 
 ## HA1 Presentation Link
+(
 
-The group video has not been recorded yet.
+`https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing`
+
 # =====HA2=====
 ## HA2 — Saeid: Pipeline & Stream Processing Integration
 
