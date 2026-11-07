@@ -714,9 +714,28 @@ Branch: `Homeworkassignment004` (or current active branch). Subsystem implementa
   * Implemented a robust suite of **15 distinct unit and integration tests** covering all major components:
     * **Analytics Tests (`test_analytics_ha4.py`):** Validates energy calculations, zero/negative reading rejections, overlap checks, and connection failure handling.
     * **Coach Tests (`test_ha4_coach.py`):** Tests score boundaries, building lookup exceptions, and evaluation API endpoints.
-    * **Web Tests (`test_web_ha4.py`):** Validates dashboard route accessibility, API analytics endpoints, time range conversions, decimal handling, and coach panel interactions.
+    * **Web Tests (`test_web_ha4.py`):** Validates dashboard route accessibility, API analytics endpoints, time range & decimal conversions, coach panel interactions, and custom WebAppError status code integration.
 * **Environment-Agnostic Mocking:** Leveraged `unittest.mock` (`MagicMock` and `patch`) in test suites to ensure complete test isolation, high execution speed, and stability without requiring an active local MySQL database connection during test runs.
 
+### Subsystem A Error-Handling Class Diagram
+```mermaid
+classDiagram
+    class WebAppError {
+        +str message
+        +str code
+        +__init__(message: str, code: str)
+    }
+    class WebAppErrorHandler {
+        +handle(error: WebAppError)$ dict
+    }
+    class FlaskApp {
+        +register_web_error_handlers(app)
+        +handle_web_error(error)
+    }
+    Exception <|-- WebAppError
+    WebAppErrorHandler ..> WebAppError : formats
+    FlaskApp ..> WebAppError : catches and maps to HTTP status
+```
 ### Subsystem B error-handling class diagram
 
 ```mermaid
