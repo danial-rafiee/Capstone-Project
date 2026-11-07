@@ -13,19 +13,73 @@ remain to be connected by subsystem A.
 - `ReadingRepository`: inserts interval energy, rejects duplicates/overlaps
   through the repository, and retrieves readings for a supplied Meter object.
 
-![HA3 data access UML](uml/ha3_repositories.png)
+```mermaid
+classDiagram
+    class Database {
+        #dict _config
+        +__init__()
+        +connect()
+    }
+    class BuildingRepository {
+        #Database _database
+        +__init__(database: Database)
+        +save(building: Building) None
+        +get_by_id(building_id: int) Optional~Building~
+    }
+    class MeterRepository {
+        #Database _database
+        +__init__(database: Database)
+        +save(meter: Meter) None
+        +get_by_id(meter_id: int, building: Building) Optional~Meter~
+    }
+    class ReadingRepository {
+        #Database _database
+        +__init__(database: Database)
+        +add(reading: Reading) None
+        +list_for_meter(meter: Meter) list~Reading~
+    }
 
-[Scalable UML](uml/ha3_repositories.svg) · [UML source](uml/ha3_repositories.dot)
+    BuildingRepository "0..*" --> "1" Database : _database
+    MeterRepository "0..*" --> "1" Database : _database
+    ReadingRepository "0..*" --> "1" Database : _database
+    BuildingRepository ..> Building : saves and returns
+    MeterRepository ..> Meter : saves and returns
+    MeterRepository ..> Building : reuses supplied object
+    ReadingRepository ..> Meter : reuses supplied object
+    ReadingRepository ..> Reading : inserts and returns
+```
+
+[Mermaid source](uml/ha3_repositories.mmd)
 
 These four classes use the existing five domain/analytics classes from HA1:
 Building, Meter, Reading, EnergySettings and AnalyticsService.
-See [the domain UML](uml/analytics_classes.png).
+See [the domain Mermaid UML](uml/analytics_classes.mmd).
 The repository diagram's solid arrows are stored Database references;
 Database is a connection factory, not an always-open connection.
 
-![MySQL table relationships](uml/ha3_schema.png)
+```mermaid
+erDiagram
+    buildings ||--o{ meters : contains
+    meters ||--o{ readings : records
+    buildings {
+        int building_id PK
+        varchar name
+    }
+    meters {
+        int meter_id PK
+        int building_id FK
+        varchar name
+    }
+    readings {
+        bigint reading_id PK
+        int meter_id FK
+        datetime start_utc
+        datetime end_utc
+        decimal energy_kwh
+    }
+```
 
-[Scalable schema](uml/ha3_schema.svg) · [Schema diagram source](uml/ha3_schema.dot)
+[Mermaid ER source](uml/ha3_schema.mmd)
 
 The table diagram is a database relationship diagram, separate from the class UML.
 The database has three tables: buildings, meters and readings. Each meter
@@ -72,7 +126,7 @@ these development defaults:
 | SMART_ENERGY_DB_HOST | 127.0.0.1 |
 | SMART_ENERGY_DB_PORT | 3306 |
 | SMART_ENERGY_DB_USER | root |
-| SMART_ENERGY_DB_PASSWORD | empty |
+| SMART_ENERGY_DB_PASSWORD | root |
 | SMART_ENERGY_DB_NAME | smart_energy_ha3 |
 
 Database reads environment variables when constructed. Set them in your shell
@@ -164,15 +218,7 @@ before the whole HA3 submission is complete.
 
 ## Diagram regeneration
 
-```bash
-python docs/uml/generate_ha3_uml.py
-dot -Tsvg docs/uml/ha3_repositories.dot -o docs/uml/ha3_repositories.svg
-dot -Tpng docs/uml/ha3_repositories.dot -o docs/uml/ha3_repositories.png
-dot -Tsvg docs/uml/ha3_schema.dot -o docs/uml/ha3_schema.svg
-dot -Tpng docs/uml/ha3_schema.dot -o docs/uml/ha3_schema.png
-```
-
-Graphviz is only needed to regenerate images; the rendered images are included.
+Run `python docs/uml/generate_b_mermaid.py` to rebuild the B class diagrams from the current Python source. Their Mermaid blocks are embedded in this document and the README for direct rendering on GitHub. The ER diagram describes table relationships separately. Existing DOT/PNG/SVG files are supplementary exports.
 
 ## References
 
