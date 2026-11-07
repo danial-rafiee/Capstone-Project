@@ -391,8 +391,12 @@ and are not connected in the current example.
 
 
 ### HA1 — Hananeh: Sustainability Scoring & AI Coach (Core OOP)
-Branch: Homeassignment1 (or main branch). Subsystem C establishes the foundational domain models for building operational contexts, exact mathematical penalty scoring, and interactive AI energy coaching using strict Object-Oriented Programming (OOP) principles.
-Subsystem C Architecture (Mermaid Class Diagram)
+
+**Branch:** `Homeassignment1` (or `main` branch).  
+Subsystem C establishes the foundational domain models for building operational contexts, exact mathematical penalty scoring, and interactive AI energy coaching using strict Object-Oriented Programming (OOP) principles.
+
+#### Subsystem C Architecture (Mermaid Class Diagram)
+
 ```mermaid
 classDiagram
     class BuildingContext {
@@ -408,7 +412,6 @@ classDiagram
         +add_essential_load(load_name: str) None
     }
 
-
     class ScoreCalculator {
         #Decimal _allowance_share
         +__init__(allowance_share: Decimal)
@@ -416,7 +419,6 @@ classDiagram
         +set_allowance_share(share: Decimal) None
         +calculate(current_energy: Decimal, reference_energy: Decimal, off_hours_energy: Decimal) dict
     }
-
 
     class CoachService {
         #ScoreCalculator _calculator
@@ -429,36 +431,42 @@ classDiagram
         +answer_question(question: str, context: BuildingContext, period_summary: dict) dict
     }
 
-
     CoachService --> ScoreCalculator : _calculator (delegates calculation)
     CoachService ..> BuildingContext : uses in answer_question()
 ```
+### HA1 Implementation Highlights
 
-HA1 Implementation Highlights
-Data Encapsulation & Guard Validations (building_context.py):
-Manages building schedule boundaries and critical equipment infrastructure (e.g., Server Room, Emergency Lighting).
-All attributes are protected with leading underscores (_building_id, _occupied_hours, _essential_loads).
-Access is mediated via explicit getters and setters enforcing non-empty string and positive identifier validations.
-High-Precision Penalty Arithmetic (score_calculator.py):
-Employs Python's Decimal module across all math operations to prevent floating-point inaccuracies.
-Enforces _allowance_share boundaries strictly between 0.0 and 1.0.
-Computes two distinct penalty metrics against baseline metrics:
-Pg (Growth Penalty): Evaluates excess consumption over historical baseline.
-Po (Off-Hours Penalty): Penalizes wasteful consumption outside occupied operational hours.
-Returns a normalized sustainability score bounded between 0.0 and 100.0.
-Dependency Injection & Coaching Logic (coach_service.py):
-Injects ScoreCalculator directly via the constructor with runtime type validation.
-In answer_question(), cross-evaluates user prompts with BuildingContext schedules and essential equipment to formulate targeted, non-destructive energy optimization advice.
-Running Subsystem C HA1 Demo
-Execute the standalone demonstration script:
+- **Data Encapsulation & Guard Validations (`building_context.py`):**
+  - Manages building schedule boundaries and critical equipment infrastructure (e.g., Server Room, Emergency Lighting).
+  - All attributes are protected with leading underscores (`_building_id`, `_occupied_hours`, `_essential_loads`).
+  - Access is mediated via explicit getters and setters enforcing non-empty string and positive identifier validations.
+
+- **High-Precision Penalty Arithmetic (`score_calculator.py`):**
+  - Employs Python's `Decimal` module across all math operations to prevent floating-point inaccuracies.
+  - Enforces `_allowance_share` boundaries strictly between `0.0` and `1.0`.
+  - Computes two distinct penalty metrics against baseline metrics:
+    - **$P_g$ (Growth Penalty):** Evaluates excess consumption over historical baseline.
+    - **$P_o$ (Off-Hours Penalty):** Penalizes wasteful consumption outside occupied operational hours.
+  - Returns a normalized sustainability score bounded between `0.0` and `100.0`.
+
+- **Dependency Injection & Coaching Logic (`coach_service.py`):**
+  - Injects `ScoreCalculator` directly via the constructor with runtime type validation.
+  - In `answer_question()`, cross-evaluates user prompts with `BuildingContext` schedules and essential equipment to formulate targeted, non-destructive energy optimization advice.
+
+### Running Subsystem C HA1 Demo
+
+Execute the standalone demonstration script from the repository root:
+
+```bash
 # On Windows:
 python demo_coach.py
 
 # On macOS / Linux:
 python3 demo_coach.py
-Expected output:
+```
+## Expected output:
 
-## Subsystem C: Sustainability Scoring & AI Coach Demo
+### Subsystem C: Sustainability Scoring & AI Coach Demo
 
 Context building ID: 1
 Occupied hours: Mon-Fri 08:00-18:00
@@ -477,45 +485,6 @@ Question: Why is the score 60 and what can we improve?
 Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon-Fri 08:00-18:00) and essential equipment (Server Room, Emergency Lighting) are strictly respected. Review non-essential off-hours consumption.
 Status: ready
 Empty question rejected: Question cannot be empty.
-
-
-
-
-### Running Subsystem C HA1 Demo
-
-Execute the standalone demonstration script from the repository root:
-
-```bash
-# On Windows:
-python demo_coach.py
-
-# On macOS / Linux:
-python3 demo_coach.py
-
-```
-
-## Expected output:
-
-
-## Subsystem C: Sustainability Scoring & AI Coach Demo
-
-Context building ID: 1
-Occupied hours: Mon-Fri 08:00-18:00
-Essential loads: ['Server Room', 'Emergency Lighting']
-Invalid occupied hours rejected: Occupied hours must be a valid non-empty string.
-
-Sustainability Scoring:
-Score: 60.0 / 100
-Growth penalty (Pg): 20.0
-Off-hours penalty (Po): 20.0
-Status: ready
-Invalid allowance share rejected: Allowance share must be between 0.0 and 1.0.
-
-AI Coach Panel:
-Question: Why is the score 60 and what can we improve?
-Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon-Fri 08:00-18:00) and essential equipment (Server Room, Emergency Lighting) are strictly respected. Review non-essential off-hours consumption.
-Status: ready
-
 
 
 ## HA1 Presentation Link
