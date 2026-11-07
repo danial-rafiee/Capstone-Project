@@ -19,36 +19,76 @@ Capstone-Project/
 ├── README.md
 ├── .gitignore
 ├── demo.py
+├── demo_coach.py
+├── demo_ha2.py
+├── demo_ha2_coach.py
+├── demo_ha2_pipeline.py
+├── demo_ha3.py
+├── demo_ha3_coach.py
 ├── run_web.py
 ├── requirements-web.txt
+├── requirements-ha3.txt
 ├── docs/
 │   └── uml/
 │       ├── analytics_classes.dot
-│       ├── analytics_classes.svg
 │       ├── analytics_classes.png
-│       └── generate_analytics_uml.py
+│       ├── analytics_classes.svg
+│       ├── generate_analytics_uml.py
+│       ├── generate_ha3_uml.py
+│       ├── ha2_source.dot
+│       ├── ha2_source.png
+│       ├── ha2_source.svg
+│       ├── ha2_source.md
+│       ├── ha3_repositories.dot
+│       ├── ha3_repositories.png
+│       ├── ha3_repositories.svg
+│       ├── ha3_schema.dot
+│       ├── ha3_schema.png
+│       ├── ha3_schema.svg
+│       └── ha3_database.md
+├── sql/
+│   └── schema_ha3.sql
 └── smart_energy/
     ├── __init__.py
-    ├── web/
-    │   ├── __init__.py
-    │   ├── domain/
-    │   │   ├── __init__.py
-    │   │   ├── coach_panel.py
-    │   │   ├── energy_summary.py
-    │   │   └── time_range.py
-    │   ├── templates/
-    │   │   └── dashboard.html
-    │   ├── app.py
-    │   └── demo_data.py
     ├── analytics/
     │   ├── __init__.py
+    │   ├── analytics_service.py
     │   ├── building.py
-    │   ├── meter.py
-    │   ├── reading.py
+    │   ├── building_repository.py
+    │   ├── database.py
     │   ├── energy_settings.py
-    │   └── analytics_service.py
-    └── coach/
-        └── __init__.py
+    │   ├── meter.py
+    │   ├── meter_repository.py
+    │   ├── reading.py
+    │   └── reading_repository.py
+    ├── coach/
+    │   ├── __init__.py
+    │   ├── building_context.py
+    │   ├── coach_api.py
+    │   ├── coach_repository.py
+    │   ├── coach_service.py
+    │   ├── realtime_coach.py
+    │   ├── score_calculator.py
+    │   └── stream_pipeline.py
+    ├── streaming/
+    │   ├── __init__.py
+    │   ├── pipeline.py
+    │   └── source/
+    │       ├── __init__.py
+    │       ├── meter_event.py
+    │       ├── meter_stream.py
+    │       └── sample_source.py
+    └── web/
+        ├── __init__.py
+        ├── app.py
+        ├── demo_data.py
+        ├── domain/
+        │   ├── __init__.py
+        │   ├── coach_panel.py
+        │   ├── energy_summary.py
+        │   └── time_range.py
+        └── templates/
+            └── dashboard.html
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
