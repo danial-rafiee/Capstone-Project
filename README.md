@@ -8,7 +8,7 @@ Group 18's capstone monitors electricity use in demo office buildings, calculate
 | --- | --- | --- | --- |
 | Saeid Rafiei Taghanaki | A | `smart_energy/web` | Web dashboard, Flask routes, domain logic, service integration, and web tests |
 | Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation, and energy/cost/carbon calculations |
-| Hananeh Hajari | C | `smart_energy/coach` | Score and penalties, AI context, OpenAI integration, and AI/scoring tests |
+| Hananeh Hajari | C | `smart_energy/coach` | Sustainability scoring & penalties, real-time stream pipeline, MySQL evaluations persistence, Coach Web API, domain exceptions & mocked unit tests. |
 
 ## Project Structure
 
