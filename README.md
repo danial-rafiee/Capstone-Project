@@ -1033,6 +1033,9 @@ classDiagram
 - **Environment-Agnostic Isolation:**
   - Uses `unittest.mock` (`MagicMock`, `patch`) to mock database cursors and connections, enabling rapid, zero-dependency testing during CI/CD without spinning up local MySQL instances.
 
+
+
+
 ### Running Subsystem C Tests Standalone
 
 To run only the Subsystem C automated test suite with verbose reporting:
@@ -1044,6 +1047,7 @@ python -m pytest tests/test_ha4_coach.py -v
 # Or directly with pytest:
 pytest tests/test_ha4_coach.py -v
 
+```
 
 ## HA4 Presentation Link
 
