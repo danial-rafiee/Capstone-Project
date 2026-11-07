@@ -807,6 +807,19 @@ explicit sample factors. This section documents B only. Subsystem A must connect
 the repositories to the final Flask/Django response. The group's final README,
 complete diagrams and five-minute video link remain to be integrated.
 
+
+
+## Presentation Link HA3
+(https://drive.google.com/file/d/15Y6hLXHtuAzNbm8Nhgy-kLTWwZuFa5ae/view)
+
+
+
+
+
+
+
+
+
 # =====HA4=====
 
 ## HA4 Presentation Link
