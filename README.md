@@ -510,14 +510,15 @@ Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon
 Status: ready
 
 
+
+
 ## HA1 Presentation Link
 
 ## Presentation Link
 (https://drive.google.com/file/d/12LQvFUQPjlpUe4bImMPygrJB_eAVsZ7w/view?usp=sharing)
 
-
-
 =====HA2=====
+
 ## HA2 — Saeid: Pipeline & Stream Processing Integration
 
 Branch: `Homeworkassignment002`. Saeid's contribution implements the core stream processing **`Pipeline`** mechanism, supporting operator overloading (`|` and `+`) to chain multiple processors (such as filters and transformers) and execute real-time stream transformations sequentially.
