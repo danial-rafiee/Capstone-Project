@@ -16,47 +16,90 @@ and AI advice. The current implementation is the initial OOP learning stage.
 
 ```text
 Capstone-Project/
-├── README.md
-├── .gitignore
-├── demo.py
-├── run_web.py
-├── requirements-web.txt
 ├── docs/
-│   └── uml/
-│       ├── analytics_classes.dot
-│       ├── analytics_classes.svg
-│       ├── analytics_classes.png
-│       └── generate_analytics_uml.py
-└── smart_energy/
-    ├── __init__.py
-    ├── web/
-    │   ├── __init__.py
-    │   ├── domain/
-    │   │   ├── __init__.py
-    │   │   ├── coach_panel.py
-    │   │   ├── energy_summary.py
-    │   │   └── time_range.py
-    │   ├── templates/
-    │   │   └── dashboard.html
-    │   ├── app.py
-    │   └── demo_data.py
-    ├── analytics/
-    │   ├── __init__.py
-    │   ├── building.py
-    │   ├── meter.py
-    │   ├── reading.py
-    │   ├── energy_settings.py
-    │   └── analytics_service.py
-    └── coach/
-        └── __init__.py
+│   ├── uml/
+│   │   ├── analytics_classes.dot
+│   │   ├── analytics_classes.mmd
+│   │   ├── analytics_classes.png
+│   │   ├── analytics_classes.svg
+│   │   ├── generate_analytics_uml.py
+│   │   ├── generate_b_mermaid.py
+│   │   ├── generate_ha3_uml.py
+│   │   ├── ha2_source.dot
+│   │   ├── ha2_source.mmd
+│   │   ├── ha2_source.png
+│   │   ├── ha2_source.svg
+│   │   ├── ha3_repositories.dot
+│   │   ├── ha3_repositories.mmd
+│   │   ├── ha3_repositories.png
+│   │   ├── ha3_repositories.svg
+│   │   ├── ha3_schema.dot
+│   │   ├── ha3_schema.mmd
+│   │   ├── ha3_schema.png
+│   │   └── ha3_schema.svg
+│   ├── ha2_source.md
+│   └── ha3_database.md
+├── smart_energy/
+│   ├── analytics/
+│   │   ├── __init__.py
+│   │   ├── analytics_service.py
+│   │   ├── building.py
+│   │   ├── building_repository.py
+│   │   ├── database.py
+│   │   ├── energy_settings.py
+│   │   ├── meter.py
+│   │   ├── meter_repository.py
+│   │   ├── reading.py
+│   │   └── reading_repository.py
+│   ├── coach/
+│   │   ├── __init__.py
+│   │   ├── building_context.py
+│   │   ├── coach_api.py
+│   │   ├── coach_repository.py
+│   │   ├── coach_service.py
+│   │   ├── realtime_coach.py
+│   │   ├── score_calculator.py
+│   │   └── stream_pipeline.py
+│   ├── streaming/
+│   │   ├── source/
+│   │   │   ├── __init__.py
+│   │   │   ├── meter_event.py
+│   │   │   ├── meter_stream.py
+│   │   │   └── sample_source.py
+│   │   ├── __init__.py
+│   │   └── pipeline.py
+│   ├── web/
+│   │   ├── domain/
+│   │   │   ├── __init__.py
+│   │   │   ├── coach_panel.py
+│   │   │   ├── energy_summary.py
+│   │   │   └── time_range.py
+│   │   ├── templates/
+│   │   │   └── dashboard.html
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   └── demo_data.py
+│   └── __init__.py
+├── sql/
+│   └── schema_ha3.sql
+├── .gitignore
+├── README.md
+├── demo.py
+├── demo_coach.py
+├── demo_ha2.py
+├── demo_ha2_coach.py
+├── demo_ha2_pipeline..py
+├── demo_ha3.py
+├── demo_ha3_coach.py
+├── requirements-ha3.txt
+├── requirements-web.txt
+└── run_web.py
 ```
 
 `Capstone-Project` is the shared repository name and the local project folder
 name. The HA1 submission branch remains `Homeworkassignment001`.
 
-`web` and `coach` contain package placeholders for teammates' work. The
-`docs/uml` directory contains the B class diagram source, its rendered SVG/PNG
-images and the generator that reads method signatures from the implementation.
+This tree lists the versioned project files in `Homeworkassignment003`. Local virtual environments and IDE settings are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports. A/C documentation is maintained by their respective authors.
 
 ## Run the current example
 
@@ -200,45 +243,86 @@ Current implemented classes and components in `smart_energy.web`:
 
 ### Subsystem B class diagram
 
-![Subsystem B UML class diagram](docs/uml/analytics_classes.png)
+```mermaid
+classDiagram
+    class Building {
+        #int _building_id
+        #str _name
+        +__init__(building_id: int, name: str)
+        +get_building_id() int
+        +set_building_id(building_id: int) None
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Meter {
+        #int _meter_id
+        #Building _building
+        #str _name
+        +__init__(meter_id: int, building: Building, name: str)
+        +get_meter_id() int
+        +set_meter_id(meter_id: int) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_name() str
+        +set_name(name: str) None
+    }
+    class Reading {
+        #Meter _meter
+        #datetime _start
+        #datetime _end
+        #Decimal _energy_kwh
+        +__init__(meter: Meter, start: datetime, end: datetime, energy_kwh: Decimal)
+        +get_meter() Meter
+        +set_meter(meter: Meter) None
+        +get_meter_id() int
+        +get_interval() tuple~datetime_datetime~
+        +set_interval(start: datetime, end: datetime) None
+        +get_energy_kwh() Decimal
+        +set_energy_kwh(energy_kwh: Decimal) None
+    }
+    class EnergySettings {
+        #Building _building
+        #Decimal _tariff
+        #Decimal _carbon_factor
+        #Decimal _off_hours_share
+        +__init__(building: Building, tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal)
+        +configure(tariff: Decimal, carbon_factor: Decimal, off_hours_share: Decimal) None
+        +get_building() Building
+        +set_building(building: Building) None
+        +get_building_id() int
+        +get_tariff() Decimal
+        +set_tariff(tariff: Decimal) None
+        +get_carbon_factor() Decimal
+        +set_carbon_factor(carbon_factor: Decimal) None
+        +get_off_hours_share() Decimal
+        +set_off_hours_share(off_hours_share: Decimal) None
+        #_validate_factor(value: Decimal, label: str) None
+        #_validate_share(off_hours_share: Decimal) None
+    }
+    class AnalyticsService {
+        #list~Reading~ _readings
+        #EnergySettings _settings
+        +__init__(settings: EnergySettings, readings)
+        +get_settings() EnergySettings
+        +set_settings(settings: EnergySettings) None
+        +get_readings() list~Reading~
+        +set_readings(readings: list~Reading~) None
+        +add_reading(reading: Reading) None
+        +totals() dict
+        #_validate_readings(readings: list~Reading~, settings: EnergySettings) None
+    }
 
-[Open the scalable diagram](docs/uml/analytics_classes.svg) ·
-[Diagram source](docs/uml/analytics_classes.dot)
-
-The diagram shows the five currently implemented B classes, their attributes,
-constructor signatures, getters/setters, configuration and calculation methods.
-It does not include unimplemented database, web or AI classes.
-
-- `+` marks public methods, including `__init__`.
-- `#` marks underscore-prefixed attributes/helpers, following Python's
-  non-public convention; it does not imply enforced access protection.
-- Solid arrows show navigable associations, not inheritance or composition.
-- `1` means exactly one related object; `0..*` means zero or more.
-
-| Relationship | Meaning in the current code |
-| --- | --- |
-| `Meter` to `Building` | Each meter references one building. Multiple meters may reference the same building. |
-| `Reading` to `Meter` | Each reading references one meter. A meter may have multiple readings. |
-| `EnergySettings` to `Building` | Each configuration references one building. The classes do not enforce a unique configuration per building; the demo uses one. |
-| `AnalyticsService` to `EnergySettings` | Each service references one configuration. A configuration may be shared by services. |
-| `AnalyticsService` to `Reading` | A service holds zero or more reading references. A reading may be used by multiple services. |
-
-The diagram generator checks the attribute names and reads all method
-signatures directly from the five Python classes. To update the source:
-
-```bash
-python3 docs/uml/generate_analytics_uml.py
+    Meter "0..*" --> "1" Building : _building
+    Reading "0..*" --> "1" Meter : _meter
+    EnergySettings "0..*" --> "1" Building : _building
+    AnalyticsService "0..*" --> "1" EnergySettings : _settings
+    AnalyticsService "0..*" --> "0..*" Reading : _readings
 ```
 
-To regenerate the images with a separately installed Graphviz renderer:
+The diagram is generated from the B implementation in this branch. `+` denotes public members and `#` Python non-public convention. Arrows show stored references; multiplicities describe those references.
 
-```bash
-dot -Tsvg docs/uml/analytics_classes.dot -o docs/uml/analytics_classes.svg
-dot -Tpng docs/uml/analytics_classes.dot -o docs/uml/analytics_classes.png
-```
-
-Graphviz is only needed to regenerate the diagram images. Running `demo.py`
-requires no external packages.
+[Mermaid source](docs/uml/analytics_classes.mmd). Regenerate with `python docs/uml/generate_b_mermaid.py`; GitHub renders the embedded Mermaid blocks directly.
 
 ### Implemented classes
 
@@ -358,7 +442,41 @@ Branch: `Homeworkassignment002`. Danial's input contribution provides validated
 `MeterEvent` objects, a single-pass `MeterStream` implementing `__iter__` and
 `__next__`, and a lazy sample generator using `yield`.
 
-![HA2 source UML](docs/uml/ha2_source.png)
+```mermaid
+classDiagram
+    class MeterEvent {
+        #int _meter_id
+        #datetime _timestamp
+        #Decimal _power_kw
+        #bool _active
+        #int _interval_seconds
+        +__init__(meter_id: int, timestamp: datetime, power_kw: Decimal, active: bool, interval_seconds: int)
+        +int meter_id
+        +datetime timestamp
+        +Decimal power_kw
+        +bool active
+        +int interval_seconds
+        +Decimal energy_kwh
+    }
+    class MeterStream {
+        #Iterator~MeterEvent~ _iterator
+        +__init__(events: Iterable~MeterEvent~)
+        +__iter__() MeterStream
+        +__next__() MeterEvent
+    }
+    class Iterator {
+        <<interface>>
+    }
+    class SampleSource {
+        <<module>>
+        +generate_meter_events() Iterator~MeterEvent~
+    }
+    Iterator <|-- MeterStream
+    MeterStream ..> MeterEvent : yields and validates
+    SampleSource ..> MeterEvent : constructs lazily
+```
+
+[Mermaid source](docs/uml/ha2_source.mmd)
 
 See [the event contract and source documentation](docs/ha2_source.md).
 Run `python3 demo_ha2.py` from the repository root.
@@ -444,67 +562,41 @@ Branch: `Homeworkassignment003`. Subsystem A's contribution integrates the Flask
 ```mermaid
 classDiagram
     class FlaskApp {
+        <<module>>
         +get_db_connection() Database
-        +dashboard() html
-        +api_analytics(building_id, meter_id) json
+        +create_app(test_config) Flask
+        +home() HTML
+        +api_analytics(building_id, meter_id) JSON
     }
-
-    class TimeRange {
-        -preset: str
-        -start: datetime
-        -end: datetime
-        +to_dict() dict
-    }
-
-    class EnergySummary {
-        -totals: dict
-        -savings: dict
-        -reference: object
-        -score: float
-        -penalties: list
-        +to_dict() dict
-    }
-
-    class CoachPanel {
-        -question: str
-        -answer: str
-        +to_dict() dict
-    }
-
     class Database {
-        +get_connection() pymysql.Connection
+        +connect()
     }
-
     class BuildingRepository {
-        -db: Database
-        +get_by_id(building_id: int) Building
+        +get_by_id(building_id) Optional~Building~
     }
-
     class MeterRepository {
-        -db: Database
-        +get_by_id(meter_id: int) Meter
+        +get_by_id(meter_id, building) Optional~Meter~
     }
-
     class ReadingRepository {
-        -db: Database
-        +find_by_meter_and_time_range(meter_id: int, time_range: TimeRange) list~Reading~
+        +list_for_meter(meter) list~Reading~
     }
-
     class AnalyticsService {
-        -settings: EnergySettings
-        -readings: list~Reading~
-        +calculate_totals() dict
+        +totals() dict
     }
-
-    FlaskApp --> Database : instantiates
-    FlaskApp --> BuildingRepository : uses
-    FlaskApp --> MeterRepository : uses
-    FlaskApp --> ReadingRepository : uses
-    FlaskApp --> AnalyticsService : executes calculations
-    FlaskApp --> EnergySummary : instantiates & passes to template
-    FlaskApp --> CoachPanel : instantiates & passes to template
-    FlaskApp --> TimeRange : filters queries
+    FlaskApp ..> Database : constructs
+    FlaskApp ..> BuildingRepository : loads building
+    FlaskApp ..> MeterRepository : loads meter with same building
+    FlaskApp ..> ReadingRepository : loads readings
+    FlaskApp ..> EnergySettings : supplies sample factors
+    FlaskApp ..> AnalyticsService : calculates totals
+    FlaskApp ..> TimeRange : creates display object
+    FlaskApp ..> EnergySummary : prepares template data
+    FlaskApp ..> CoachPanel : prepares template data
 ```
+
+`FlaskApp` groups functions in `smart_energy/web/app.py`; it is not a Python class. The current routes call `list_for_meter(meter)` and `totals()`. `TimeRange` is currently passed to the template; these routes do not apply a time-range SQL filter. MySQL access uses `mysql.connector`, not PyMySQL.
+
+`FlaskApp` groups functions in `smart_energy/web/app.py`; it is not a Python class. The current routes call `list_for_meter(meter)` and `totals()`. `TimeRange` is currently passed to the template; these routes do not apply a time-range SQL filter. MySQL access uses `mysql.connector`, not PyMySQL.
 ### HA3 Implementation Highlights
 * **Application Factory & Database Integration:** Configured Flask routes (`app.py`) to instantiate database connections and fetch live building, meter, and reading records dynamically.
 * **Service & Domain Wiring:** Integrated `EnergySettings` with explicit `Decimal` parameters alongside `AnalyticsService` to compute real-time energy consumption, estimated costs, and carbon footprints.
@@ -525,9 +617,65 @@ Branch: `Homeworkassignment003`. Danial's B contribution adds Database,
 BuildingRepository, MeterRepository and ReadingRepository. The shared domain
 classes and AnalyticsService read real stored readings through these repositories.
 
-![HA3 repository UML](docs/uml/ha3_repositories.png)
+```mermaid
+classDiagram
+    class Database {
+        #dict _config
+        +__init__()
+        +connect()
+    }
+    class BuildingRepository {
+        #Database _database
+        +__init__(database: Database)
+        +save(building: Building) None
+        +get_by_id(building_id: int) Optional~Building~
+    }
+    class MeterRepository {
+        #Database _database
+        +__init__(database: Database)
+        +save(meter: Meter) None
+        +get_by_id(meter_id: int, building: Building) Optional~Meter~
+    }
+    class ReadingRepository {
+        #Database _database
+        +__init__(database: Database)
+        +add(reading: Reading) None
+        +list_for_meter(meter: Meter) list~Reading~
+    }
 
-![HA3 database relationships](docs/uml/ha3_schema.png)
+    BuildingRepository "0..*" --> "1" Database : _database
+    MeterRepository "0..*" --> "1" Database : _database
+    ReadingRepository "0..*" --> "1" Database : _database
+    BuildingRepository ..> Building : saves and returns
+    MeterRepository ..> Meter : saves and returns
+    MeterRepository ..> Building : reuses supplied object
+    ReadingRepository ..> Meter : reuses supplied object
+    ReadingRepository ..> Reading : inserts and returns
+```
+
+[Mermaid source](docs/uml/ha3_repositories.mmd)
+
+```mermaid
+erDiagram
+    buildings ||--o{ meters : contains
+    meters ||--o{ readings : records
+    buildings {
+        int building_id PK
+        varchar name
+    }
+    meters {
+        int meter_id PK
+        int building_id FK
+        varchar name
+    }
+    readings {
+        bigint reading_id PK
+        int meter_id FK
+        datetime start_utc
+        datetime end_utc
+        decimal energy_kwh
+    }
+```
 
 See [setup, storage behavior and the integration contract](docs/ha3_database.md).
 Install `requirements-ha3.txt`, create the schema with `sql/schema_ha3.sql`,

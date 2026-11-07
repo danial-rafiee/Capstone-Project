@@ -1,0 +1,31 @@
+classDiagram
+    class MeterEvent {
+        #int _meter_id
+        #datetime _timestamp
+        #Decimal _power_kw
+        #bool _active
+        #int _interval_seconds
+        +__init__(meter_id: int, timestamp: datetime, power_kw: Decimal, active: bool, interval_seconds: int)
+        +int meter_id
+        +datetime timestamp
+        +Decimal power_kw
+        +bool active
+        +int interval_seconds
+        +Decimal energy_kwh
+    }
+    class MeterStream {
+        #Iterator~MeterEvent~ _iterator
+        +__init__(events: Iterable~MeterEvent~)
+        +__iter__() MeterStream
+        +__next__() MeterEvent
+    }
+    class Iterator {
+        <<interface>>
+    }
+    class SampleSource {
+        <<module>>
+        +generate_meter_events() Iterator~MeterEvent~
+    }
+    Iterator <|-- MeterStream
+    MeterStream ..> MeterEvent : yields and validates
+    SampleSource ..> MeterEvent : constructs lazily
