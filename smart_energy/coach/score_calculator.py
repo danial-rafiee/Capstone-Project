@@ -1,6 +1,6 @@
 """Sustainability score and penalty calculator for Subsystem C."""
 from decimal import Decimal
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 
 class ScoreCalculator:
@@ -31,7 +31,7 @@ class ScoreCalculator:
         current_energy: Optional[Decimal],
         reference_energy: Optional[Decimal],
         off_hours_energy: Optional[Decimal],
-    ) -> Dict[str, Optional[Decimal]]:
+    ) -> Dict[str, Any]:
         """Calculates score and breakdown penalties."""
         if (
             current_energy is None
@@ -48,7 +48,7 @@ class ScoreCalculator:
                 "status": "unavailable",
             }
 
-        allowance = self._allowance_share * reference_energy
+        allowance = self.get_allowance_share() * reference_energy
 
         growth_ratio = (current_energy - reference_energy) / reference_energy
         raw_pg = Decimal("100") * growth_ratio
