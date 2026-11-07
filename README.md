@@ -701,6 +701,10 @@ complete diagrams and five-minute video link remain to be integrated.
 
 # =====HA4=====
 
+## HA4 Presentation Link
+
+[Watch the HA4 presentation on Google Drive](https://drive.google.com/file/d/11aNbz97Z6CoCFNOwMvcnHBVlrQ_1F1bV/view?usp=sharing)
+
 ## HA4 — Exception Handling & Comprehensive Testing
 
 Branch: `Homeworkassignment004` (or current active branch). Subsystem implementation integrates robust cross-layer exception handling and a comprehensive automated testing suite.
