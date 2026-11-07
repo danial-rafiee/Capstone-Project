@@ -1,50 +1,57 @@
-"""Flask Web API routes for Subsystem C (AI Coach & Sustainability Score)."""
+"""Flask API blueprint for Subsystem C (Coach)."""
 
-from decimal import Decimal
-from flask import Blueprint, jsonify, request
-from smart_energy.coach.coach_repository import CoachEvaluationRepository
+from flask import Blueprint, jsonify
+from smart_energy.coach.exceptions import (
+    BuildingNotFoundError,
+    CoachBaseException,
+    EvaluationPersistenceError,
+    InvalidScoreError,
+)
 
 
-def create_coach_blueprint(coach_repository: CoachEvaluationRepository) -> Blueprint:
-    """Factory to create a Flask Blueprint with injected repository dependency."""
+def create_coach_blueprint(repository) -> Blueprint:
+    """Factory creating the coach blueprint with dependency injection."""
     coach_bp = Blueprint("coach_api", __name__, url_prefix="/api/coach")
+
+    @coach_bp.errorhandler(CoachBaseException)
+    def handle_coach_exception(error: CoachBaseException):
+        response = jsonify({
+            "error": error.__class__.__name__,
+            "message": error.message,
+            "status_code": error.status_code,
+        })
+        response.status_code = error.status_code
+        return response
 
     @coach_bp.route("/evaluations/<int:building_id>", methods=["GET"])
     def get_building_evaluations(building_id: int):
-        """Web API to retrieve all sustainability score evaluations for a building."""
-        evaluations = coach_repository.list_for_building(building_id)
+        if building_id <= 0:
+            raise BuildingNotFoundError(building_id)
 
-        output = [
-            {
-                "evaluation_id": item["evaluation_id"],
-                "building_id": item["building_id"],
-                "score": float(item["score"]),
-                "penalty_eur": float(item["penalty_eur"]),
-                "peak_detected": item["peak_detected"],
-                "advice_summary": item["advice_summary"],
-                "created_at": item["created_at"].isoformat() if item["created_at"] else None,
-            }
-            for item in evaluations
-        ]
-        return jsonify({"building_id": building_id, "count": len(output), "evaluations": output}), 200
+        try:
+            records = repository.list_for_building(building_id)
+        except Exception as exc:
+            raise EvaluationPersistenceError(str(exc)) from exc
 
-    @coach_bp.route("/evaluations", methods=["POST"])
-    def save_evaluation():
-        """Web API to persist a new sustainability score evaluation."""
-        payload = request.get_json(silent=True) or {}
-        building_id = payload.get("building_id")
-        score = payload.get("score")
+        output = []
+        for item in records:
+            output.append({
+                "evaluation_id": item.get("evaluation_id") or item.get("id"),
+                "building_id": item.get("building_id"),
+                "score": float(item["score"]) if item.get("score") is not None else None,
+                "penalty_eur": float(item["penalty_eur"]) if item.get("penalty_eur") is not None else None,
+                "peak_detected": bool(item.get("peak_detected")),
+                "advice_summary": item.get("advice_summary"),
+                "created_at": item["created_at"].isoformat() if hasattr(item.get("created_at"), "isoformat") else str(item.get("created_at")),
+            })
 
-        if building_id is None or score is None:
-            return jsonify({"error": "building_id and score are required fields."}), 400
-
-        eval_id = coach_repository.save_evaluation(
-            building_id=int(building_id),
-            score=Decimal(str(score)),
-            penalty_eur=Decimal(str(payload.get("penalty_eur", "0.00"))),
-            peak_detected=bool(payload.get("peak_detected", False)),
-            advice_summary=str(payload.get("advice_summary", "Evaluation recorded")),
-        )
-        return jsonify({"message": "Evaluation stored successfully", "evaluation_id": eval_id}), 201
+        return jsonify({
+            "building_id": building_id,
+            "count": len(output),
+            "evaluations": output,
+        }), 200
 
     return coach_bp
+
+
+
