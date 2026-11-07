@@ -360,9 +360,10 @@ and are not connected in the current example.
 
 
 
-HA1 — Hananeh: Sustainability Scoring & AI Coach (Core OOP)
+### HA1 — Hananeh: Sustainability Scoring & AI Coach (Core OOP)
 Branch: Homeassignment1 (or main branch). Subsystem C establishes the foundational domain models for building operational contexts, exact mathematical penalty scoring, and interactive AI energy coaching using strict Object-Oriented Programming (OOP) principles.
 Subsystem C Architecture (Mermaid Class Diagram)
+```mermaid
 classDiagram
     class BuildingContext {
         #int _building_id
@@ -377,6 +378,7 @@ classDiagram
         +add_essential_load(load_name: str) None
     }
 
+
     class ScoreCalculator {
         #Decimal _allowance_share
         +__init__(allowance_share: Decimal)
@@ -384,6 +386,7 @@ classDiagram
         +set_allowance_share(share: Decimal) None
         +calculate(current_energy: Decimal, reference_energy: Decimal, off_hours_energy: Decimal) dict
     }
+
 
     class CoachService {
         #ScoreCalculator _calculator
@@ -396,9 +399,10 @@ classDiagram
         +answer_question(question: str, context: BuildingContext, period_summary: dict) dict
     }
 
+
     CoachService --> ScoreCalculator : _calculator (delegates calculation)
     CoachService ..> BuildingContext : uses in answer_question()
-
+```
 
 HA1 Implementation Highlights
 Data Encapsulation & Guard Validations (building_context.py):
@@ -422,8 +426,6 @@ python demo_coach.py
 
 # On macOS / Linux:
 python3 demo_coach.py
-
-
 Expected output:
 ==================================================
 Subsystem C: Sustainability Scoring & AI Coach Demo
@@ -445,6 +447,5 @@ Question: Why is the score 60 and what can we improve?
 Coach Answer: Advice for selected period: Score is 60.0/100. Occupied hours (Mon-Fri 08:00-18:00) and essential equipment (Server Room, Emergency Lighting) are strictly respected. Review non-essential off-hours consumption.
 Status: ready
 Empty question rejected: Question cannot be empty.
-
 
 
