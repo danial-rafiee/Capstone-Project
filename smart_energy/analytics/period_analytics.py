@@ -11,6 +11,7 @@ from decimal import Decimal
 from .analytics_service import AnalyticsService
 from .energy_settings import EnergySettings
 from .meter import Meter
+from .operating_schedule import OperatingSchedule
 from .reading import Reading
 from .time_window import TimeWindow, duration_seconds
 
@@ -33,10 +34,13 @@ def to_json_ready(value):
 class PeriodAnalyticsService:
     """Prepare B data for A's dashboard; scoring and AI remain C's job."""
 
-    def __init__(self, settings: EnergySettings):
+    def __init__(self, settings: EnergySettings, schedule: OperatingSchedule | None = None):
         if not isinstance(settings, EnergySettings):
             raise TypeError("Period settings must be an EnergySettings object.")
+        if schedule is not None and not isinstance(schedule, OperatingSchedule):
+            raise TypeError("Schedule must be an OperatingSchedule object or None.")
         self._settings = settings
+        self._schedule = schedule
 
     def summarize(self, meter: Meter, readings: list[Reading], window: TimeWindow) -> dict:
         if not isinstance(meter, Meter) or not isinstance(window, TimeWindow):
@@ -49,6 +53,11 @@ class PeriodAnalyticsService:
             raise ValueError("Every reading must reference the supplied Meter object.")
 
         energy, covered = Decimal(0), Decimal(0)
+        off_energy, covered_off_seconds = Decimal(0), Decimal(0)
+        occupied_intervals = self._schedule.occupied_intervals(window) if self._schedule else []
+        expected_off_seconds = (window.seconds - sum(
+            (duration_seconds(a, b) for a, b in occupied_intervals), Decimal(0)
+        )) if self._schedule else None
         series, gaps = [], []
         cursor = window.start
         for reading in sorted(readings, key=lambda item: item.get_interval()[0]):
@@ -64,10 +73,21 @@ class PeriodAnalyticsService:
             # Dividing last also preserves exact whole-interval energy.
             interval_energy = reading.get_energy_kwh() * seconds / source_seconds
             estimated = start != source_start or end != source_end
+            interval_off_energy, interval_off_estimated = None, None
+            if self._schedule:
+                occupied_seconds = sum((duration_seconds(max(start, a), min(end, b))
+                    for a, b in occupied_intervals if max(start, a) < min(end, b)), Decimal(0))
+                off_seconds = seconds - occupied_seconds
+                interval_off_energy = reading.get_energy_kwh() * off_seconds / source_seconds
+                interval_off_estimated = off_seconds > 0 and (estimated or off_seconds < seconds)
+                off_energy += interval_off_energy
+                covered_off_seconds += off_seconds
             series.append({
                 "start": start, "end": end, "energy_kwh": interval_energy,
                 "average_power_kw": reading.get_energy_kwh() * Decimal(3600) / source_seconds,
                 "energy_estimated": estimated,
+                "off_hours_energy_kwh": interval_off_energy,
+                "off_hours_energy_estimated": interval_off_estimated,
             })
             covered += seconds
             energy += interval_energy
@@ -89,6 +109,16 @@ class PeriodAnalyticsService:
             "allocation_method": "constant_average_power",
             "tariff_eur_per_kwh": self._settings.get_tariff(),
             "carbon_factor_kg_per_kwh": self._settings.get_carbon_factor(),
+            "off_hours_energy_kwh": off_energy if has_data and self._schedule else None,
+            "occupied_energy_kwh": energy - off_energy if has_data and self._schedule else None,
+            "off_hours_energy_estimated": any(item["off_hours_energy_estimated"] for item in series)
+                if has_data and self._schedule else None,
+            "off_hours_status": status if self._schedule else "not_configured",
+            "expected_off_hours_seconds": expected_off_seconds,
+            "covered_off_hours_seconds": covered_off_seconds if self._schedule else None,
+            "off_hours_coverage_fraction": covered_off_seconds / expected_off_seconds
+                if self._schedule and expected_off_seconds > 0 else None,
+            "operating_schedule": self._schedule.to_dict() if self._schedule else None,
             "series": series, "gaps": gaps,
         }
 
@@ -112,8 +142,21 @@ class PeriodAnalyticsService:
         ready = current["status"] == reference["status"] == "complete"
         saved = reference["energy_kwh"] - current["energy_kwh"] if ready else None
         reference_energy = reference["energy_kwh"]
+        score_ready = (ready and self._schedule is not None
+                       and current["off_hours_status"] == "complete"
+                       and current["energy_kwh"] > 0 and reference_energy > 0)
         return {
             "current": current, "reference": reference,
+            "score_inputs": {
+                "current_energy": current["energy_kwh"],
+                "reference_energy": reference_energy,
+                "off_hours_energy": current["off_hours_energy_kwh"],
+            } if score_ready else None,
+            "score_inputs_status": "ready" if score_ready else "unavailable",
+            "score_inputs_estimated": (current["energy_estimated"]
+                or reference["energy_estimated"] or current["off_hours_energy_estimated"])
+                if score_ready else None,
+            "score_allowance_share": self._settings.get_off_hours_share(),
             "comparison": {
                 "status": "ready" if ready else "unavailable",
                 "energy_saved_kwh": saved,

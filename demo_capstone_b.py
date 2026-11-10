@@ -2,6 +2,7 @@
 
 python demo_capstone_b.py          # simulated complete/partial/missing periods
 python demo_capstone_b.py --mysql  # read existing HA3 meter 101 data only
+python demo_capstone_b.py --mysql --schedule-demo  # include agreed illustrative calendar
 """
 
 import argparse
@@ -17,6 +18,8 @@ from smart_energy.analytics.time_window import TimeWindow
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mysql', action='store_true', help='Read existing sample data; never insert or delete.')
+    parser.add_argument('--schedule-demo', action='store_true',
+                        help='Explicit demo calendar: Mon-Fri 09:00-17:00 Europe/Berlin.')
     args = parser.parse_args()
     start = datetime(2026, 11, 4, 9, tzinfo=timezone.utc)
     window = TimeWindow(start, start + timedelta(minutes=10))
@@ -37,7 +40,13 @@ def main():
         readings = [Reading(meter, start, start + timedelta(minutes=5), Decimal('3')),
                     Reading(meter, start + timedelta(minutes=5), window.end, Decimal('2'))]
     # Illustrative fixed factors; real configuration is supplied by the caller.
-    service = PeriodAnalyticsService(EnergySettings(building, Decimal('0.30'), Decimal('0.40'), Decimal('0.10')))
+    schedule = None
+    if args.schedule_demo:
+        from smart_energy.analytics.operating_schedule import OperatingSchedule
+        schedule = OperatingSchedule('Europe/Berlin', {day: [('09:00', '17:00')] for day in range(5)})
+        print('SIMULATED CALENDAR: Monday-Friday 09:00-17:00 Europe/Berlin')
+    service = PeriodAnalyticsService(
+        EnergySettings(building, Decimal('0.30'), Decimal('0.40'), Decimal('0.10')), schedule)
     result = service.summarize(meter, readings, window)
     print(('MYSQL READ-ONLY PERIOD' if args.mysql else 'SIMULATED COMPLETE PERIOD'))
     print(json.dumps(to_json_ready(result), indent=2))

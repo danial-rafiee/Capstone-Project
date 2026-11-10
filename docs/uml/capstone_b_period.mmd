@@ -9,9 +9,21 @@ classDiagram
     }
     class PeriodAnalyticsService {
         #EnergySettings _settings
-        +__init__(settings)
+        #OperatingSchedule _schedule
+        +__init__(settings, schedule)
         +summarize(meter, readings, window) dict
         +compare(meter, current_readings, reference_readings, current_window, reference_window) dict
+    }
+    class OperatingSchedule {
+        #ZoneInfo _timezone
+        #str _timezone_name
+        #dict _weekly_hours
+        #frozenset _closed_dates
+        +__init__(timezone_name, weekly_hours, closed_dates)
+        +get_timezone() str
+        +to_dict() dict
+        +occupied_intervals(window) list
+        +occupied_seconds(window) Decimal
     }
     class ReadingRepository {
         #Database _database
@@ -20,6 +32,8 @@ classDiagram
         +add(reading)
     }
     PeriodAnalyticsService --> EnergySettings : supplied configuration
+    PeriodAnalyticsService "0..*" --> "0..1" OperatingSchedule : explicit local calendar
+    OperatingSchedule ..> TimeWindow : UTC occupied intervals
     PeriodAnalyticsService ..> TimeWindow : validates selected periods
     PeriodAnalyticsService ..> AnalyticsService : reuses reading validation
     PeriodAnalyticsService ..> Reading : reads interval measurements

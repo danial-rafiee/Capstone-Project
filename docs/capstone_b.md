@@ -14,8 +14,11 @@ dashboard, OpenAI connection, Docker deployment or complete final product.
 - New `TimeWindow(start, end)` requires aware datetimes and normalizes to UTC.
 - New `PeriodAnalyticsService(settings)` calculates single-meter period totals,
   coverage, chronological interval series and an optional reference comparison.
-- No schema changes, new packages, database writes or credentials are needed for
-  the new read-only MySQL demonstration. Existing local credentials still apply.
+- No schema changes, database writes or credentials are needed for the new
+  read-only MySQL demonstration. Existing local credentials still apply.
+- Optional `OperatingSchedule` enables off-hours energy and E/R/O scoring inputs.
+  `requirements-capstone-b.txt` adds IANA `tzdata` for systems without timezone
+  data (notably Windows and minimal containers).
 
 The new classes use the same Building/Meter/Reading objects as B's original
 contract. Retrieve one building, pass that object to the meter repository, and
@@ -98,9 +101,15 @@ an estimation flag and must be labelled accordingly.
 - For an explicit complete reference period, `reference["energy_kwh"]` is R.
 - Do not convert `no_data`/`partial` to measured zero or display a ready score
   for a full period when its inputs are missing.
-- O (off-hours energy) is **not** supplied by this increment. Do not replace it
-  with zero or a fixed percentage of E. B still needs the agreed building time
-  zone and occupied-hours calendar to implement that calculation.
+- When an `OperatingSchedule` is explicitly supplied, current-period
+  `off_hours_energy_kwh` is O. It is based on local weekly hours/closed dates,
+  not an arbitrary percentage of E. Without a schedule it remains null.
+- `compare()` now includes `score_inputs`, `score_inputs_status`,
+  `score_inputs_estimated` and `score_allowance_share`. Use the ready E/R/O
+  inputs directly in C before JSON serialization. Missing/partial periods,
+  absent schedule or non-positive E/R give unavailable/null scoring inputs.
+- [Off-hours configuration and the final C handoff](capstone_b_off_hours.md)
+  describe the calendar and exact input names. Actual scoring remains C's job.
 - Score, penalties, AI context and OpenAI calls remain C's responsibility.
 - `off_hours_share` still belongs to EnergySettings; pass the same agreed value
   to C's calculator. The demonstrator's 0.10 is illustrative configuration.
@@ -108,7 +117,9 @@ an estimation flag and must be labelled accordingly.
 ## Demonstration and checks
 
 ```bash
+python -m pip install -r requirements-capstone-b.txt -r requirements-web.txt
 python demo_capstone_b.py
+python demo_off_hours_b.py
 python -m pytest tests/test_period_analytics.py -v
 python -m pytest tests -q
 ```
@@ -122,21 +133,28 @@ meter 101 readings for 4 November 2026, 09:00-09:10 UTC without changing data:
 
 ```bash
 python demo_capstone_b.py --mysql
+python demo_capstone_b.py --mysql --schedule-demo
 ```
 
 If your local root account has an empty password, set
 `SMART_ENERGY_DB_PASSWORD` to an explicitly empty environment value for this run.
 Do not change the database password or commit local credentials.
 
-The verification run passed all 34 tests (15 existing + 19 new B tests).
+The updated verification run passed all 62 tests (15 existing + 47 new B tests).
 The read-only MySQL run returned two readings, 5 kWh, EUR 1.50 and 2 kg CO2.
+With `--schedule-demo`, their local 10:00-10:10 Berlin period is occupied time,
+so O is measured zero for this fully covered period. The separate off-hours demo
+uses 08:00-10:00 local samples and produces O=2 kWh.
 This verifies the data layer; final A/C integration requires its own checks.
 
 The diagram source is [capstone_b_period.mmd](uml/capstone_b_period.mmd).
 It abbreviates existing classes to the methods involved in this increment.
 
-## Remaining B work
+## Group integration boundary
 
-Agree and implement the occupied-hours/timezone definition for off-hours energy,
-then provide O and update B's tests/diagram. Coordinate Docker database settings
-with the group's deployment owner. These are not implemented by the period demo.
+B's local demo calendar has been agreed as Monday-Friday 09:00-17:00,
+Europe/Berlin, with no additional closed dates. This is illustrative, not a real
+building configuration. A/C still need to call this B service and use its flags;
+the code in their packages is unchanged. Coordinate Docker database settings
+with the group's deployment owner. Full web/AI/container integration is not
+implemented by these B demos.
