@@ -154,10 +154,18 @@ database. No data-deleting reset command is needed for normal demo use.
   that temporary validation schema was removed; the host project DB was untouched.
 - The exact B source/test set included by the Dockerfile passed all 52 B tests
   independently on the host, with no A/C source present.
-- **Docker image build, container startup and container-to-container checks have
-  not yet run on Danial's laptop because Docker Engine/Desktop is unavailable.**
-  The checks above do not substitute for that runtime test. Do not present the
-  whole project's Docker requirement as finished until the group tests it.
+- **Runtime verified on 10 November 2026:** Docker Engine 29.9.3 and Compose
+  v5.7.0 built the B image and started MySQL successfully. The MySQL service is
+  healthy and published only on host `127.0.0.1:3307`.
+- The actual `b-check` container completed with exit code 0: **52 B tests passed**,
+  followed by the read-only seeded E/R/O verification, the MySQL period demo
+  and the simulated off-hours demo. Container-to-container access used
+  `mysql:3306` and the `energy_app` account.
+- Local Docker credentials were generated in the Git-ignored `.env`; they are
+  not included in committed files or this guide. The existing host database
+  on port 3306 was not changed by the Docker startup.
+- This verifies B's database/demo containers only. The group's complete Docker
+  requirement still needs A/C application services integrated and tested.
 
 References:
 

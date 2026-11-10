@@ -157,6 +157,6 @@ Europe/Berlin, with no additional closed dates. This is illustrative, not a real
 building configuration. A/C still need to call this B service and use its flags;
 the code in their packages is unchanged. Coordinate Docker database settings
 with the group's deployment owner. [B's Docker database and B-only runner](capstone_b_docker.md)
-are now prepared and statically validated, with SQL/sample-data checks passing
-on isolated local MySQL. The actual Docker build/startup still needs a running
-Docker Engine. Full web/AI/container integration is not implemented by these B demos.
+are now verified in actual Docker: MySQL started healthy, 52 B-only tests passed
+inside the B runner, and seeded E/R/O queries succeeded across the container
+network. Full web/AI/container integration is not implemented by these B demos.

@@ -1123,4 +1123,4 @@ Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.p
 
 ### Danial B - Docker database package
 
-[Setup and verification instructions](docs/capstone_b_docker.md) cover the isolated MySQL service and a B-only Python test/demo image in `docker/analytics/`. The database uses localhost port 3307 and a separate persistent volume. Compose configuration, seed SQL and the B source payload have been checked. Docker image build/startup remain unverified until Docker Engine is available. This does not package or change A/C application code.
+[Setup and verification instructions](docs/capstone_b_docker.md) cover the isolated MySQL service and a B-only Python test/demo image in `docker/analytics/`. The database uses localhost port 3307 and a separate persistent volume. Compose configuration, seed SQL and the B source payload have been checked. The B image built successfully, MySQL started healthy, and all 52 B tests passed inside Docker. The seeded E/R/O database check also passed. This does not package or change A/C application code.
