@@ -1,0 +1,29 @@
+classDiagram
+    class TimeWindow {
+        #datetime _start
+        #datetime _end
+        +__init__(start, end)
+        +datetime start
+        +datetime end
+        +Decimal seconds
+    }
+    class PeriodAnalyticsService {
+        #EnergySettings _settings
+        +__init__(settings)
+        +summarize(meter, readings, window) dict
+        +compare(meter, current_readings, reference_readings, current_window, reference_window) dict
+    }
+    class ReadingRepository {
+        #Database _database
+        +list_for_period(meter, start, end) list~Reading~
+        +list_for_meter(meter) list~Reading~
+        +add(reading)
+    }
+    PeriodAnalyticsService --> EnergySettings : supplied configuration
+    PeriodAnalyticsService ..> TimeWindow : validates selected periods
+    PeriodAnalyticsService ..> AnalyticsService : reuses reading validation
+    PeriodAnalyticsService ..> Reading : reads interval measurements
+    PeriodAnalyticsService ..> Meter : single meter per summary
+    ReadingRepository --> Database : connection factory
+    ReadingRepository ..> TimeWindow : validates query bounds
+    ReadingRepository ..> Reading : reconstructs full intervals

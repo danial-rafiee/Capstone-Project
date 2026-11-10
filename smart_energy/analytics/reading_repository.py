@@ -7,6 +7,7 @@ from decimal import Decimal
 from .database import Database
 from .meter import Meter
 from .reading import Reading
+from .time_window import TimeWindow
 
 
 class ReadingRepository:
@@ -120,3 +121,28 @@ class ReadingRepository:
             )
             for row in rows
         ]
+
+    def list_for_period(self, meter: Meter, start, end) -> list[Reading]:
+        """Load intervals overlapping [start, end); preserve full measurements.
+
+        PeriodAnalyticsService handles clipping/coverage. This method neither
+        sums out-of-window energy nor mutates the stored measurement intervals.
+        """
+        if not isinstance(meter, Meter):
+            raise TypeError("Meter must be a Meter object.")
+        window = TimeWindow(start, end)
+        with closing(self._database.connect()) as connection:
+            with closing(connection.cursor()) as cursor:
+                cursor.execute(
+                    """
+                    SELECT start_utc, end_utc, energy_kwh
+                    FROM readings
+                    WHERE meter_id = %s AND start_utc < %s AND end_utc > %s
+                    ORDER BY start_utc, reading_id
+                    """,
+                    (meter.get_meter_id(), window.end.replace(tzinfo=None),
+                     window.start.replace(tzinfo=None)),
+                )
+                rows = cursor.fetchall()
+        return [Reading(meter, row[0].replace(tzinfo=timezone.utc),
+                        row[1].replace(tzinfo=timezone.utc), row[2]) for row in rows]

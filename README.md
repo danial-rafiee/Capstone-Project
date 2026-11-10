@@ -1064,3 +1064,44 @@ pytest tests/test_ha4_coach.py -v
 
 
 
+
+
+## Capstone - Danial: selected-period analytics (B)
+
+Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data and equal-duration reference comparisons. Existing A/C code is unchanged; web integration is pending.
+
+[B setup, data contract, limitations and integration instructions](docs/capstone_b.md)
+
+```mermaid
+classDiagram
+    class TimeWindow {
+        #datetime _start
+        #datetime _end
+        +__init__(start, end)
+        +datetime start
+        +datetime end
+        +Decimal seconds
+    }
+    class PeriodAnalyticsService {
+        #EnergySettings _settings
+        +__init__(settings)
+        +summarize(meter, readings, window) dict
+        +compare(meter, current_readings, reference_readings, current_window, reference_window) dict
+    }
+    class ReadingRepository {
+        #Database _database
+        +list_for_period(meter, start, end) list~Reading~
+        +list_for_meter(meter) list~Reading~
+        +add(reading)
+    }
+    PeriodAnalyticsService --> EnergySettings : supplied configuration
+    PeriodAnalyticsService ..> TimeWindow : validates selected periods
+    PeriodAnalyticsService ..> AnalyticsService : reuses reading validation
+    PeriodAnalyticsService ..> Reading : reads interval measurements
+    PeriodAnalyticsService ..> Meter : single meter per summary
+    ReadingRepository --> Database : connection factory
+    ReadingRepository ..> TimeWindow : validates query bounds
+    ReadingRepository ..> Reading : reconstructs full intervals
+```
+
+Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.py --mysql` to read existing MySQL sample data. Run `python -m pytest tests/test_period_analytics.py -v` for the new B checks. Off-hours energy is a subsequent B task after agreeing the building schedule.
