@@ -20,12 +20,12 @@ from smart_energy.web.errors import register_web_error_handlers
 
 
 def get_db_connection() -> Database:
-    """Establish and return a database connection instance."""
+    # Connect to database
     return Database()
 
 
 def create_app(test_config: dict | None = None):
-    """Create and configure the Flask application."""
+    # Initialize Flask app and basic config
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
@@ -34,7 +34,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
-        """Render the main energy management dashboard."""
+        # Main dashboard route to load meter and building info
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
@@ -53,10 +53,12 @@ def create_app(test_config: dict | None = None):
                 estimated_cost_eur=0.0,
                 estimated_co2_kg=0.0,
                 off_hours_energy_kwh="0",
-                coverage_percent=0.0
+                coverage_percent=0.0,
+                energy_series=[],
+                max_energy=1.0
             )
 
-        # Get preset from query parameters (default to '24h')
+        # Get time preset from query params (default to 24h)
         preset = request.args.get('preset', '24h')
         end_time = datetime.now(timezone.utc)
 
@@ -70,7 +72,7 @@ def create_app(test_config: dict | None = None):
 
         window = TimeWindow(start_time, end_time)
 
-        # Configure operating schedule
+        # Set up building operating schedule
         schedule = OperatingSchedule(
             "Europe/Berlin",
             {day: [("09:00", "17:00")] for day in range(5)},
@@ -85,14 +87,19 @@ def create_app(test_config: dict | None = None):
             off_hours_share=Decimal("0.20")
         )
 
-        # Run period analytics service
+        # Run analytics service for the period
         service = PeriodAnalyticsService(settings, schedule)
         summary = service.summarize(meter, readings, window)
 
-        # Serialize payload and safely parse numerical values for template rendering
+        # Prepare payload and compute coverage percentage for template
         summary_payload = to_json_ready(summary)
         coverage_fraction_val = summary.get('coverage_fraction')
         coverage_percent = float(coverage_fraction_val) * 100 if coverage_fraction_val is not None else 0.0
+
+        series_list = summary_payload.get('series', [])
+        max_energy = max([float(item.get('energy_kwh', 0)) for item in series_list], default=1.0)
+        if max_energy == 0:
+            max_energy = 1.0
 
         return render_template(
             "dashboard.html",
@@ -109,12 +116,14 @@ def create_app(test_config: dict | None = None):
             estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
             estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),
             off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', '0'),
-            coverage_percent=coverage_percent
+            coverage_percent=coverage_percent,
+            energy_series=series_list,
+            max_energy=max_energy
         )
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
-        """Provide JSON analytics endpoint for external consumption."""
+        # API endpoint returning analytics JSON
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None

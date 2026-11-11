@@ -7,19 +7,22 @@
   <style>
     body { font: 17px/1.6 system-ui, sans-serif; color: #19302d; background: #f4f7f6; max-width: 960px; margin: 32px auto; padding: 0 20px; }
     section { background: white; border: 1px solid #d4e1dd; border-radius: 10px; padding: 20px; margin: 20px 0; }
-    h1,h2 { line-height: 1.25; } dt { font-weight: 600; } dd { margin: 0 0 12px; }
-    .note { color: #495b55; } .score { font-size: 32px; font-weight: 700; }
+    h1, h2 { line-height: 1.25; } dt { font-weight: 600; } dd { margin: 0 0 12px; }
+    .note { color: #495b55; }
     .preset-nav a { text-decoration: none; padding: 6px 12px; border-radius: 4px; background: #eef2f1; color: #19302d; }
     .preset-nav a.active { background: #007bff; color: white; font-weight: bold; }
+    /* SVG line chart styling */
+    .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 10px 15px; margin-top: 15px; }
   </style>
 </head>
 <body>
-  <!-- Header Section -->
+
+  <!-- Dashboard header section -->
   <h1>Smart Energy Management</h1>
   <p>{{ building_name }} · Group 18 · Capstone Project</p>
   <p class="note">Live energy analytics connected via MySQL database and analytical services.</p>
 
-  <!-- Time Range Presets -->
+  <!-- Navigation bar for time range presets -->
   <section class="preset-nav">
     <strong>Time range:</strong>
     <a href="/?preset=24h" class="{% if time_range.preset == '24h' %}active{% endif %}">24 Hours</a> &nbsp;|&nbsp;
@@ -27,13 +30,13 @@
     <a href="/?preset=30d" class="{% if time_range.preset == '30d' %}active{% endif %}">30 Days</a>
   </section>
 
-  <!-- Time Range Details Section -->
+  <!-- Details of the currently selected time window -->
   <section>
     <h2>Selected period</h2>
     <p>{{ time_range.preset }}: {{ time_range.start }} to {{ time_range.end }}</p>
   </section>
 
-  <!-- Energy Summary Section -->
+  <!-- Summary of energy statistics -->
   <section>
     <h2>Energy summary</h2>
     <dl>
@@ -57,12 +60,59 @@
     </dl>
   </section>
 
-  <!-- Coach Panel Section -->
+  <!-- SVG Line Chart section replacing table -->
+  <section>
+    <h2>Energy Consumption Trend</h2>
+    {% if energy_series %}
+      <div class="chart-container">
+        <svg viewBox="0 0 600 200" width="100%" height="200" style="overflow: visible;">
+          <!-- Horizontal background gridlines -->
+          <line x1="40" y1="20" x2="580" y2="20" stroke="#eef2f1" stroke-dasharray="4" />
+          <line x1="40" y1="90" x2="580" y2="90" stroke="#eef2f1" stroke-dasharray="4" />
+          <line x1="40" y1="160" x2="580" y2="160" stroke="#d4e1dd" />
+
+          {% set count = energy_series | length %}
+          {% set points_list = [] %}
+          {% for pt in energy_series %}
+            {% set val = pt.energy_kwh | float %}
+            {% if count > 1 %}
+              {% set x = 50 + (loop.index0 / (count - 1)) * 500 %}
+            {% else %}
+              {% set x = 300 %}
+            {% endif %}
+            {% set y = 160 - (val / max_energy) * 130 %}
+            {% if points_list.append(x ~ ',' ~ y) %}{% endif %}
+          {% endfor %}
+
+          <!-- Main trend line -->
+          <polyline fill="none" stroke="#007bff" stroke-width="3" points="{{ points_list | join(' ') }}" />
+
+          <!-- Render data points and label values -->
+          {% for pt in energy_series %}
+            {% set val = pt.energy_kwh | float %}
+            {% if count > 1 %}
+              {% set x = 50 + (loop.index0 / (count - 1)) * 500 %}
+            {% else %}
+              {% set x = 300 %}
+            {% endif %}
+            {% set y = 160 - (val / max_energy) * 130 %}
+            <circle cx="{{ x }}" cy="{{ y }}" r="5" fill="#007bff" />
+            <text x="{{ x }}" y="{{ y - 10 }}" font-size="11" text-anchor="middle" fill="#495b55">{{ '%.2f'|format(val) }}</text>
+          {% endfor %}
+        </svg>
+      </div>
+    {% else %}
+      <p class="note">No time-series data available for this period.</p>
+    {% endif %}
+  </section>
+
+  <!-- Coach response placeholder section -->
   <section>
     <h2>Coach panel — sample response</h2>
     <p><strong>Question:</strong> {{ coach.question }}</p>
     <p><strong>Answer:</strong> {{ coach.answer }}</p>
-    <p class="note">The current coach returns a template response. Future integration with Subsystem C (AI/Score) in progress.</p>
+    <p class="note">The current coach returns a template response. Future integration with Subsystem C in progress.</p>
   </section>
+
 </body>
 </html>
