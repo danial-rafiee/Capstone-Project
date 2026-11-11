@@ -91,8 +91,13 @@ def create_app(test_config: dict | None = None):
         service = PeriodAnalyticsService(settings, schedule)
         summary = service.summarize(meter, readings, window)
 
-        # Prepare payload and compute coverage percentage for template
+        # Prepare payload and compute metrics safely in Python
         summary_payload = to_json_ready(summary)
+
+        # Ensure energy_kwh is safely cast to float for clean template rendering
+        raw_energy = summary_payload.get('energy_kwh')
+        summary_payload['energy_kwh'] = float(raw_energy) if raw_energy is not None else 0.0
+
         coverage_fraction_val = summary.get('coverage_fraction')
         coverage_percent = float(coverage_fraction_val) * 100 if coverage_fraction_val is not None else 0.0
 
@@ -110,8 +115,8 @@ def create_app(test_config: dict | None = None):
             meter=meter,
             time_range={
                 "preset": preset,
-                "start": window.start,
-                "end": window.end
+                "start": window.start.strftime('%Y-%m-%d %H:%M'),
+                "end": window.end.strftime('%Y-%m-%d %H:%M')
             },
             estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
             estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),

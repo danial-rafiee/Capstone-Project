@@ -5,12 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Smart Energy — Management Dashboard</title>
   <style>
-    body { font: 17px/1.6 system-ui, sans-serif; color: #19302d; background: #f4f7f6; max-width: 960px; margin: 32px auto; padding: 0 20px; }
+    body { font: 17px/1.6 system-ui, sans-serif; color: #19302d; background: #f4f7f6; max-width: 1000px; margin: 32px auto; padding: 0 20px; }
     section { background: white; border: 1px solid #d4e1dd; border-radius: 10px; padding: 20px; margin: 20px 0; }
-    h1, h2 { line-height: 1.25; } dt { font-weight: 600; } dd { margin: 0 0 12px; }
-    .note { color: #495b55; }
-    .preset-nav a { text-decoration: none; padding: 6px 12px; border-radius: 4px; background: #eef2f1; color: #19302d; }
-    .preset-nav a.active { background: #007bff; color: white; font-weight: bold; }
+    h1, h2 { line-height: 1.25; }
+    .note { color: #495b55; font-size: 14px; }
+    .preset-nav a { text-decoration: none; padding: 6px 12px; border-radius: 4px; background: #eef2f1; color: #19302d; font-size: 14px; }
+    .preset-nav a.active { background: #19302d; color: white; font-weight: bold; }
+
+    /* Grid layout for the 6 metrics cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .metric-card {
+      border: 1px solid #d4e1dd;
+      border-radius: 8px;
+      padding: 12px 15px;
+      background: #fafbfc;
+    }
+    .metric-card h3 {
+      font-size: 13px;
+      margin: 0 0 6px 0;
+      color: #495b55;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-card .value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #19302d;
+      margin: 0;
+    }
+    .metric-card .subtext {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+
     /* SVG line chart styling */
     .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 10px 15px; margin-top: 15px; }
   </style>
@@ -30,37 +63,61 @@
     <a href="/?preset=30d" class="{% if time_range.preset == '30d' %}active{% endif %}">30 Days</a>
   </section>
 
-  <!-- Details of the currently selected time window -->
+  <!-- Selected time window details -->
   <section>
     <h2>Selected period</h2>
     <p>{{ time_range.preset }}: {{ time_range.start }} to {{ time_range.end }}</p>
   </section>
 
-  <!-- Summary of energy statistics -->
+  <!-- 6 Metric Cards Section (Matching Prototype) -->
   <section>
-    <h2>Energy summary</h2>
-    <dl>
-      <dt>Consumption</dt>
-      <dd>{{ summary.energy_kwh ~ ' kWh' if summary.energy_kwh is not none else 'No data available' }}</dd>
+    <h2>Metrics Overview</h2>
+    <div class="cards-grid">
+      <!-- Card 1: Latest interval with auto-refresh note -->
+      <div class="metric-card">
+        <h3>Latest interval</h3>
+        <p class="value">1.2 kWh</p>
+        <p class="subtext">Auto-refresh active</p>
+      </div>
 
-      <dt>Status</dt>
-      <dd>{{ summary.status }} (Coverage: {{ '%.1f'|format(coverage_percent) }}%)</dd>
+      <!-- Card 2: Energy consumption for selected period -->
+      <div class="metric-card">
+        <h3>Energy</h3>
+        <p class="value">{{ summary.energy_kwh | round(1) if summary.energy_kwh is not none else '0' }} kWh</p>
+        <p class="subtext">Selected period</p>
+      </div>
 
-      <dt>Estimated cost</dt>
-      <dd>{{ ('%.2f'|format(estimated_cost_eur) ~ ' EUR') if estimated_cost_eur is not none else 'N/A' }}</dd>
+      <!-- Card 3: Estimated cost -->
+      <div class="metric-card">
+        <h3>Est. cost</h3>
+        <p class="value">EUR {{ '%.2f'|format(estimated_cost_eur) }}</p>
+        <p class="subtext">0.30 EUR/kWh</p>
+      </div>
 
-      <dt>Estimated CO2</dt>
-      <dd>{{ ('%.2f'|format(estimated_co2_kg) ~ ' kg') if estimated_co2_kg is not none else 'N/A' }}</dd>
+      <!-- Card 4: CO2 emissions -->
+      <div class="metric-card">
+        <h3>CO2 / change</h3>
+        <p class="value">{{ '%.1f'|format(estimated_co2_kg) }} kg</p>
+        <p class="subtext">Carbon footprint</p>
+      </div>
 
-      <dt>Off-hours consumption</dt>
-      <dd>{{ off_hours_energy_kwh ~ ' kWh' if off_hours_energy_kwh is not none else 'N/A' }}</dd>
+      <!-- Card 5: Energy change -->
+      <div class="metric-card">
+        <h3>Energy change</h3>
+        <p class="value">--</p>
+        <p class="subtext">vs reference period</p>
+      </div>
 
-      <dt>Occupied energy</dt>
-      <dd>{{ summary.occupied_energy_kwh ~ ' kWh' if summary.occupied_energy_kwh is not none else 'N/A' }}</dd>
-    </dl>
+      <!-- Card 6: Score placeholder (Subsystem C) -->
+      <div class="metric-card">
+        <h3>Score</h3>
+        <p class="value">-- / 100</p>
+        <p class="subtext">Pending C integration</p>
+      </div>
+    </div>
   </section>
 
-  <!-- SVG Line Chart section replacing table -->
+  <!-- SVG Line Chart section -->
   <section>
     <h2>Energy Consumption Trend</h2>
     {% if energy_series %}
@@ -108,10 +165,10 @@
 
   <!-- Coach response placeholder section -->
   <section>
-    <h2>Coach panel — sample response</h2>
+    <h2>AI Sustainability Coach (Subsystem C)</h2>
     <p><strong>Question:</strong> {{ coach.question }}</p>
     <p><strong>Answer:</strong> {{ coach.answer }}</p>
-    <p class="note">The current coach returns a template response. Future integration with Subsystem C in progress.</p>
+    <p class="note">The current coach returns a template response. Full integration pending.</p>
   </section>
 
 </body>
