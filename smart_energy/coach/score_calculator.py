@@ -91,3 +91,23 @@ class ScoreCalculator:
             "off_hours_penalty": float(po.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)),
             "status": "ready",
         }
+
+
+def evaluate_period(comparison_result: dict) -> dict:
+    """Consolidated backend evaluator for Subsystem A.
+    Takes Subsystem B comparison payload and returns minimal score data.
+    """
+    if not isinstance(comparison_result, dict):
+        return {"score": None, "status": "unavailable"}
+
+    status = comparison_result.get("score_inputs_status", "unavailable")
+    if status != "ready":
+        return {"score": None, "status": status}
+
+    inputs = comparison_result.get("score_inputs") or {}
+    calc = ScoreCalculator()
+    return calc.calculate(
+        current_energy=inputs.get("current_energy"),
+        reference_energy=inputs.get("reference_energy"),
+        off_hours_energy=inputs.get("off_hours_energy"),
+    )
