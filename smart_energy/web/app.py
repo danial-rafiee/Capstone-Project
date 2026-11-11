@@ -1,113 +1,111 @@
-# Flask application factory
+# Flask application factory for the Smart Energy Management web interface
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from datetime import datetime, timezone
 from decimal import Decimal
 import os
 
-# Import database and repository modules
 from smart_energy.analytics.database import Database
 from smart_energy.analytics.building_repository import BuildingRepository
 from smart_energy.analytics.meter_repository import MeterRepository
 from smart_energy.analytics.reading_repository import ReadingRepository
 from smart_energy.analytics.energy_settings import EnergySettings
-from smart_energy.analytics.analytics_service import AnalyticsService
 
-# Import domain classes from the web/domain directory
-from smart_energy.web.domain.time_range import TimeRange
-from smart_energy.web.domain.energy_summary import EnergySummary
+from smart_energy.analytics.time_window import TimeWindow
+from smart_energy.analytics.operating_schedule import OperatingSchedule
+from smart_energy.analytics.period_analytics import PeriodAnalyticsService, to_json_ready
+
 from smart_energy.web.domain.coach_panel import CoachPanel
-
-# Import web error handlers for cross-layer integration
 from smart_energy.web.errors import register_web_error_handlers
 
 
 def get_db_connection() -> Database:
-    """Helper function to instantiate Database (it automatically reads from environment variables)."""
+    """Establish and return a database connection instance."""
     return Database()
 
 
 def create_app(test_config: dict | None = None):
+    """Create and configure the Flask application."""
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
 
-    # Register web error handlers
     register_web_error_handlers(app)
 
     @app.get("/")
     def home():
-        # Connect to MySQL using database class
+        """Render the main energy management dashboard."""
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
 
-        time_range = TimeRange(preset="24h")
         coach = CoachPanel(question="How can we optimize energy consumption?", answer="Reduce peak hour usage.")
 
         if not building or not meter:
-            summary = EnergySummary(totals=0, savings=0)
             return render_template(
                 "dashboard.html",
-                summary=summary,
+                building_name="Not Found",
+                summary={},
                 coach=coach,
-                estimated_cost_eur=0.0,
-                estimated_co2_kg=0.0,
-                totals={},
-                readings=[],
                 building=None,
                 meter=None,
-                time_range=time_range
+                time_range={"preset": "24h", "start": "-", "end": "-"},
+                estimated_cost_eur=0.0,
+                estimated_co2_kg=0.0,
+                off_hours_energy_kwh="0",
+                coverage_percent=0.0
             )
 
-        # Fetch readings from MySQL repository
-        readings = ReadingRepository(db).list_for_meter(meter)
+        # Define time window for analytics summary
+        end_time = datetime.now(timezone.utc)
+        start_time = datetime.replace(end_time, hour=0, minute=0, second=0, microsecond=0)
+        window = TimeWindow(start_time, end_time)
 
-        # Configure energy settings with required Decimal parameters per EnergySettings definition
+        # Configure operating schedule
+        schedule = OperatingSchedule(
+            "Europe/Berlin",
+            {day: [("09:00", "17:00")] for day in range(5)},
+        )
+
+        # Fetch readings and apply settings
+        readings = ReadingRepository(db).list_for_period(meter, window.start, window.end)
         settings = EnergySettings(
             building=building,
             tariff=Decimal("0.30"),
             carbon_factor=Decimal("0.40"),
             off_hours_share=Decimal("0.20")
         )
-        analytics = AnalyticsService(settings, readings)
-        raw_totals = analytics.totals() or {}
 
-        # Safely extract values with fallbacks
-        energy_val = raw_totals.get('energy_kwh', raw_totals.get('energy', 0))
-        cost_val = raw_totals.get('cost_eur', raw_totals.get('cost', 0))
-        co2_val = raw_totals.get('co2_kg', raw_totals.get('co2', 0))
+        # Run period analytics service
+        service = PeriodAnalyticsService(settings, schedule)
+        summary = service.summarize(meter, readings, window)
 
-        # Create EnergySummary instance expected by dashboard.html template
-        summary = EnergySummary(
-            totals=energy_val,
-            savings=0,
-            score=85
-        )
-
-        # Format totals for frontend display with units
-        totals = {
-            "energy_kwh": f"{float(energy_val):.2f} kWh",
-            "cost_eur": f"{float(cost_val):.2f} EUR",
-            "co2_kg": f"{float(co2_val):.2f} kg",
-        }
+        # Serialize payload and safely parse numerical values for template rendering
+        summary_payload = to_json_ready(summary)
+        coverage_fraction_val = summary.get('coverage_fraction')
+        coverage_percent = float(coverage_fraction_val) * 100 if coverage_fraction_val is not None else 0.0
 
         return render_template(
             "dashboard.html",
-            summary=summary,
+            building_name=building.get_name(),
+            summary=summary_payload,
             coach=coach,
             building=building,
             meter=meter,
-            totals=totals,
-            readings=readings,
-            time_range=time_range,
-            estimated_cost_eur=float(cost_val),
-            estimated_co2_kg=float(co2_val)
+            time_range={
+                "preset": "custom",
+                "start": window.start,
+                "end": window.end
+            },
+            estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
+            estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),
+            off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', '0'),
+            coverage_percent=coverage_percent
         )
 
-    # Optional JSON API endpoint to explicitly test data integration
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
+        """Provide JSON analytics endpoint for external consumption."""
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None
@@ -115,31 +113,26 @@ def create_app(test_config: dict | None = None):
         if not building or not meter:
             return {"error": "Building or Meter not found"}, 404
 
-        readings = ReadingRepository(db).list_for_meter(meter)
+        end_time = datetime.now(timezone.utc)
+        start_time = datetime.replace(end_time, hour=0, minute=0, second=0, microsecond=0)
+        window = TimeWindow(start_time, end_time)
+
+        schedule = OperatingSchedule(
+            "Europe/Berlin",
+            {day: [("09:00", "17:00")] for day in range(5)},
+        )
+
+        readings = ReadingRepository(db).list_for_period(meter, window.start, window.end)
         settings = EnergySettings(
             building=building,
             tariff=Decimal("0.30"),
             carbon_factor=Decimal("0.40"),
             off_hours_share=Decimal("0.20")
         )
-        analytics = AnalyticsService(settings, readings)
-        raw_totals = analytics.totals() or {}
 
-        energy_val = raw_totals.get('energy_kwh', raw_totals.get('energy', 0))
-        cost_val = raw_totals.get('cost_eur', raw_totals.get('cost', 0))
-        co2_val = raw_totals.get('co2_kg', raw_totals.get('co2', 0))
+        service = PeriodAnalyticsService(settings, schedule)
+        summary = service.summarize(meter, readings, window)
 
-        return {
-            "building_id": building.get_building_id(),
-            "building_name": building.get_name(),
-            "meter_id": meter.get_meter_id(),
-            "meter_name": meter.get_name(),
-            "totals": {
-                "energy_kwh": f"{float(energy_val):.2f} kWh",
-                "cost_eur": f"{float(cost_val):.2f} EUR",
-                "co2_kg": f"{float(co2_val):.2f} kg",
-            },
-            "readings_count": len(readings)
-        }
+        return jsonify(to_json_ready(summary))
 
     return app
