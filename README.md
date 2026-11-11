@@ -1124,29 +1124,3 @@ Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.p
 ### Danial B - Docker database package
 
 [Setup and verification instructions](docs/capstone_b_docker.md) cover the isolated MySQL service and a B-only Python test/demo image in `docker/analytics/`. The database uses localhost port 3307 and a separate persistent volume. Compose configuration, seed SQL and the B source payload have been checked. The B image built successfully, MySQL started healthy, and all 52 B tests passed inside Docker. The seeded E/R/O database check also passed. This does not package or change A/C application code.
-
-### Danial B — Dashboard orchestration and C score handoff
-
-The new `DashboardService` reads the selected and reference periods through B's repositories, delegates calculations to `PeriodAnalyticsService`, and delegates scoring to an injected C `ScoreCalculator`. Its single summary includes energy, cost, carbon, reference comparison, selected-window latest interval, score, penalties and availability/estimation metadata. Missing data remains null; a valid zero score remains zero. The web routes and C code are unchanged; A must connect this service to its HTML and API.
-
-See [the integration guide for Saeid and Hananeh](docs/dashboard_service_b.md). Run `python demo_dashboard_b.py` for simulated repository data with real B/C calculations (E=5, R=7, O=2, score=74), or `python demo_dashboard_b.py --mysql` to read existing historical sample records without writing. The new orchestration checks are in `tests/test_dashboard_service_b.py` and run locally with C available; the existing B-only Docker runner does not package C.
-
-```mermaid
-classDiagram
-    class DashboardService {
-        +from_database(database, configuration) DashboardService
-        +build_summary(building_id, meter_id, window, reference_window) dict
-    }
-    class BuildingRepository
-    class MeterRepository
-    class ReadingRepository
-    class PeriodAnalyticsService
-    class ScoreCalculator
-    class TimeWindow
-    DashboardService ..> BuildingRepository : reads
-    DashboardService ..> MeterRepository : reads
-    DashboardService ..> ReadingRepository : reads two periods
-    DashboardService ..> PeriodAnalyticsService : B calculations
-    DashboardService ..> ScoreCalculator : injected C calculator
-    DashboardService ..> TimeWindow : selected and reference periods
-```
