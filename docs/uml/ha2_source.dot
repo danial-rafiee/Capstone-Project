@@ -1,0 +1,12 @@
+digraph SourceUML {
+ graph [rankdir=BT,bgcolor="white",pad="0.4",nodesep="0.7",ranksep="0.8",fontname="Arial",fontsize=20,labelloc=t,label="HA2 — Danial: validated meter events and stream source"];
+ node [shape=record,fontname="Arial",fontsize=13,color="#087F79",style=filled,fillcolor="#F0F6F5",margin="0.2,0.12"];
+ edge [fontname="Arial",fontsize=12,color="#52656D"];
+ Event [label="{MeterEvent|# _meter_id: int\l# _timestamp: datetime\l# _power_kw: Decimal\l# _active: bool\l# _interval_seconds: int\l|+ __init__(meter_id, timestamp, power_kw, active=True, interval_seconds=60)\l+ meter_id: int [read-only property]\l+ timestamp: datetime [read-only property]\l+ power_kw: Decimal [read-only property]\l+ active: bool [read-only property]\l+ interval_seconds: int [read-only property]\l+ energy_kwh: Decimal [derived read-only property]\l}"];
+ Stream [label="{MeterStream|# _iterator: Iterator[MeterEvent]\l|+ __init__(events: Iterable[MeterEvent])\l+ __iter__(): MeterStream\l+ __next__(): MeterEvent\l}"];
+ Iterator [label="{«abstract» Iterator[MeterEvent]\nPython standard library|+ __iter__()\l+ __next__()\l}"];
+ Sample [label="{«module» sample_source|+ generate_meter_events(): Iterator[MeterEvent]\lUses yield; fixed illustrative inputs\l}"];
+ Stream -> Iterator [arrowhead=empty,label="inherits"];
+ Stream -> Event [style=dashed,arrowhead=vee,label="validates and returns"];
+ Sample -> Event [style=dashed,arrowhead=vee,label="creates on demand"];
+}

@@ -1,0 +1,2 @@
+# Subsystem B: tested with Python 3.14 and MySQL 8.4
+mysql-connector-python==9.7.0

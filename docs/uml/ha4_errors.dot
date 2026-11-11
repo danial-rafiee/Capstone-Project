@@ -1,0 +1,17 @@
+digraph HA4Errors {
+  graph [rankdir=BT, bgcolor="white", pad="0.4", nodesep="0.9", ranksep="1.0",
+    splines=polyline, outputorder=edgesfirst, fontname="Arial", fontsize=20,
+    labelloc=t, label="HA4 — Danial: error handling\nImplemented classes in smart_energy.analytics"];
+  node [shape=plain, fontname="Arial", fontsize=13];
+  edge [color="#52656D", fontname="Arial", fontsize=12, arrowhead=vee,
+    arrowsize=0.75, penwidth=1.2, labeldistance=2.0, labelangle=25];
+  AnalyticsError [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>AnalyticsError</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5">+ code: str<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(message: str, code: str = &#x27;analytics_error&#x27;)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  AnalyticsErrorHandler [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>AnalyticsErrorHandler</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"><BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ handle(error: Exception): dict<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  Exception [shape=record, label="{Exception|Python standard library}"];
+  AnalyticsService [shape=record, label="{«existing» AnalyticsService|+ totals(): dict}"];
+  Database [shape=record, label="{«existing» Database|+ connect()}"];
+  AnalyticsError -> Exception [arrowhead=empty, label="inherits"];
+  AnalyticsErrorHandler -> AnalyticsError [style=dashed, label="formats"];
+  AnalyticsService -> AnalyticsError [style=dashed, label="raises: no_readings"];
+  Database -> AnalyticsError [style=dashed, label="raises: database_unavailable"];
+}

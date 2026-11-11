@@ -1,0 +1,3 @@
+-r requirements-ha4.txt
+# IANA timezone data for OperatingSchedule, including Windows/minimal containers.
+tzdata>=2025.2

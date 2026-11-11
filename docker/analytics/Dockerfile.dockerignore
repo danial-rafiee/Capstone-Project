@@ -1,0 +1,19 @@
+# Only send B's source, requirements and tests to this build context.
+**
+!requirements-ha3.txt
+!requirements-ha4.txt
+!requirements-capstone-b.txt
+!smart_energy/
+!smart_energy/__init__.py
+!smart_energy/analytics/
+!smart_energy/analytics/**
+!demo_capstone_b.py
+!demo_off_hours_b.py
+!check_docker_database_b.py
+!tests/
+!tests/test_analytics_ha4.py
+!tests/test_period_analytics.py
+!tests/test_off_hours_analytics.py
+**/__pycache__/
+**/.env
+**/*.pyc

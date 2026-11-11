@@ -1,0 +1,16 @@
+digraph HA3Repositories {
+  graph [rankdir=BT, bgcolor="white", pad="0.4", nodesep="0.9", ranksep="1.0",
+    splines=polyline, outputorder=edgesfirst, fontname="Arial", fontsize=20,
+    labelloc=t, label="HA3 — Danial: MySQL access classes\nImplemented classes in smart_energy.analytics"];
+  node [shape=plain, fontname="Arial", fontsize=13];
+  edge [color="#52656D", fontname="Arial", fontsize=12, arrowhead=vee,
+    arrowsize=0.75, penwidth=1.2, labeldistance=2.0, labelangle=25];
+  Database [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>Database</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _config: dict<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__()<BR ALIGN="LEFT"/>+ connect()<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  BuildingRepository [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>BuildingRepository</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _database: Database<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(database: Database)<BR ALIGN="LEFT"/>+ save(building: Building): None<BR ALIGN="LEFT"/>+ get_by_id(building_id: int): Building | None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  MeterRepository [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>MeterRepository</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _database: Database<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(database: Database)<BR ALIGN="LEFT"/>+ save(meter: Meter): None<BR ALIGN="LEFT"/>+ get_by_id(meter_id: int, building: Building): Meter | None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  ReadingRepository [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" COLOR="#087F79"><TR><TD BGCOLOR="#102E31"><FONT COLOR="white" POINT-SIZE="16"><B>ReadingRepository</B></FONT></TD></TR><TR><TD ALIGN="LEFT" BGCOLOR="#F0F6F5"># _database: Database<BR ALIGN="LEFT"/></TD></TR><HR/><TR><TD ALIGN="LEFT">+ __init__(database: Database)<BR ALIGN="LEFT"/>+ add(reading: Reading): None<BR ALIGN="LEFT"/>+ list_for_meter(meter: Meter): list[Reading]<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  { rank=same; BuildingRepository; MeterRepository; ReadingRepository; }
+  BuildingRepository -> Database [label="_database", taillabel="0..*", headlabel="1"];
+  MeterRepository -> Database [label="_database", taillabel="0..*", headlabel="1"];
+  ReadingRepository -> Database [label="_database", taillabel="0..*", headlabel="1"];
+}
