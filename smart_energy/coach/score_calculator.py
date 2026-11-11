@@ -93,21 +93,40 @@ class ScoreCalculator:
         }
 
 
-def evaluate_period(comparison_result: dict) -> dict:
+def evaluate_period(data: dict) -> dict:
     """Consolidated backend evaluator for Subsystem A.
-    Takes Subsystem B comparison payload and returns minimal score data.
+
+    Accepts either:
+      1. A full comparison payload from service.compare(...) containing 'score_inputs'
+      2. A period summary dictionary from service.summarize(...)
     """
-    if not isinstance(comparison_result, dict):
+    if not isinstance(data, dict):
         return {"score": None, "status": "unavailable"}
 
-    status = comparison_result.get("score_inputs_status", "unavailable")
-    if status != "ready":
-        return {"score": None, "status": status}
+    # Case 1: Standard comparison payload from service.compare
+    if "score_inputs" in data:
+        status = data.get("score_inputs_status", "unavailable")
+        if status != "ready":
+            return {"score": None, "status": status}
+        inputs = data.get("score_inputs") or {}
+        calc = ScoreCalculator()
+        return calc.calculate(
+            current_energy=inputs.get("current_energy"),
+            reference_energy=inputs.get("reference_energy"),
+            off_hours_energy=inputs.get("off_hours_energy"),
+        )
 
-    inputs = comparison_result.get("score_inputs") or {}
-    calc = ScoreCalculator()
-    return calc.calculate(
-        current_energy=inputs.get("current_energy"),
-        reference_energy=inputs.get("reference_energy"),
-        off_hours_energy=inputs.get("off_hours_energy"),
-    )
+    # Case 2: Direct summary payload from service.summarize
+    current_e = data.get("energy_kwh")
+    off_hours_e = data.get("off_hours_energy_kwh", Decimal("0.0"))
+    ref_e = data.get("reference_energy_kwh") or data.get("reference_energy")
+
+    if current_e is not None and ref_e is not None:
+        calc = ScoreCalculator()
+        return calc.calculate(
+            current_energy=current_e,
+            reference_energy=ref_e,
+            off_hours_energy=off_hours_e,
+        )
+
+    return {"score": None, "status": "unavailable"}
