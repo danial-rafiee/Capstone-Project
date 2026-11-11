@@ -45,7 +45,7 @@
     }
 
     /* SVG line chart styling */
-    .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 10px 15px; margin-top: 15px; }
+    .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 15px 15px; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -117,44 +117,62 @@
     </div>
   </section>
 
-  <!-- SVG Line Chart section -->
+  <!-- SVG Line Chart section with Axes, Labels, and Point Values -->
   <section>
     <h2>Energy Consumption Trend</h2>
     {% if energy_series %}
       <div class="chart-container">
-        <svg viewBox="0 0 600 200" width="100%" height="200" style="overflow: visible;">
-          <!-- Horizontal background gridlines -->
-          <line x1="40" y1="20" x2="580" y2="20" stroke="#eef2f1" stroke-dasharray="4" />
-          <line x1="40" y1="90" x2="580" y2="90" stroke="#eef2f1" stroke-dasharray="4" />
-          <line x1="40" y1="160" x2="580" y2="160" stroke="#d4e1dd" />
+        <svg viewBox="0 0 650 240" width="100%" height="240" style="overflow: visible;">
+          <!-- Axis Labels -->
+          <text x="60" y="15" font-size="11" font-weight="bold" fill="#495b55">Energy (kWh)</text>
+          <text x="620" y="230" font-size="11" font-weight="bold" text-anchor="end" fill="#495b55">Time</text>
+
+          <!-- Y-Axis Line (Vertical) -->
+          <line x1="60" y1="25" x2="60" y2="180" stroke="#d4e1dd" stroke-width="2" />
+
+          <!-- X-Axis Line (Horizontal) -->
+          <line x1="60" y1="180" x2="620" y2="180" stroke="#d4e1dd" stroke-width="2" />
+
+          <!-- Horizontal Grid lines -->
+          <line x1="60" y1="25" x2="620" y2="25" stroke="#eef2f1" stroke-dasharray="4" />
+          <line x1="60" y1="102" x2="620" y2="102" stroke="#eef2f1" stroke-dasharray="4" />
+
+          <!-- Y-Axis Labels -->
+          <text x="50" y="29" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy) }}</text>
+          <text x="50" y="106" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy / 2) }}</text>
+          <text x="50" y="184" font-size="10" text-anchor="end" fill="#6c757d">0.0</text>
+
+          <!-- X-Axis Labels (Start and End times) -->
+          <text x="60" y="200" font-size="10" text-anchor="start" fill="#6c757d">{{ time_range.start }}</text>
+          <text x="620" y="200" font-size="10" text-anchor="end" fill="#6c757d">{{ time_range.end }}</text>
 
           {% set count = energy_series | length %}
           {% set points_list = [] %}
           {% for pt in energy_series %}
             {% set val = pt.energy_kwh | float %}
             {% if count > 1 %}
-              {% set x = 50 + (loop.index0 / (count - 1)) * 500 %}
+              {% set x = 60 + (loop.index0 / (count - 1)) * 560 %}
             {% else %}
-              {% set x = 300 %}
+              {% set x = 340 %}
             {% endif %}
-            {% set y = 160 - (val / max_energy) * 130 %}
+            {% set y = 180 - (val / max_energy) * 155 %}
             {% if points_list.append(x ~ ',' ~ y) %}{% endif %}
           {% endfor %}
 
           <!-- Main trend line -->
-          <polyline fill="none" stroke="#007bff" stroke-width="3" points="{{ points_list | join(' ') }}" />
+          <polyline fill="none" stroke="#007bff" stroke-width="2.5" points="{{ points_list | join(' ') }}" />
 
-          <!-- Render data points and label values -->
+          <!-- Render data points and values -->
           {% for pt in energy_series %}
             {% set val = pt.energy_kwh | float %}
             {% if count > 1 %}
-              {% set x = 50 + (loop.index0 / (count - 1)) * 500 %}
+              {% set x = 60 + (loop.index0 / (count - 1)) * 560 %}
             {% else %}
-              {% set x = 300 %}
+              {% set x = 340 %}
             {% endif %}
-            {% set y = 160 - (val / max_energy) * 130 %}
-            <circle cx="{{ x }}" cy="{{ y }}" r="5" fill="#007bff" />
-            <text x="{{ x }}" y="{{ y - 10 }}" font-size="11" text-anchor="middle" fill="#495b55">{{ '%.2f'|format(val) }}</text>
+            {% set y = 180 - (val / max_energy) * 155 %}
+            <circle cx="{{ x }}" cy="{{ y }}" r="4" fill="#007bff" />
+            <text x="{{ x }}" y="{{ y - 8 }}" font-size="9" text-anchor="middle" fill="#495b55">{{ '%.1f'|format(val) }}</text>
           {% endfor %}
         </svg>
       </div>
@@ -163,7 +181,7 @@
     {% endif %}
   </section>
 
-  <!-- Coach response placeholder section -->
+  <!-- AI Sustainability Coach section (Subsystem C) -->
   <section>
     <h2>AI Sustainability Coach (Subsystem C)</h2>
     <p><strong>Question:</strong> {{ coach.question }}</p>
