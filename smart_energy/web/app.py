@@ -55,7 +55,8 @@ def create_app(test_config: dict | None = None):
                 off_hours_energy_kwh="0",
                 coverage_percent=0.0,
                 energy_series=[],
-                max_energy=1.0
+                max_energy=1.0,
+                latest_interval_kwh=0.0
             )
 
         # Get time preset from query params (default to 24h)
@@ -80,6 +81,11 @@ def create_app(test_config: dict | None = None):
 
         # Fetch readings and apply settings
         readings = ReadingRepository(db).list_for_period(meter, window.start, window.end)
+
+        # Get the latest interval reading for the card (if available)
+        all_meter_readings = ReadingRepository(db).list_for_meter(meter)
+        latest_reading_val = all_meter_readings[-1].get_energy_kwh() if all_meter_readings else 0.0
+
         settings = EnergySettings(
             building=building,
             tariff=Decimal("0.30"),
@@ -123,7 +129,8 @@ def create_app(test_config: dict | None = None):
             off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', '0'),
             coverage_percent=coverage_percent,
             energy_series=series_list,
-            max_energy=max_energy
+            max_energy=max_energy,
+            latest_interval_kwh=float(latest_reading_val)
         )
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")

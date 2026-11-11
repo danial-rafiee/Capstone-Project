@@ -73,10 +73,10 @@
   <section>
     <h2>Metrics Overview</h2>
     <div class="cards-grid">
-      <!-- Card 1: Latest interval with auto-refresh note -->
+      <!-- Card 1: Latest interval (Dynamic from database) -->
       <div class="metric-card">
         <h3>Latest interval</h3>
-        <p class="value">1.2 kWh</p>
+        <p class="value">{{ '%.1f'|format(latest_interval_kwh) }} kWh</p>
         <p class="subtext">Auto-refresh active</p>
       </div>
 
