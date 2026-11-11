@@ -1,7 +1,7 @@
 # Flask application factory for the Smart Energy Management web interface
 
-from flask import Flask, render_template, jsonify
-from datetime import datetime, timezone
+from flask import Flask, render_template, jsonify, request
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 import os
 
@@ -56,9 +56,18 @@ def create_app(test_config: dict | None = None):
                 coverage_percent=0.0
             )
 
-        # Define time window for analytics summary
+        # Get preset from query parameters (default to '24h')
+        preset = request.args.get('preset', '24h')
         end_time = datetime.now(timezone.utc)
-        start_time = datetime.replace(end_time, hour=0, minute=0, second=0, microsecond=0)
+
+        if preset == '7d':
+            start_time = end_time - timedelta(days=7)
+        elif preset == '30d':
+            start_time = end_time - timedelta(days=30)
+        else:
+            preset = '24h'
+            start_time = end_time - timedelta(days=1)
+
         window = TimeWindow(start_time, end_time)
 
         # Configure operating schedule
@@ -93,7 +102,7 @@ def create_app(test_config: dict | None = None):
             building=building,
             meter=meter,
             time_range={
-                "preset": "custom",
+                "preset": preset,
                 "start": window.start,
                 "end": window.end
             },
@@ -113,8 +122,17 @@ def create_app(test_config: dict | None = None):
         if not building or not meter:
             return {"error": "Building or Meter not found"}, 404
 
+        preset = request.args.get('preset', '24h')
         end_time = datetime.now(timezone.utc)
-        start_time = datetime.replace(end_time, hour=0, minute=0, second=0, microsecond=0)
+
+        if preset == '7d':
+            start_time = end_time - timedelta(days=7)
+        elif preset == '30d':
+            start_time = end_time - timedelta(days=30)
+        else:
+            preset = '24h'
+            start_time = end_time - timedelta(days=1)
+
         window = TimeWindow(start_time, end_time)
 
         schedule = OperatingSchedule(
