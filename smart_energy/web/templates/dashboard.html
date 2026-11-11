@@ -108,11 +108,13 @@
         <p class="subtext">vs reference period</p>
       </div>
 
-      <!-- Card 6: Score placeholder (Subsystem C) -->
+      <!-- Card 6: Score (Subsystem C Integration) -->
       <div class="metric-card">
         <h3>Score</h3>
-        <p class="value">-- / 100</p>
-        <p class="subtext">Pending C integration</p>
+        <p class="value">
+          {{ '%.1f'|format(sustainability_score) if sustainability_score is not none else '--' }} / 100
+        </p>
+        <p class="subtext">Subsystem C integration</p>
       </div>
     </div>
   </section>

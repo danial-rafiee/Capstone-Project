@@ -17,6 +17,7 @@ from smart_energy.analytics.period_analytics import PeriodAnalyticsService, to_j
 
 from smart_energy.web.domain.coach_panel import CoachPanel
 from smart_energy.web.errors import register_web_error_handlers
+from smart_energy.coach import evaluate_period
 
 
 def get_db_connection() -> Database:
@@ -56,7 +57,8 @@ def create_app(test_config: dict | None = None):
                 coverage_percent=0.0,
                 energy_series=[],
                 max_energy=1.0,
-                latest_interval_kwh=0.0
+                latest_interval_kwh=0.0,
+                sustainability_score=None
             )
 
         # Get time preset from query params (default to 24h)
@@ -81,10 +83,6 @@ def create_app(test_config: dict | None = None):
 
         # Fetch readings and apply settings
         readings = ReadingRepository(db).list_for_period(meter, window.start, window.end)
-
-        # Get the latest interval reading for the card (if available)
-        all_meter_readings = ReadingRepository(db).list_for_meter(meter)
-        latest_reading_val = all_meter_readings[-1].get_energy_kwh() if all_meter_readings else 0.0
 
         settings = EnergySettings(
             building=building,
@@ -112,6 +110,16 @@ def create_app(test_config: dict | None = None):
         if max_energy == 0:
             max_energy = 1.0
 
+        # Get the latest interval reading from the current period's series
+        latest_reading_val = float(series_list[-1].get('energy_kwh', 0.0)) if series_list else 0.0
+
+        # Subsystem C integration: supply reference_energy_kwh for flexible summary evaluation
+        if "reference_energy_kwh" not in summary_payload:
+            summary_payload["reference_energy_kwh"] = summary_payload.get('energy_kwh', 0.0) * 0.95
+
+        coach_data = evaluate_period(summary_payload)
+        sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
+
         return render_template(
             "dashboard.html",
             building_name=building.get_name(),
@@ -130,7 +138,8 @@ def create_app(test_config: dict | None = None):
             coverage_percent=coverage_percent,
             energy_series=series_list,
             max_energy=max_energy,
-            latest_interval_kwh=float(latest_reading_val)
+            latest_interval_kwh=latest_reading_val,
+            sustainability_score=sustainability_score
         )
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
