@@ -24,12 +24,12 @@ from smart_energy.coach.coach_models import CoachRequest
 
 
 def get_db_connection() -> Database:
-    # quick db connection helper
+    # Quick database connection helper
     return Database()
 
 
 def create_app(test_config: dict | None = None):
-    # flask app factory
+    # Flask app factory
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
@@ -38,7 +38,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
-        # parse query params via dashboard view
+        # Parse query parameters via dashboard view
         view = DashboardView()
         params = view.handle_request(request.args)
         preset = params["preset"]
@@ -69,12 +69,14 @@ def create_app(test_config: dict | None = None):
                 max_energy=1.0,
                 latest_interval_kwh=0.0,
                 sustainability_score=None,
+                growth_penalty=0.0,
+                off_hours_penalty=0.0,
                 energy_change_percent=None
             )
 
         reading_repo = ReadingRepository(db)
 
-        # align latest reading timestamp with the start of the interval to match chart
+        # Align latest reading timestamp with the start of the interval to match chart
         all_meter_readings = reading_repo.list_for_meter(meter)
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
@@ -169,17 +171,21 @@ def create_app(test_config: dict | None = None):
         coach_data = evaluate_period(summary_payload)
         sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
 
+        # Extract both penalty values to fully fulfill FR-A7 requirement
+        growth_penalty_val = coach_data.get("growth_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
+        off_hours_penalty_val = coach_data.get("off_hours_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
+
         period_label = f"{preset}: {current_window.start.strftime('%Y-%m-%d %H:%M')} to {current_window.end.strftime('%Y-%m-%d %H:%M')}"
         period_summary_for_coach = {
             "period": period_label,
             "score": sustainability_score,
             "penalties": {
-                "growth_penalty": coach_data.get("growth_penalty", 0.0) if isinstance(coach_data, dict) else 0.0,
-                "off_hours_penalty": coach_data.get("off_hours_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
+                "growth_penalty": growth_penalty_val,
+                "off_hours_penalty": off_hours_penalty_val
             }
         }
 
-        # call AI coach service with safe fallback
+        # Call AI coach service with safe fallback
         building_id = getattr(building, 'id', 1)
         building_ctx = BuildingContext(building_id)
         calculator = ScoreCalculator()
@@ -195,7 +201,7 @@ def create_app(test_config: dict | None = None):
             coach_response = coach_service.answer_question(coach_req)
             answer_text = coach_response.answer
         except Exception:
-            # fallback message if AI coach fails
+            # Fallback message if AI coach fails
             answer_text = "AI coach is currently unavailable, but energy metrics and scores are fully operational."
 
         coach_panel_data = CoachPanel(
@@ -224,12 +230,14 @@ def create_app(test_config: dict | None = None):
             max_energy=max_energy,
             latest_interval_kwh=latest_reading_val,
             sustainability_score=sustainability_score,
+            growth_penalty=growth_penalty_val,
+            off_hours_penalty=off_hours_penalty_val,
             energy_change_percent=energy_change_percent
         )
 
     @app.get("/api/latest")
     def api_latest():
-        # get latest reading for auto refresh card
+        # Get latest reading for auto refresh card
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
@@ -245,7 +253,6 @@ def create_app(test_config: dict | None = None):
 
         latest_reading = all_meter_readings[-1]
         try:
-            # use getter method since reading uses private fields
             val = float(latest_reading.get_energy_kwh()) if hasattr(latest_reading, 'get_energy_kwh') else 0.0
         except Exception:
             val = 0.0
@@ -254,7 +261,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
-        # return json analytics data
+        # Return JSON analytics data
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None

@@ -54,7 +54,6 @@
   <h1>Smart Energy Management</h1>
   <p>{{ building_name }} · Group 18 · Capstone Project</p>
 
-
   <!-- Navigation bar for time range presets -->
   <section class="preset-nav">
     <strong>Time range:</strong>
@@ -114,13 +113,16 @@
         <p class="subtext">vs reference period</p>
       </div>
 
-      <!-- Card 6: Score -->
+      <!-- Card 6: Score with Penalties (FR-A7 fulfillment) -->
       <div class="metric-card" style="border-color: #19302d; background: #f0f7f4;">
         <h3>Score</h3>
         <p class="value">
           {{ '%.1f'|format(sustainability_score) if sustainability_score is not none else '--' }} / 100
         </p>
-        <p class="subtext">Based on efficiency & operating schedule</p>
+        <p class="subtext" style="color: #2c4a45; font-weight: 600;">
+          Growth pen: {{ '%.1f'|format(growth_penalty) if growth_penalty is not none else '0.0' }}<br>
+          Off-hours pen: {{ '%.1f'|format(off_hours_penalty) if off_hours_penalty is not none else '0.0' }}
+        </p>
       </div>
     </div>
   </section>
