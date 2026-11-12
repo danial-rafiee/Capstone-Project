@@ -63,11 +63,11 @@ def create_app(test_config: dict | None = None):
                 latest_reading_time="-",
                 estimated_cost_eur=0.0,
                 estimated_co2_kg=0.0,
-                off_hours_energy_kwh="0",
+                off_hours_energy_kwh=None,
                 coverage_percent=0.0,
                 energy_series=[],
                 max_energy=1.0,
-                latest_interval_kwh=0.0,
+                latest_interval_kwh=None,
                 sustainability_score=None,
                 growth_penalty=0.0,
                 off_hours_penalty=0.0,
@@ -75,17 +75,17 @@ def create_app(test_config: dict | None = None):
             )
 
         reading_repo = ReadingRepository(db)
-
-        # Align latest reading timestamp with the start of the interval to match chart
         all_meter_readings = reading_repo.list_for_meter(meter)
+
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
             start_time_interval = latest_reading.get_interval()[0]
             latest_reading_time = start_time_interval.strftime('%Y-%m-%d %H:%M')
-            end_time = latest_reading.get_interval()[1]
         else:
-            end_time = datetime.now(timezone.utc)
             latest_reading_time = "-"
+
+        # Synchronize dashboard end_time with API using datetime.now(timezone.utc) (Item 3)
+        end_time = datetime.now(timezone.utc)
 
         # Set up current and reference windows based on selected preset
         if preset == '7d':
@@ -143,15 +143,15 @@ def create_app(test_config: dict | None = None):
             else:
                 energy_change_percent = None
         except Exception:
-            # Fallback to single summary if comparison fails due to incomplete window
             summary = service.summarize(meter, current_readings, current_window)
             comparison_data = {"status": "unavailable", "energy_saved_percent": None}
             energy_change_percent = None
 
         summary_payload = to_json_ready(summary)
 
+        # Prevent displaying fake zero for missing energy values (Item 4)
         raw_energy = summary_payload.get('energy_kwh')
-        summary_payload['energy_kwh'] = float(raw_energy) if raw_energy is not None else 0.0
+        summary_payload['energy_kwh'] = float(raw_energy) if raw_energy is not None else None
 
         coverage_fraction_val = summary.get('coverage_fraction')
         coverage_percent = float(coverage_fraction_val) * 100 if coverage_fraction_val is not None else 0.0
@@ -161,21 +161,25 @@ def create_app(test_config: dict | None = None):
         if max_energy == 0:
             max_energy = 1.0
 
-        latest_reading_val = float(series_list[-1].get('energy_kwh', 0.0)) if series_list else 0.0
+        latest_reading_val = float(series_list[-1].get('energy_kwh')) if series_list and series_list[-1].get(
+            'energy_kwh') is not None else None
 
+        # Do not fallback to current energy when reference is missing (Item 2)
         if reference_energy_val is not None:
             summary_payload["reference_energy_kwh"] = reference_energy_val
         else:
-            summary_payload["reference_energy_kwh"] = summary_payload.get('energy_kwh', 0.0)
+            summary_payload["reference_energy_kwh"] = None
 
         coach_data = evaluate_period(summary_payload)
         sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
 
-        # Extract both penalty values to fully fulfill FR-A7 requirement
         growth_penalty_val = coach_data.get("growth_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
         off_hours_penalty_val = coach_data.get("off_hours_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
 
-        period_label = f"{preset}: {current_window.start.strftime('%Y-%m-%d %H:%M')} to {current_window.end.strftime('%Y-%m-%d %H:%M')}"
+        start_str = current_window.start.strftime("%Y-%m-%d %H:%M")
+        end_str = current_window.end.strftime("%Y-%m-%d %H:%M")
+        period_label = f"{preset}: {start_str} to {end_str}"
+
         period_summary_for_coach = {
             "period": period_label,
             "score": sustainability_score,
@@ -185,7 +189,6 @@ def create_app(test_config: dict | None = None):
             }
         }
 
-        # Call AI coach service with safe fallback
         building_id = getattr(building, 'id', 1)
         building_ctx = BuildingContext(building_id)
         calculator = ScoreCalculator()
@@ -202,7 +205,6 @@ def create_app(test_config: dict | None = None):
             answer_text = coach_response.answer
             coach_status = coach_response.status
         except Exception:
-            # Fallback message if AI coach fails
             answer_text = "AI coach is currently unavailable, but energy metrics and scores are fully operational."
             coach_status = "fallback"
 
@@ -227,7 +229,7 @@ def create_app(test_config: dict | None = None):
             latest_reading_time=latest_reading_time,
             estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
             estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),
-            off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', '0'),
+            off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', None),
             coverage_percent=coverage_percent,
             energy_series=series_list,
             max_energy=max_energy,
@@ -240,31 +242,29 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/latest")
     def api_latest():
-        # Get latest reading for auto refresh card
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
 
         if not building or not meter:
-            return jsonify({"latest_interval_kwh": 0.0})
+            return jsonify({"latest_interval_kwh": None})
 
         reading_repo = ReadingRepository(db)
         all_meter_readings = reading_repo.list_for_meter(meter)
 
         if not all_meter_readings:
-            return jsonify({"latest_interval_kwh": 0.0})
+            return jsonify({"latest_interval_kwh": None})
 
         latest_reading = all_meter_readings[-1]
         try:
-            val = float(latest_reading.get_energy_kwh()) if hasattr(latest_reading, 'get_energy_kwh') else 0.0
+            val = float(latest_reading.get_energy_kwh()) if hasattr(latest_reading, 'get_energy_kwh') else None
         except Exception:
-            val = 0.0
+            val = None
 
         return jsonify({"latest_interval_kwh": val})
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
-        # Return JSON analytics data
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None
