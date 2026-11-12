@@ -16,6 +16,7 @@ from smart_energy.analytics.operating_schedule import OperatingSchedule
 from smart_energy.analytics.period_analytics import PeriodAnalyticsService, to_json_ready
 
 from smart_energy.web.domain.coach_panel import CoachPanel
+from smart_energy.web.domain.dashboard_view import DashboardView
 from smart_energy.web.errors import register_web_error_handlers
 from smart_energy.coach import evaluate_period
 from smart_energy.coach import CoachService, BuildingContext, ScoreCalculator
@@ -37,6 +38,12 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
+        # Initialize DashboardView to coordinate web request parameters
+        view = DashboardView()
+        params = view.handle_request(request.args)
+        preset = params["preset"]
+        user_question = params["question"]
+
         # Main dashboard route: fetches meters, runs analytics, and renders UI
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
@@ -65,7 +72,6 @@ def create_app(test_config: dict | None = None):
                 energy_change_percent=None
             )
 
-        preset = request.args.get('preset', '24h')
         reading_repo = ReadingRepository(db)
 
         # Sync end_time with the absolute last reading timestamp to keep periods complete,
@@ -162,9 +168,6 @@ def create_app(test_config: dict | None = None):
 
         coach_data = evaluate_period(summary_payload)
         sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
-
-        user_question = request.args.get('question',
-                                         'How can we optimize energy consumption during off-hours without violating essential loads?')
 
         period_label = f"{preset}: {current_window.start.strftime('%Y-%m-%d %H:%M')} to {current_window.end.strftime('%Y-%m-%d %H:%M')}"
         period_summary_for_coach = {
