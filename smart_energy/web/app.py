@@ -38,7 +38,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
-        # Initialize DashboardView to coordinate web request parameters
+        # parse query params via dashboard view
         view = DashboardView()
         params = view.handle_request(request.args)
         preset = params["preset"]
@@ -74,12 +74,13 @@ def create_app(test_config: dict | None = None):
 
         reading_repo = ReadingRepository(db)
 
-        # align end time with the latest reading if possible
+        # align latest reading timestamp with the start of the interval to match chart
         all_meter_readings = reading_repo.list_for_meter(meter)
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
+            start_time_interval = latest_reading.get_interval()[0]
+            latest_reading_time = start_time_interval.strftime('%Y-%m-%d %H:%M')
             end_time = latest_reading.get_interval()[1]
-            latest_reading_time = end_time.strftime('%Y-%m-%d %H:%M')
         else:
             end_time = datetime.now(timezone.utc)
             latest_reading_time = "-"
