@@ -18,19 +18,17 @@ from smart_energy.analytics.period_analytics import PeriodAnalyticsService, to_j
 from smart_energy.web.domain.coach_panel import CoachPanel
 from smart_energy.web.errors import register_web_error_handlers
 from smart_energy.coach import evaluate_period
-from smart_energy.coach.coach_service import CoachService
-from smart_energy.coach.score_calculator import ScoreCalculator
-from smart_energy.coach.building_context import BuildingContext
+from smart_energy.coach import CoachService, BuildingContext, ScoreCalculator
 from smart_energy.coach.coach_models import CoachRequest
 
 
 def get_db_connection() -> Database:
-    # Connect to database
+    # Initialize and return database connection
     return Database()
 
 
 def create_app(test_config: dict | None = None):
-    # Initialize Flask app and basic config
+    # Create and configure the Flask application instance
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
@@ -39,7 +37,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
-        # Main dashboard route to load meter and building info
+        # Handle main dashboard route and data rendering
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
@@ -66,11 +64,10 @@ def create_app(test_config: dict | None = None):
                 energy_change_percent=None
             )
 
-        # Get time preset from query params (default to 24h)
         preset = request.args.get('preset', '24h')
         end_time = datetime.now(timezone.utc)
 
-        # Precisely align current and reference windows back-to-back for accurate comparison
+        # Determine time windows based on selected preset
         if preset == '7d':
             start_time = end_time - timedelta(days=7)
             ref_end_time = start_time
@@ -85,17 +82,14 @@ def create_app(test_config: dict | None = None):
             ref_end_time = start_time
             ref_start_time = ref_end_time - timedelta(days=1)
 
-        # Define current and reference time windows for comparison
         current_window = TimeWindow(start_time, end_time)
         reference_window = TimeWindow(ref_start_time, ref_end_time)
 
-        # Set up building operating schedule
         schedule = OperatingSchedule(
             "Europe/Berlin",
             {day: [("09:00", "17:00")] for day in range(5)},
         )
 
-        # Fetch readings for both current and reference periods from repository
         reading_repo = ReadingRepository(db)
         current_readings = reading_repo.list_for_period(meter, current_window.start, current_window.end)
         reference_readings = reading_repo.list_for_period(meter, reference_window.start, reference_window.end)
@@ -107,9 +101,9 @@ def create_app(test_config: dict | None = None):
             off_hours_share=Decimal("0.20")
         )
 
-        # Run period analytics service with comparison
         service = PeriodAnalyticsService(settings, schedule)
 
+        reference_energy_val = None
         try:
             comparison_result = service.compare(
                 meter=meter,
@@ -119,19 +113,23 @@ def create_app(test_config: dict | None = None):
                 reference_window=reference_window
             )
             summary = comparison_result["current"]
+            reference_summary = comparison_result["reference"]
+            if reference_summary and reference_summary.get("energy_kwh") is not None:
+                reference_energy_val = float(reference_summary.get("energy_kwh"))
+
             comparison_data = comparison_result["comparison"]
-            energy_change_percent = comparison_data.get("energy_saved_percent")
-            if energy_change_percent is not None:
-                energy_change_percent = float(energy_change_percent)
+            energy_saved_percent = comparison_data.get("energy_saved_percent")
+            if energy_saved_percent is not None:
+                energy_change_percent = float(-energy_saved_percent)
+            else:
+                energy_change_percent = None
         except Exception:
             summary = service.summarize(meter, current_readings, current_window)
             comparison_data = {"status": "unavailable", "energy_saved_percent": None}
             energy_change_percent = None
 
-        # Prepare payload and compute metrics safely in Python
         summary_payload = to_json_ready(summary)
 
-        # Ensure energy_kwh is safely cast to float for clean template rendering
         raw_energy = summary_payload.get('energy_kwh')
         summary_payload['energy_kwh'] = float(raw_energy) if raw_energy is not None else 0.0
 
@@ -143,22 +141,18 @@ def create_app(test_config: dict | None = None):
         if max_energy == 0:
             max_energy = 1.0
 
-        # Get the latest interval reading from the current period's series
         latest_reading_val = float(series_list[-1].get('energy_kwh', 0.0)) if series_list else 0.0
 
-        # Subsystem C integration: supply reference_energy_kwh for flexible summary evaluation
-        if "reference_energy_kwh" not in summary_payload:
-            summary_payload["reference_energy_kwh"] = summary_payload.get('energy_kwh', 0.0) * 0.95
+        if reference_energy_val is not None:
+            summary_payload["reference_energy_kwh"] = reference_energy_val
+        else:
+            summary_payload["reference_energy_kwh"] = summary_payload.get('energy_kwh', 0.0)
 
         coach_data = evaluate_period(summary_payload)
         sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
 
-        # Subsystem C AI Coach Integration (Interactive)
         user_question = request.args.get('question',
                                          'How can we optimize energy consumption during off-hours without violating essential loads?')
-
-        calculator = ScoreCalculator()
-        coach_service = CoachService(calculator=calculator)
 
         period_label = f"{preset}: {current_window.start.strftime('%Y-%m-%d %H:%M')} to {current_window.end.strftime('%Y-%m-%d %H:%M')}"
         period_summary_for_coach = {
@@ -170,19 +164,23 @@ def create_app(test_config: dict | None = None):
             }
         }
 
+        # Initialize Subsystem C components and generate dynamic AI coach response
         building_id = getattr(building, 'id', 1)
         building_ctx = BuildingContext(building_id)
+        calculator = ScoreCalculator()
+        coach_service = CoachService(calculator=calculator)
+
         coach_req = CoachRequest(
             question=user_question,
             context=building_ctx,
             period_summary=period_summary_for_coach
         )
-
         coach_response = coach_service.answer_question(coach_req)
+        answer_text = coach_response.answer
 
         coach_panel_data = CoachPanel(
             question=user_question,
-            answer=coach_response.answer
+            answer=answer_text
         )
 
         return render_template(
@@ -210,7 +208,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
-        # API endpoint returning analytics JSON
+        # Provide analytics JSON endpoint for external calls
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None
