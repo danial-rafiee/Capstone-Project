@@ -69,18 +69,18 @@
     <p>{{ time_range.preset }}: {{ time_range.start }} to {{ time_range.end }}</p>
   </section>
 
-  <!-- 6 Metric Cards Section (Matching Prototype) -->
+  <!-- 6 Metric Cards Section -->
   <section>
     <h2>Metrics Overview</h2>
     <div class="cards-grid">
-      <!-- Card 1: Latest interval (Dynamic from database) -->
+      <!-- Card 1: Latest interval -->
       <div class="metric-card">
         <h3>Latest interval</h3>
         <p class="value">{{ '%.1f'|format(latest_interval_kwh) }} kWh</p>
         <p class="subtext">Auto-refresh active</p>
       </div>
 
-      <!-- Card 2: Energy consumption for selected period -->
+      <!-- Card 2: Energy consumption -->
       <div class="metric-card">
         <h3>Energy</h3>
         <p class="value">{{ summary.energy_kwh | round(1) if summary.energy_kwh is not none else '0' }} kWh</p>
@@ -104,11 +104,17 @@
       <!-- Card 5: Energy change -->
       <div class="metric-card">
         <h3>Energy change</h3>
-        <p class="value">--</p>
+        <p class="value">
+          {% if energy_change_percent is not none %}
+            {{ '%.1f'|format(energy_change_percent) }}%
+          {% else %}
+            --
+          {% endif %}
+        </p>
         <p class="subtext">vs reference period</p>
       </div>
 
-      <!-- Card 6: Score (Subsystem C Integration) -->
+      <!-- Card 6: Score -->
       <div class="metric-card" style="border-color: #19302d; background: #f0f7f4;">
         <h3>Score</h3>
         <p class="value">
@@ -119,32 +125,25 @@
     </div>
   </section>
 
-  <!-- SVG Line Chart section with Axes, Labels, and Point Values -->
+  <!-- SVG Line Chart section -->
   <section>
     <h2>Energy Consumption Trend</h2>
     {% if energy_series %}
       <div class="chart-container">
         <svg viewBox="0 0 650 240" width="100%" height="240" style="overflow: visible;">
-          <!-- Axis Labels -->
           <text x="60" y="15" font-size="11" font-weight="bold" fill="#495b55">Energy (kWh)</text>
           <text x="620" y="230" font-size="11" font-weight="bold" text-anchor="end" fill="#495b55">Time</text>
 
-          <!-- Y-Axis Line (Vertical) -->
           <line x1="60" y1="25" x2="60" y2="180" stroke="#d4e1dd" stroke-width="2" />
-
-          <!-- X-Axis Line (Horizontal) -->
           <line x1="60" y1="180" x2="620" y2="180" stroke="#d4e1dd" stroke-width="2" />
 
-          <!-- Horizontal Grid lines -->
           <line x1="60" y1="25" x2="620" y2="25" stroke="#eef2f1" stroke-dasharray="4" />
           <line x1="60" y1="102" x2="620" y2="102" stroke="#eef2f1" stroke-dasharray="4" />
 
-          <!-- Y-Axis Labels -->
           <text x="50" y="29" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy) }}</text>
           <text x="50" y="106" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy / 2) }}</text>
           <text x="50" y="184" font-size="10" text-anchor="end" fill="#6c757d">0.0</text>
 
-          <!-- X-Axis Labels (Start and End times) -->
           <text x="60" y="200" font-size="10" text-anchor="start" fill="#6c757d">{{ time_range.start }}</text>
           <text x="620" y="200" font-size="10" text-anchor="end" fill="#6c757d">{{ time_range.end }}</text>
 
@@ -161,10 +160,8 @@
             {% if points_list.append(x ~ ',' ~ y) %}{% endif %}
           {% endfor %}
 
-          <!-- Main trend line -->
           <polyline fill="none" stroke="#007bff" stroke-width="2.5" points="{{ points_list | join(' ') }}" />
 
-          <!-- Render data points and values -->
           {% for pt in energy_series %}
             {% set val = pt.energy_kwh | float %}
             {% if count > 1 %}
@@ -183,7 +180,7 @@
     {% endif %}
   </section>
 
-  <!-- AI Sustainability Coach section (Subsystem C) -->
+  <!-- AI Sustainability Coach section -->
   <section>
     <h2>AI Sustainability Coach (Subsystem C)</h2>
 

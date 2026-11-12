@@ -62,7 +62,8 @@ def create_app(test_config: dict | None = None):
                 energy_series=[],
                 max_energy=1.0,
                 latest_interval_kwh=0.0,
-                sustainability_score=None
+                sustainability_score=None,
+                energy_change_percent=None
             )
 
         # Get time preset from query params (default to 24h)
@@ -71,13 +72,18 @@ def create_app(test_config: dict | None = None):
 
         if preset == '7d':
             start_time = end_time - timedelta(days=7)
+            ref_start_time = start_time - timedelta(days=7)
         elif preset == '30d':
             start_time = end_time - timedelta(days=30)
+            ref_start_time = start_time - timedelta(days=30)
         else:
             preset = '24h'
             start_time = end_time - timedelta(days=1)
+            ref_start_time = start_time - timedelta(days=1)
 
-        window = TimeWindow(start_time, end_time)
+        # Define current and reference time windows for comparison
+        current_window = TimeWindow(start_time, end_time)
+        reference_window = TimeWindow(ref_start_time, start_time)
 
         # Set up building operating schedule
         schedule = OperatingSchedule(
@@ -85,8 +91,10 @@ def create_app(test_config: dict | None = None):
             {day: [("09:00", "17:00")] for day in range(5)},
         )
 
-        # Fetch readings and apply settings
-        readings = ReadingRepository(db).list_for_period(meter, window.start, window.end)
+        # Fetch readings for both current and reference periods from repository
+        reading_repo = ReadingRepository(db)
+        current_readings = reading_repo.list_for_period(meter, current_window.start, current_window.end)
+        reference_readings = reading_repo.list_for_period(meter, reference_window.start, reference_window.end)
 
         settings = EnergySettings(
             building=building,
@@ -95,9 +103,26 @@ def create_app(test_config: dict | None = None):
             off_hours_share=Decimal("0.20")
         )
 
-        # Run analytics service for the period
+        # Run period analytics service with comparison
         service = PeriodAnalyticsService(settings, schedule)
-        summary = service.summarize(meter, readings, window)
+
+        try:
+            comparison_result = service.compare(
+                meter=meter,
+                current_readings=current_readings,
+                reference_readings=reference_readings,
+                current_window=current_window,
+                reference_window=reference_window
+            )
+            summary = comparison_result["current"]
+            comparison_data = comparison_result["comparison"]
+            energy_change_percent = comparison_data.get("energy_saved_percent")
+            if energy_change_percent is not None:
+                energy_change_percent = float(energy_change_percent)
+        except Exception:
+            summary = service.summarize(meter, current_readings, current_window)
+            comparison_data = {"status": "unavailable", "energy_saved_percent": None}
+            energy_change_percent = None
 
         # Prepare payload and compute metrics safely in Python
         summary_payload = to_json_ready(summary)
@@ -124,14 +149,14 @@ def create_app(test_config: dict | None = None):
         coach_data = evaluate_period(summary_payload)
         sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
 
-        # --- Subsystem C AI Coach Integration (Interactive) ---
+        # Subsystem C AI Coach Integration (Interactive)
         user_question = request.args.get('question',
                                          'How can we optimize energy consumption during off-hours without violating essential loads?')
 
         calculator = ScoreCalculator()
         coach_service = CoachService(calculator=calculator)
 
-        period_label = f"{preset}: {window.start.strftime('%Y-%m-%d %H:%M')} to {window.end.strftime('%Y-%m-%d %H:%M')}"
+        period_label = f"{preset}: {current_window.start.strftime('%Y-%m-%d %H:%M')} to {current_window.end.strftime('%Y-%m-%d %H:%M')}"
         period_summary_for_coach = {
             "period": period_label,
             "score": sustainability_score,
@@ -165,8 +190,8 @@ def create_app(test_config: dict | None = None):
             meter=meter,
             time_range={
                 "preset": preset,
-                "start": window.start.strftime('%Y-%m-%d %H:%M'),
-                "end": window.end.strftime('%Y-%m-%d %H:%M')
+                "start": current_window.start.strftime('%Y-%m-%d %H:%M'),
+                "end": current_window.end.strftime('%Y-%m-%d %H:%M')
             },
             estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
             estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),
@@ -175,7 +200,8 @@ def create_app(test_config: dict | None = None):
             energy_series=series_list,
             max_energy=max_energy,
             latest_interval_kwh=latest_reading_val,
-            sustainability_score=sustainability_score
+            sustainability_score=sustainability_score,
+            energy_change_percent=energy_change_percent
         )
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
