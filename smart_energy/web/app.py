@@ -70,20 +70,24 @@ def create_app(test_config: dict | None = None):
         preset = request.args.get('preset', '24h')
         end_time = datetime.now(timezone.utc)
 
+        # Precisely align current and reference windows back-to-back for accurate comparison
         if preset == '7d':
             start_time = end_time - timedelta(days=7)
-            ref_start_time = start_time - timedelta(days=7)
+            ref_end_time = start_time
+            ref_start_time = ref_end_time - timedelta(days=7)
         elif preset == '30d':
             start_time = end_time - timedelta(days=30)
-            ref_start_time = start_time - timedelta(days=30)
+            ref_end_time = start_time
+            ref_start_time = ref_end_time - timedelta(days=30)
         else:
             preset = '24h'
             start_time = end_time - timedelta(days=1)
-            ref_start_time = start_time - timedelta(days=1)
+            ref_end_time = start_time
+            ref_start_time = ref_end_time - timedelta(days=1)
 
         # Define current and reference time windows for comparison
         current_window = TimeWindow(start_time, end_time)
-        reference_window = TimeWindow(ref_start_time, start_time)
+        reference_window = TimeWindow(ref_start_time, ref_end_time)
 
         # Set up building operating schedule
         schedule = OperatingSchedule(
