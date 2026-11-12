@@ -203,6 +203,9 @@
 
     <div style="background: #fafbfc; padding: 15px; border-radius: 6px; border-left: 4px solid #19302d; margin-top: 10px;">
       <p style="margin: 0 0 8px 0;"><strong>Question:</strong> {{ coach.question }}</p>
+      {% if coach.status %}
+      <p style="margin: 0 0 8px 0; font-size: 12px; color: #526763;"><strong>Status:</strong> {{ coach.status }}</p>
+      {% endif %}
       <p style="margin: 0; white-space: pre-line;"><strong>Answer:</strong> {{ coach.answer }}</p>
     </div>
   </section>

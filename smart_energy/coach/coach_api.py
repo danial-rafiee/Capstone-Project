@@ -68,7 +68,7 @@ def create_coach_blueprint(coach_service_or_repo, repository=None) -> Blueprint:
 
         try:
             b_id = int(payload.get("building_id", 1))
-            occupied = payload.get("occupied_hours", "Mon-Fri 08:00-18:00")
+            occupied = payload.get("occupied_hours", "Mon-Fri 09:00-17:00 (Europe/Berlin)")
             essential = payload.get("essential_loads", ["Server Room", "Emergency Lighting"])
             context = BuildingContext(building_id=b_id, occupied_hours=occupied, essential_loads=essential)
 

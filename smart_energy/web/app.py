@@ -200,13 +200,16 @@ def create_app(test_config: dict | None = None):
         try:
             coach_response = coach_service.answer_question(coach_req)
             answer_text = coach_response.answer
+            coach_status = coach_response.status
         except Exception:
             # Fallback message if AI coach fails
             answer_text = "AI coach is currently unavailable, but energy metrics and scores are fully operational."
+            coach_status = "fallback"
 
         coach_panel_data = CoachPanel(
             question=user_question,
-            answer=answer_text
+            answer=answer_text,
+            status=coach_status
         )
 
         return render_template(
