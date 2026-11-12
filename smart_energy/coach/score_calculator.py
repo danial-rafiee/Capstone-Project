@@ -93,13 +93,20 @@ class ScoreCalculator:
         }
 
 
-def evaluate_period(data: dict) -> dict:
-    """Consolidated backend evaluator for Subsystem A.
+def _extract_allowance_share(data: dict, inputs: dict = None) -> Decimal:
+    """Resolve allowance share using explicit None checks so valid 0.0 is preserved."""
+    sources = [data]
+    if isinstance(inputs, dict):
+        sources.append(inputs)
+    for src in sources:
+        for key in ("score_allowance_share", "allowance_share"):
+            if key in src and src[key] is not None:
+                return Decimal(str(src[key]))
+    return Decimal("0.20")
 
-    Accepts either:
-      1. A full comparison payload from service.compare(...) containing 'score_inputs'
-      2. A period summary dictionary from service.summarize(...)
-    """
+
+def evaluate_period(data: dict) -> dict:
+    """Consolidated backend evaluator for Subsystem A/B payloads."""
     if not isinstance(data, dict):
         return {"score": None, "status": "unavailable"}
 
@@ -109,7 +116,7 @@ def evaluate_period(data: dict) -> dict:
         if status != "ready":
             return {"score": None, "status": status}
         inputs = data.get("score_inputs") or {}
-        share = data.get("allowance_share") or inputs.get("allowance_share") or Decimal("0.20")
+        share = _extract_allowance_share(data, inputs)
         calc = ScoreCalculator(allowance_share=share)
         return calc.calculate(
             current_energy=inputs.get("current_energy"),
@@ -120,10 +127,12 @@ def evaluate_period(data: dict) -> dict:
     # Case 2: Direct summary payload from service.summarize
     current_e = data.get("energy_kwh")
     off_hours_e = data.get("off_hours_energy_kwh", Decimal("0.0"))
-    ref_e = data.get("reference_energy_kwh") or data.get("reference_energy")
+    ref_e = data.get("reference_energy_kwh")
+    if ref_e is None:
+        ref_e = data.get("reference_energy")
 
     if current_e is not None and ref_e is not None:
-        share = data.get("allowance_share") or Decimal("0.20")
+        share = _extract_allowance_share(data)
         calc = ScoreCalculator(allowance_share=share)
         return calc.calculate(
             current_energy=current_e,
