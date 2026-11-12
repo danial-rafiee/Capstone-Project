@@ -1124,3 +1124,22 @@ Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.p
 ### Danial B - Docker database package
 
 [Setup and verification instructions](docs/capstone_b_docker.md) cover the isolated MySQL service and a B-only Python test/demo image in `docker/analytics/`. The database uses localhost port 3307 and a separate persistent volume. Compose configuration, seed SQL and the B source payload have been checked. The B image built successfully, MySQL started healthy, and all 52 B tests passed inside Docker. The seeded E/R/O database check also passed. This does not package or change A/C application code.
+
+### Danial B — 60-day simulated demo history
+
+`seed_demo_history_b.py` previews or appends **SIMULATED** history to an existing
+demo meter. It fills only uncovered intervals, preserves all original readings,
+and supports complete 24-hour, 7-day and 30-day current/reference comparisons.
+It uses an explicit Monday-Friday 09:00-17:00 Europe/Berlin simulation calendar.
+
+```bash
+python seed_demo_history_b.py --env-file docker/analytics/.env
+# After checking the preview, append missing data:
+python seed_demo_history_b.py --env-file docker/analytics/.env --apply
+```
+
+See [the full data-generation and dashboard handoff guide](docs/demo_history_b.md),
+including how to pin the endpoint with `--end`. The dashboard must use the same
+completed-reading endpoint, not a later `now()`. Repeating a fixed window inserts
+zero rows; existing E=5/R=7/O=2 sample data is preserved. This tool does not modify
+web or coach code, and Git does not transfer generated database records.
