@@ -53,6 +53,7 @@ def create_app(test_config: dict | None = None):
                 building=None,
                 meter=None,
                 time_range={"preset": "24h", "start": "-", "end": "-"},
+                latest_reading_time="-",
                 estimated_cost_eur=0.0,
                 estimated_co2_kg=0.0,
                 off_hours_energy_kwh="0",
@@ -65,7 +66,17 @@ def create_app(test_config: dict | None = None):
             )
 
         preset = request.args.get('preset', '24h')
-        end_time = datetime.now(timezone.utc)
+        reading_repo = ReadingRepository(db)
+
+        # Align end_time with the latest actual reading timestamp to ensure complete coverage
+        all_meter_readings = reading_repo.list_for_meter(meter)
+        if all_meter_readings:
+            latest_reading = all_meter_readings[-1]
+            end_time = latest_reading.get_interval()[1]
+            latest_reading_time = end_time.strftime('%Y-%m-%d %H:%M')
+        else:
+            end_time = datetime.now(timezone.utc)
+            latest_reading_time = "-"
 
         # Determine time windows based on selected preset
         if preset == '7d':
@@ -90,7 +101,6 @@ def create_app(test_config: dict | None = None):
             {day: [("09:00", "17:00")] for day in range(5)},
         )
 
-        reading_repo = ReadingRepository(db)
         current_readings = reading_repo.list_for_period(meter, current_window.start, current_window.end)
         reference_readings = reading_repo.list_for_period(meter, reference_window.start, reference_window.end)
 
@@ -195,6 +205,7 @@ def create_app(test_config: dict | None = None):
                 "start": current_window.start.strftime('%Y-%m-%d %H:%M'),
                 "end": current_window.end.strftime('%Y-%m-%d %H:%M')
             },
+            latest_reading_time=latest_reading_time,
             estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
             estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),
             off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', '0'),
