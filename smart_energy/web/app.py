@@ -1,4 +1,4 @@
-# Flask application factory for the Smart Energy Management web interface
+# Flask app setup for Smart Energy Management dashboard
 
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime, timezone, timedelta
@@ -23,12 +23,12 @@ from smart_energy.coach.coach_models import CoachRequest
 
 
 def get_db_connection() -> Database:
-    # Initialize and return database connection
+    # Helper to grab a fresh db connection
     return Database()
 
 
 def create_app(test_config: dict | None = None):
-    # Create and configure the Flask application instance
+    # Main factory function to spin up flask app
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
@@ -37,7 +37,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
-        # Handle main dashboard route and data rendering
+        # Main dashboard route: fetches meters, runs analytics, and renders UI
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
@@ -68,7 +68,8 @@ def create_app(test_config: dict | None = None):
         preset = request.args.get('preset', '24h')
         reading_repo = ReadingRepository(db)
 
-        # Align end_time with the latest actual reading timestamp to ensure complete coverage
+        # Sync end_time with the absolute last reading timestamp to keep periods complete,
+        # fallback to utc now if db is empty
         all_meter_readings = reading_repo.list_for_meter(meter)
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
@@ -78,7 +79,7 @@ def create_app(test_config: dict | None = None):
             end_time = datetime.now(timezone.utc)
             latest_reading_time = "-"
 
-        # Determine time windows based on selected preset
+        # Set up current and reference windows based on selected preset
         if preset == '7d':
             start_time = end_time - timedelta(days=7)
             ref_end_time = start_time
@@ -134,6 +135,7 @@ def create_app(test_config: dict | None = None):
             else:
                 energy_change_percent = None
         except Exception:
+            # Fallback to single summary if comparison fails due to incomplete window
             summary = service.summarize(meter, current_readings, current_window)
             comparison_data = {"status": "unavailable", "energy_saved_percent": None}
             energy_change_percent = None
@@ -174,7 +176,7 @@ def create_app(test_config: dict | None = None):
             }
         }
 
-        # Initialize Subsystem C components and generate dynamic AI coach response
+        # Hook up Subsystem C coach service to generate AI feedback dynamically
         building_id = getattr(building, 'id', 1)
         building_ctx = BuildingContext(building_id)
         calculator = ScoreCalculator()
@@ -219,7 +221,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
-        # Provide analytics JSON endpoint for external calls
+        # API endpoint for raw analytics JSON data
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None
