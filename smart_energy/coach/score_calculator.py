@@ -20,8 +20,8 @@ class ScoreCalculator:
       Score = max(0, 100 - Pg - Po)
     """
 
-    def __init__(self, allowance_share: Union[Decimal, float] = Decimal("0.10")):
-        self._allowance_share = Decimal("0.10")
+    def __init__(self, allowance_share: Union[Decimal, float] = Decimal("0.20")):
+        self._allowance_share = Decimal("0.20")
         self.set_allowance_share(allowance_share)
 
     def get_allowance_share(self) -> Decimal:

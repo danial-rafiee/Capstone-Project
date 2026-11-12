@@ -33,3 +33,9 @@ class InvalidScoreError(CoachError):
         super().__init__(msg, status_code=422)
         self.score = score
         self.message = msg
+
+class EvaluationPersistenceError(CoachError):
+    """Raised when saving or retrieving coach evaluations fails."""
+    def __init__(self, message: str = "Failed to persist coach evaluation"):
+        super().__init__(message, status_code=500)
+        self.message = message
