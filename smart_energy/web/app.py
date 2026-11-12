@@ -18,6 +18,10 @@ from smart_energy.analytics.period_analytics import PeriodAnalyticsService, to_j
 from smart_energy.web.domain.coach_panel import CoachPanel
 from smart_energy.web.errors import register_web_error_handlers
 from smart_energy.coach import evaluate_period
+from smart_energy.coach.coach_service import CoachService
+from smart_energy.coach.score_calculator import ScoreCalculator
+from smart_energy.coach.building_context import BuildingContext
+from smart_energy.coach.coach_models import CoachRequest
 
 
 def get_db_connection() -> Database:
@@ -40,14 +44,14 @@ def create_app(test_config: dict | None = None):
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
 
-        coach = CoachPanel(question="How can we optimize energy consumption?", answer="Reduce peak hour usage.")
-
         if not building or not meter:
+            coach_default = CoachPanel(question="How can we optimize energy consumption?",
+                                       answer="No meter data available.")
             return render_template(
                 "dashboard.html",
                 building_name="Not Found",
                 summary={},
-                coach=coach,
+                coach=coach_default,
                 building=None,
                 meter=None,
                 time_range={"preset": "24h", "start": "-", "end": "-"},
@@ -120,11 +124,43 @@ def create_app(test_config: dict | None = None):
         coach_data = evaluate_period(summary_payload)
         sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
 
+        # --- Subsystem C AI Coach Integration (Interactive) ---
+        user_question = request.args.get('question',
+                                         'How can we optimize energy consumption during off-hours without violating essential loads?')
+
+        calculator = ScoreCalculator()
+        coach_service = CoachService(calculator=calculator)
+
+        period_label = f"{preset}: {window.start.strftime('%Y-%m-%d %H:%M')} to {window.end.strftime('%Y-%m-%d %H:%M')}"
+        period_summary_for_coach = {
+            "period": period_label,
+            "score": sustainability_score,
+            "penalties": {
+                "growth_penalty": coach_data.get("growth_penalty", 0.0) if isinstance(coach_data, dict) else 0.0,
+                "off_hours_penalty": coach_data.get("off_hours_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
+            }
+        }
+
+        building_id = getattr(building, 'id', 1)
+        building_ctx = BuildingContext(building_id)
+        coach_req = CoachRequest(
+            question=user_question,
+            context=building_ctx,
+            period_summary=period_summary_for_coach
+        )
+
+        coach_response = coach_service.answer_question(coach_req)
+
+        coach_panel_data = CoachPanel(
+            question=user_question,
+            answer=coach_response.answer
+        )
+
         return render_template(
             "dashboard.html",
             building_name=building.get_name(),
             summary=summary_payload,
-            coach=coach,
+            coach=coach_panel_data,
             building=building,
             meter=meter,
             time_range={
