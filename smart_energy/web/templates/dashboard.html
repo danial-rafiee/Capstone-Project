@@ -44,8 +44,8 @@
       margin-top: 4px;
     }
 
-    /* SVG line chart styling */
-    .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 15px 15px; margin-top: 15px; }
+    /* SVG line chart styling with horizontal scroll support */
+    .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 35px 15px; margin-top: 15px; overflow-x: auto; }
   </style>
 </head>
 <body>
@@ -74,10 +74,10 @@
   <section>
     <h2>Metrics Overview</h2>
     <div class="cards-grid">
-      <!-- Card 1: Latest interval -->
+      <!-- Card 1: Latest interval (updated to 2 decimal places) -->
       <div class="metric-card">
         <h3>Latest interval</h3>
-        <p class="value">{{ '%.1f'|format(latest_interval_kwh) }} kWh</p>
+        <p class="value">{{ '%.2f'|format(latest_interval_kwh) }} kWh</p>
         <p class="subtext">Auto-refresh active</p>
       </div>
 
@@ -126,53 +126,60 @@
     </div>
   </section>
 
-  <!-- SVG Line Chart section -->
+  <!-- SVG Line Chart section with sparse clean date labels -->
   <section>
     <h2>Energy Consumption Trend</h2>
     {% if energy_series %}
       <div class="chart-container">
-        <svg viewBox="0 0 650 240" width="100%" height="240" style="overflow: visible;">
+        <svg viewBox="0 0 1200 260" width="100%" height="260" style="overflow: visible; min-width: 900px;">
           <text x="60" y="15" font-size="11" font-weight="bold" fill="#495b55">Energy (kWh)</text>
-          <text x="620" y="230" font-size="11" font-weight="bold" text-anchor="end" fill="#495b55">Time</text>
+          <text x="1170" y="240" font-size="11" font-weight="bold" text-anchor="end" fill="#495b55">Time</text>
 
           <line x1="60" y1="25" x2="60" y2="180" stroke="#d4e1dd" stroke-width="2" />
-          <line x1="60" y1="180" x2="620" y2="180" stroke="#d4e1dd" stroke-width="2" />
+          <line x1="60" y1="180" x2="1170" y2="180" stroke="#d4e1dd" stroke-width="2" />
 
-          <line x1="60" y1="25" x2="620" y2="25" stroke="#eef2f1" stroke-dasharray="4" />
-          <line x1="60" y1="102" x2="620" y2="102" stroke="#eef2f1" stroke-dasharray="4" />
+          <line x1="60" y1="25" x2="1170" y2="25" stroke="#eef2f1" stroke-dasharray="4" />
+          <line x1="60" y1="102" x2="1170" y2="102" stroke="#eef2f1" stroke-dasharray="4" />
 
           <text x="50" y="29" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy) }}</text>
           <text x="50" y="106" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy / 2) }}</text>
           <text x="50" y="184" font-size="10" text-anchor="end" fill="#6c757d">0.0</text>
-
-          <text x="60" y="200" font-size="10" text-anchor="start" fill="#6c757d">{{ time_range.start }}</text>
-          <text x="620" y="200" font-size="10" text-anchor="end" fill="#6c757d">{{ time_range.end }}</text>
 
           {% set count = energy_series | length %}
           {% set points_list = [] %}
           {% for pt in energy_series %}
             {% set val = pt.energy_kwh | float %}
             {% if count > 1 %}
-              {% set x = 60 + (loop.index0 / (count - 1)) * 560 %}
+              {% set x = 60 + (loop.index0 / (count - 1)) * 1110 %}
             {% else %}
-              {% set x = 340 %}
+              {% set x = 615 %}
             {% endif %}
             {% set y = 180 - (val / max_energy) * 155 %}
             {% if points_list.append(x ~ ',' ~ y) %}{% endif %}
+
+            {% if loop.first or loop.last or loop.index0 == (count * 0.25)|int or loop.index0 == (count * 0.50)|int or loop.index0 == (count * 0.75)|int %}
+              <text x="{{ x }}" y="200" font-size="10" fill="#6c757d" text-anchor="middle">
+                {{ pt.start | replace('T', ' ') | truncate(16, True, '') }}
+              </text>
+              <line x1="{{ x }}" y1="180" x2="{{ x }}" y2="185" stroke="#6c757d" stroke-width="1.5" />
+            {% endif %}
           {% endfor %}
 
-          <polyline fill="none" stroke="#007bff" stroke-width="2.5" points="{{ points_list | join(' ') }}" />
+          <!-- Main trend polyline -->
+          <polyline fill="none" stroke="#007bff" stroke-width="2" points="{{ points_list | join(' ') }}" />
 
+          <!-- Data points with clean datetime tooltips -->
           {% for pt in energy_series %}
             {% set val = pt.energy_kwh | float %}
             {% if count > 1 %}
-              {% set x = 60 + (loop.index0 / (count - 1)) * 560 %}
+              {% set x = 60 + (loop.index0 / (count - 1)) * 1110 %}
             {% else %}
-              {% set x = 340 %}
+              {% set x = 615 %}
             {% endif %}
             {% set y = 180 - (val / max_energy) * 155 %}
-            <circle cx="{{ x }}" cy="{{ y }}" r="4" fill="#007bff" />
-            <text x="{{ x }}" y="{{ y - 8 }}" font-size="9" text-anchor="middle" fill="#495b55">{{ '%.1f'|format(val) }}</text>
+            <circle cx="{{ x }}" cy="{{ y }}" r="3.5" fill="#007bff">
+              <title>{{ pt.start | replace('T', ' ') | truncate(16, True, '') }}: {{ '%.2f'|format(val) }} kWh</title>
+            </circle>
           {% endfor %}
         </svg>
       </div>
