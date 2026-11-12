@@ -14,7 +14,7 @@ class BuildingContext:
         if not isinstance(building_id, int) or building_id <= 0:
             raise ValueError("Building ID must be a positive integer.")
         self._building_id = building_id
-        self._occupied_hours = occupied_hours or "Mon-Fri 09:00-17:00"
+        self._occupied_hours = occupied_hours or "Mon-Fri 09:00-17:00 (Europe/Berlin)"
         self._essential_loads = essential_loads or []
 
     def get_building_id(self) -> int:

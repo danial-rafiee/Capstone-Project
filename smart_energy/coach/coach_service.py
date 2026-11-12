@@ -165,7 +165,7 @@ class CoachService:
         growth_p = penalties.get("growth_penalty", 0.0)
         off_hours_p = penalties.get("off_hours_penalty", 0.0)
 
-        occupied_hours = req.context.get_occupied_hours() if req.context else "Mon-Fri 09:00-17:00"
+        occupied_hours = req.context.get_occupied_hours() if req.context else "Mon-Fri 09:00-17:00 (Europe/Berlin)"
         essential_loads = req.context.get_essential_loads() if req.context else ["Server Room", "Emergency Lighting"]
         essential_str = ", ".join(essential_loads) if essential_loads else "Server Room, Emergency Lighting"
 
@@ -177,7 +177,7 @@ class CoachService:
                     "Provide concise, actionable, and non-destructive advice. "
                     f"Operational constraints: Occupied hours are '{occupied_hours}'. "
                     f"Essential loads that must NEVER be powered down or curtailed: {essential_str}. "
-                    "Always explicitly state the period covered and relate advice to savings. Write in plain text with short bullet points; do NOT use Markdown tables or ### headers."
+                    "Always explicitly state the period covered and relate advice to savings. Never invent or fabricate savings percentages or CO2 reduction numbers without explicit backing data in the context. Write in plain text with short bullet points; do NOT use Markdown tables or ### headers."
                 )
                 user_prompt = (
                     f"Building Period: {period_label}. Sustainability Score: {score}/100. "

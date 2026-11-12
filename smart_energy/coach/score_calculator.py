@@ -109,7 +109,8 @@ def evaluate_period(data: dict) -> dict:
         if status != "ready":
             return {"score": None, "status": status}
         inputs = data.get("score_inputs") or {}
-        calc = ScoreCalculator()
+        share = data.get("allowance_share") or inputs.get("allowance_share") or Decimal("0.20")
+        calc = ScoreCalculator(allowance_share=share)
         return calc.calculate(
             current_energy=inputs.get("current_energy"),
             reference_energy=inputs.get("reference_energy"),
@@ -122,7 +123,8 @@ def evaluate_period(data: dict) -> dict:
     ref_e = data.get("reference_energy_kwh") or data.get("reference_energy")
 
     if current_e is not None and ref_e is not None:
-        calc = ScoreCalculator()
+        share = data.get("allowance_share") or Decimal("0.20")
+        calc = ScoreCalculator(allowance_share=share)
         return calc.calculate(
             current_energy=current_e,
             reference_energy=ref_e,
