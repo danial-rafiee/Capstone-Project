@@ -74,18 +74,17 @@
   <section>
     <h2>Metrics Overview</h2>
     <div class="cards-grid">
-      <!-- Card 1: Latest interval (updated to 2 decimal places) -->
+      <!-- Card 1: Latest interval -->
       <div class="metric-card">
         <h3>Latest interval</h3>
         <p class="value">{{ '%.2f'|format(latest_interval_kwh) }} kWh</p>
-        <p class="subtext">Auto-refresh active</p>
       </div>
 
       <!-- Card 2: Energy consumption -->
       <div class="metric-card">
         <h3>Energy</h3>
-        <p class="value">{{ summary.energy_kwh | round(1) if summary.energy_kwh is not none else '0' }} kWh</p>
-        <p class="subtext">Selected period</p>
+        <p class="value">{{ '%.2f'|format(summary.energy_kwh) if summary.energy_kwh is not none else '0.00' }} kWh</p>
+        <p class="subtext">Based on selected period</p>
       </div>
 
       <!-- Card 3: Estimated cost -->
@@ -121,7 +120,7 @@
         <p class="value">
           {{ '%.1f'|format(sustainability_score) if sustainability_score is not none else '--' }} / 100
         </p>
-        <p class="subtext">Subsystem C integration</p>
+        <p class="subtext">Based on efficiency & operating schedule</p>
       </div>
     </div>
   </section>
@@ -190,7 +189,7 @@
 
   <!-- AI Sustainability Coach section -->
   <section>
-    <h2>AI Sustainability Coach (Subsystem C)</h2>
+    <h2>AI Sustainability Coach</h2>
 
     <form method="GET" action="/" style="margin: 15px 0;">
       <input type="hidden" name="preset" value="{{ time_range.preset }}">
