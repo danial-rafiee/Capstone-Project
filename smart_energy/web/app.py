@@ -24,12 +24,10 @@ from smart_energy.coach.coach_models import CoachRequest
 
 
 def get_db_connection() -> Database:
-    # Quick database connection helper
     return Database()
 
 
 def create_app(test_config: dict | None = None):
-    # Flask app factory
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
@@ -38,13 +36,11 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/")
     def home():
-        # Parse query parameters via dashboard view
         view = DashboardView()
         params = view.handle_request(request.args)
         preset = params["preset"]
         user_question = params["question"]
 
-        # Main dashboard route: fetches meters, runs analytics, and renders UI
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
@@ -61,33 +57,32 @@ def create_app(test_config: dict | None = None):
                 meter=None,
                 time_range={"preset": "24h", "start": "-", "end": "-"},
                 latest_reading_time="-",
-                estimated_cost_eur=0.0,
-                estimated_co2_kg=0.0,
+                estimated_cost_eur=None,
+                estimated_co2_kg=None,
                 off_hours_energy_kwh=None,
                 coverage_percent=0.0,
                 energy_series=[],
                 max_energy=1.0,
                 latest_interval_kwh=None,
                 sustainability_score=None,
-                growth_penalty=0.0,
-                off_hours_penalty=0.0,
+                growth_penalty=None,
+                off_hours_penalty=None,
                 energy_change_percent=None
             )
 
         reading_repo = ReadingRepository(db)
         all_meter_readings = reading_repo.list_for_meter(meter)
 
+        # Derive end_time strictly from the end of the last complete reading interval
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
             start_time_interval = latest_reading.get_interval()[0]
             latest_reading_time = start_time_interval.strftime('%Y-%m-%d %H:%M')
+            end_time = latest_reading.get_interval()[1]
         else:
+            end_time = datetime.now(timezone.utc)
             latest_reading_time = "-"
 
-        # Synchronize dashboard end_time with API using datetime.now(timezone.utc) (Item 3)
-        end_time = datetime.now(timezone.utc)
-
-        # Set up current and reference windows based on selected preset
         if preset == '7d':
             start_time = end_time - timedelta(days=7)
             ref_end_time = start_time
@@ -123,6 +118,8 @@ def create_app(test_config: dict | None = None):
         service = PeriodAnalyticsService(settings, schedule)
 
         reference_energy_val = None
+        comparison_result_full = None
+        comparison_status = "unavailable"
         try:
             comparison_result = service.compare(
                 meter=meter,
@@ -131,12 +128,14 @@ def create_app(test_config: dict | None = None):
                 current_window=current_window,
                 reference_window=reference_window
             )
+            comparison_result_full = comparison_result
             summary = comparison_result["current"]
             reference_summary = comparison_result["reference"]
             if reference_summary and reference_summary.get("energy_kwh") is not None:
                 reference_energy_val = float(reference_summary.get("energy_kwh"))
 
             comparison_data = comparison_result["comparison"]
+            comparison_status = comparison_data.get("status", "unavailable")
             energy_saved_percent = comparison_data.get("energy_saved_percent")
             if energy_saved_percent is not None:
                 energy_change_percent = float(-energy_saved_percent)
@@ -149,7 +148,6 @@ def create_app(test_config: dict | None = None):
 
         summary_payload = to_json_ready(summary)
 
-        # Prevent displaying fake zero for missing energy values (Item 4)
         raw_energy = summary_payload.get('energy_kwh')
         summary_payload['energy_kwh'] = float(raw_energy) if raw_energy is not None else None
 
@@ -164,17 +162,26 @@ def create_app(test_config: dict | None = None):
         latest_reading_val = float(series_list[-1].get('energy_kwh')) if series_list and series_list[-1].get(
             'energy_kwh') is not None else None
 
-        # Do not fallback to current energy when reference is missing (Item 2)
         if reference_energy_val is not None:
             summary_payload["reference_energy_kwh"] = reference_energy_val
         else:
             summary_payload["reference_energy_kwh"] = None
 
-        coach_data = evaluate_period(summary_payload)
-        sustainability_score = coach_data.get("score") if isinstance(coach_data, dict) else None
+        # Pass full comparison result / payload respecting score_inputs_status & availability
+        sustainability_score = None
+        growth_penalty_val = None
+        off_hours_penalty_val = None
 
-        growth_penalty_val = coach_data.get("growth_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
-        off_hours_penalty_val = coach_data.get("off_hours_penalty", 0.0) if isinstance(coach_data, dict) else 0.0
+        if comparison_status != "unavailable" and coverage_percent > 0 and comparison_result_full is not None:
+            # Provide full comparison payload structure to evaluate_period
+            eval_payload = dict(summary_payload)
+            if isinstance(comparison_result_full, dict):
+                eval_payload["comparison"] = comparison_result_full.get("comparison", {})
+            coach_data = evaluate_period(eval_payload)
+            if isinstance(coach_data, dict) and coach_data.get("score") is not None:
+                sustainability_score = coach_data.get("score")
+                growth_penalty_val = coach_data.get("growth_penalty", 0.0)
+                off_hours_penalty_val = coach_data.get("off_hours_penalty", 0.0)
 
         start_str = current_window.start.strftime("%Y-%m-%d %H:%M")
         end_str = current_window.end.strftime("%Y-%m-%d %H:%M")
@@ -214,6 +221,9 @@ def create_app(test_config: dict | None = None):
             status=coach_status
         )
 
+        est_cost = summary_payload.get('estimated_cost_eur')
+        est_co2 = summary_payload.get('estimated_co2_kg')
+
         return render_template(
             "dashboard.html",
             building_name=building.get_name(),
@@ -227,8 +237,8 @@ def create_app(test_config: dict | None = None):
                 "end": current_window.end.strftime('%Y-%m-%d %H:%M')
             },
             latest_reading_time=latest_reading_time,
-            estimated_cost_eur=float(summary_payload.get('estimated_cost_eur') or 0),
-            estimated_co2_kg=float(summary_payload.get('estimated_co2_kg') or 0),
+            estimated_cost_eur=float(est_cost) if est_cost is not None else None,
+            estimated_co2_kg=float(est_co2) if est_co2 is not None else None,
             off_hours_energy_kwh=summary_payload.get('off_hours_energy_kwh', None),
             coverage_percent=coverage_percent,
             energy_series=series_list,
@@ -273,7 +283,14 @@ def create_app(test_config: dict | None = None):
             return {"error": "Building or Meter not found"}, 404
 
         preset = request.args.get('preset', '24h')
-        end_time = datetime.now(timezone.utc)
+
+        # Synchronize API end_time with dashboard logic (using last complete reading interval)
+        reading_repo = ReadingRepository(db)
+        all_meter_readings = reading_repo.list_for_meter(meter)
+        if all_meter_readings:
+            end_time = all_meter_readings[-1].get_interval()[1]
+        else:
+            end_time = datetime.now(timezone.utc)
 
         if preset == '7d':
             start_time = end_time - timedelta(days=7)
@@ -290,7 +307,7 @@ def create_app(test_config: dict | None = None):
             {day: [("09:00", "17:00")] for day in range(5)},
         )
 
-        readings = ReadingRepository(db).list_for_period(meter, window.start, window.end)
+        readings = reading_repo.list_for_period(meter, window.start, window.end)
         settings = EnergySettings(
             building=building,
             tariff=Decimal("0.30"),
