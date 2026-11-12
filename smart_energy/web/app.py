@@ -179,7 +179,7 @@ def create_app(test_config: dict | None = None):
             }
         }
 
-        # Hook up Subsystem C coach service to generate AI feedback dynamically
+        # Hook up Subsystem C coach service to generate AI feedback dynamically with fallback (NFR-A5)
         building_id = getattr(building, 'id', 1)
         building_ctx = BuildingContext(building_id)
         calculator = ScoreCalculator()
@@ -190,8 +190,12 @@ def create_app(test_config: dict | None = None):
             context=building_ctx,
             period_summary=period_summary_for_coach
         )
-        coach_response = coach_service.answer_question(coach_req)
-        answer_text = coach_response.answer
+
+        try:
+            coach_response = coach_service.answer_question(coach_req)
+            answer_text = coach_response.answer
+        except Exception:
+            answer_text = "AI coach is currently unavailable, but energy metrics and scores are fully operational."
 
         coach_panel_data = CoachPanel(
             question=user_question,
