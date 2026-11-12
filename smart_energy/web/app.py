@@ -24,12 +24,12 @@ from smart_energy.coach.coach_models import CoachRequest
 
 
 def get_db_connection() -> Database:
-    # Helper to grab a fresh db connection
+    # quick db connection helper
     return Database()
 
 
 def create_app(test_config: dict | None = None):
-    # Main factory function to spin up flask app
+    # flask app factory
     app = Flask(__name__)
     if test_config is not None:
         app.config.update(test_config)
@@ -74,8 +74,7 @@ def create_app(test_config: dict | None = None):
 
         reading_repo = ReadingRepository(db)
 
-        # Sync end_time with the absolute last reading timestamp to keep periods complete,
-        # fallback to utc now if db is empty
+        # align end time with the latest reading if possible
         all_meter_readings = reading_repo.list_for_meter(meter)
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
@@ -179,7 +178,7 @@ def create_app(test_config: dict | None = None):
             }
         }
 
-        # Hook up Subsystem C coach service to generate AI feedback dynamically with fallback (NFR-A5)
+        # call AI coach service with safe fallback
         building_id = getattr(building, 'id', 1)
         building_ctx = BuildingContext(building_id)
         calculator = ScoreCalculator()
@@ -195,6 +194,7 @@ def create_app(test_config: dict | None = None):
             coach_response = coach_service.answer_question(coach_req)
             answer_text = coach_response.answer
         except Exception:
+            # fallback message if AI coach fails
             answer_text = "AI coach is currently unavailable, but energy metrics and scores are fully operational."
 
         coach_panel_data = CoachPanel(
@@ -228,7 +228,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/latest")
     def api_latest():
-        # API endpoint for auto-refreshing the latest interval energy value
+        # get latest reading for auto refresh card
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
@@ -244,7 +244,8 @@ def create_app(test_config: dict | None = None):
 
         latest_reading = all_meter_readings[-1]
         try:
-            val = float(latest_reading.energy_kwh) if hasattr(latest_reading, 'energy_kwh') else 0.0
+            # use getter method since reading uses private fields
+            val = float(latest_reading.get_energy_kwh()) if hasattr(latest_reading, 'get_energy_kwh') else 0.0
         except Exception:
             val = 0.0
 
@@ -252,7 +253,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
-        # API endpoint for raw analytics JSON data
+        # return json analytics data
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(building_id)
         meter = MeterRepository(db).get_by_id(meter_id, building) if building else None
