@@ -33,23 +33,36 @@ class CoachService:
             self,
             calculator: ScoreCalculator,
             api_key: Optional[str] = None,
-            model_name: str = "gpt-4o-mini"
+            model_name: Optional[str] = None
     ):
         if not isinstance(calculator, ScoreCalculator):
             raise TypeError("calculator must be an instance of ScoreCalculator.")
 
         self._calculator = calculator
         self._last_status = "ready"
-        self._model_name = model_name
 
-        # Read API key securely from argument or environment (NFR-C1)
-        self._api_key = api_key or os.getenv("OPENAI_API_KEY")
+        groq_key = os.getenv("GROQ_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        openai_key = api_key or os.getenv("OPENAI_API_KEY")
+
+        self._api_key = groq_key or gemini_key or openai_key
+        if groq_key:
+            base_url = "https://api.groq.com/openai/v1"
+            default_model = "openai/gpt-oss-20b"
+        elif gemini_key:
+            base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+            default_model = "gemini-2.5-flash"
+        else:
+            base_url = None
+            default_model = "gpt-4o-mini"
+
+        self._model_name = model_name or default_model
         self._client = None
         if HAS_OPENAI and self._api_key:
             try:
-                self._client = OpenAI(api_key=self._api_key)
+                self._client = OpenAI(api_key=self._api_key, base_url=base_url)
             except Exception as exc:
-                logger.warning(f"Failed to initialize OpenAI client: {exc}")
+                logger.warning(f"Failed to initialize AI client: {exc}")
                 self._client = None
 
     def get_calculator(self) -> ScoreCalculator:
@@ -164,7 +177,7 @@ class CoachService:
                     "Provide concise, actionable, and non-destructive advice. "
                     f"Operational constraints: Occupied hours are '{occupied_hours}'. "
                     f"Essential loads that must NEVER be powered down or curtailed: {essential_str}. "
-                    "Always explicitly state the period covered and relate advice to savings."
+                    "Always explicitly state the period covered and relate advice to savings. Write in plain text with short bullet points; do NOT use Markdown tables or ### headers."
                 )
                 user_prompt = (
                     f"Building Period: {period_label}. Sustainability Score: {score}/100. "
@@ -178,7 +191,7 @@ class CoachService:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    max_tokens=250,
+                    max_tokens=350,
                     temperature=0.3
                 )
                 answer_content = response.choices[0].message.content.strip()
