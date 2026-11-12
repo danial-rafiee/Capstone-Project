@@ -222,6 +222,30 @@ def create_app(test_config: dict | None = None):
             energy_change_percent=energy_change_percent
         )
 
+    @app.get("/api/latest")
+    def api_latest():
+        # API endpoint for auto-refreshing the latest interval energy value
+        db = get_db_connection()
+        building = BuildingRepository(db).get_by_id(1)
+        meter = MeterRepository(db).get_by_id(101, building) if building else None
+
+        if not building or not meter:
+            return jsonify({"latest_interval_kwh": 0.0})
+
+        reading_repo = ReadingRepository(db)
+        all_meter_readings = reading_repo.list_for_meter(meter)
+
+        if not all_meter_readings:
+            return jsonify({"latest_interval_kwh": 0.0})
+
+        latest_reading = all_meter_readings[-1]
+        try:
+            val = float(latest_reading.energy_kwh) if hasattr(latest_reading, 'energy_kwh') else 0.0
+        except Exception:
+            val = 0.0
+
+        return jsonify({"latest_interval_kwh": val})
+
     @app.get("/api/analytics/<int:building_id>/<int:meter_id>")
     def api_analytics(building_id: int, meter_id: int):
         # API endpoint for raw analytics JSON data

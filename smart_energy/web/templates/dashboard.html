@@ -206,5 +206,26 @@
     </div>
   </section>
 
+  <script>
+    // Periodic fetch to update the latest interval energy card dynamically every 10 minutes
+    setInterval(async function() {
+      try {
+        let response = await fetch('/api/latest');
+        if (response.ok) {
+          let data = await response.json();
+          let cards = document.querySelectorAll('.metric-card');
+          if (cards.length > 0 && data.latest_interval_kwh !== undefined) {
+            let valueEl = cards[0].querySelector('.value');
+            if (valueEl) {
+              valueEl.innerText = data.latest_interval_kwh.toFixed(2) + ' kWh';
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching latest interval data:', error);
+      }
+    }, 600000);
+  </script>
+
 </body>
 </html>
