@@ -1,4 +1,3 @@
-# smart_energy/coach/coach_service.py
 """Subsystem C Core Coaching Service.
 
 Integrates Python-based sustainability scoring with OpenAI interactive coaching
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Optional OpenAI import for production resilience
 try:
     from openai import OpenAI
+
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
@@ -30,10 +30,10 @@ class CoachService:
     """Manages sustainability assessments and AI-driven interactive advice."""
 
     def __init__(
-        self,
-        calculator: ScoreCalculator,
-        api_key: Optional[str] = None,
-        model_name: str = "gpt-4o-mini"
+            self,
+            calculator: ScoreCalculator,
+            api_key: Optional[str] = None,
+            model_name: str = "gpt-4o-mini"
     ):
         if not isinstance(calculator, ScoreCalculator):
             raise TypeError("calculator must be an instance of ScoreCalculator.")
@@ -41,7 +41,7 @@ class CoachService:
         self._calculator = calculator
         self._last_status = "ready"
         self._model_name = model_name
-        
+
         # Read API key securely from argument or environment (NFR-C1)
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         self._client = None
@@ -67,19 +67,61 @@ class CoachService:
         return self._last_status
 
     def assess_sustainability(
-        self,
-        current_energy: Union[Decimal, float],
-        reference_energy: Union[Decimal, float],
-        off_hours_energy: Union[Decimal, float]
+            self,
+            current_energy: Union[Decimal, float],
+            reference_energy: Union[Decimal, float],
+            off_hours_energy: Union[Decimal, float]
     ) -> Dict[str, Any]:
         """Calculates sustainability score and penalties independently in Python (FR-C2)."""
         evaluation = self._calculator.calculate(current_energy, reference_energy, off_hours_energy)
         self._last_status = evaluation.get("status", "error")
         return evaluation
 
+    def _build_contextual_fallback(
+            self,
+            question: str,
+            period_label: str,
+            score: Any,
+            growth_p: float,
+            off_hours_p: float,
+            occupied_hours: str,
+            essential_str: str
+    ) -> str:
+        """Generates intent-aware deterministic advice when OpenAI API is not configured."""
+        q_lower = question.lower()
+        score_text = f"{score}/100" if score is not None else "unavailable (insufficient period data)"
+
+        if any(word in q_lower for word in ["off-hour", "night", "weekend", "after work", "penalty"]):
+            insight = (
+                f"To minimize your off-hours penalty ({off_hours_p}), audit standby HVAC, lighting, and non-critical "
+                f"workstations outside occupied hours ({occupied_hours}). Essential loads ({essential_str}) remain protected."
+            )
+        elif any(word in q_lower for word in ["growth", "increase", "change", "reference", "compare", "why"]):
+            insight = (
+                f"Your growth penalty is {growth_p} compared to the reference baseline for {period_label}. "
+                f"Check peak daytime demand spikes during {occupied_hours} and reschedule heavy non-essential batch tasks."
+            )
+        elif any(word in q_lower for word in ["essential", "comfort", "equipment", "server", "turn off"]):
+            insight = (
+                f"Operational rules strictly protect essential equipment ({essential_str}) and thermal/lighting comfort "
+                f"during {occupied_hours}. Savings must only target non-essential idle loads."
+            )
+        elif any(word in q_lower for word in ["improve", "save", "reduce", "action", "tip", "recommend"]):
+            insight = (
+                f"Action plan for {period_label}: 1) Enforce automated shutdown schedules outside {occupied_hours}, "
+                f"2) Keep {essential_str} isolated on dedicated circuits, and 3) Monitor phantom standby loads."
+            )
+        else:
+            insight = (
+                f"Regarding '{question.strip()}': For {period_label}, maintain comfort during {occupied_hours} "
+                f"and keep {essential_str} running continuously while trimming non-essential off-hours consumption."
+            )
+
+        return f"Advice for {period_label} (Score: {score_text}): {insight}"
+
     def answer_question(self, request: Union[CoachRequest, Dict[str, Any], str], **kwargs) -> CoachResponse:
         """Generates contextual coaching advice honoring comfort and constraints (FR-C4..FR-C9).
-        
+
         Supports CoachRequest objects as well as legacy parameter calls.
         """
         # Adapt legacy signature: answer_question(question, context, period_summary)
@@ -110,9 +152,9 @@ class CoachService:
         growth_p = penalties.get("growth_penalty", 0.0)
         off_hours_p = penalties.get("off_hours_penalty", 0.0)
 
-        occupied_hours = req.context.get_occupied_hours() if req.context else "Standard business hours"
+        occupied_hours = req.context.get_occupied_hours() if req.context else "Mon-Fri 08:00-18:00"
         essential_loads = req.context.get_essential_loads() if req.context else ["Server Room", "Emergency Lighting"]
-        essential_str = ", ".join(essential_loads)
+        essential_str = ", ".join(essential_loads) if essential_loads else "Server Room, Emergency Lighting"
 
         # 1. Attempt OpenAI call if configured (FR-C1)
         if self._client:
@@ -151,11 +193,15 @@ class CoachService:
             except Exception as api_err:
                 logger.warning(f"OpenAI service unavailable, invoking fallback: {api_err}")
 
-        # 2. Rule-based Fallback (NFR-C7: Keep score available and provide deterministic advice)
-        fallback_advice = (
-            f"Advice for {period_label}: Current sustainability score is {score}/100. "
-            f"Occupied hours ({occupied_hours}) and essential equipment ({essential_str}) are strictly respected. "
-            "Review non-essential off-hours consumption to reduce penalties and carbon footprint."
+        # 2. Intent-aware Rule-based Fallback (NFR-C7)
+        fallback_advice = self._build_contextual_fallback(
+            question=req.question,
+            period_label=period_label,
+            score=score,
+            growth_p=growth_p,
+            off_hours_p=off_hours_p,
+            occupied_hours=occupied_hours,
+            essential_str=essential_str
         )
         self._last_status = "fallback" if self._client else "ready"
         return CoachResponse(
