@@ -14,6 +14,8 @@ and AI advice. The current implementation is the initial OOP learning stage.
 
 ## Project Structure
 
+This tree lists all files tracked in the current repository checkout, including the Capstone additions. Local environments, caches and generated database data are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports.
+
 ```text
 Capstone-Project/
 ├── docker/
@@ -272,7 +274,7 @@ python -m pytest tests/test_web_ha4.py -v
 
 ## Capstone - Danial: selected-period analytics (B)
 
-Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data, reference comparisons and configurable local-calendar off-hours energy (O). Ready E/R/O inputs are supplied for C; existing A/C code is unchanged and integration is pending.
+Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data, reference comparisons and configurable local-calendar off-hours energy (O). The current Flask dashboard uses B's period queries and comparisons for the 24h, 7d and 30d presets, and passes the comparison payload to C's `evaluate_period` for sustainability scoring. B supplies current energy (E), reference energy (R) and off-hours energy (O); C owns the scoring logic and AI advice.
 
 [B setup, data contract, limitations and integration instructions](docs/capstone_b.md)
 
@@ -408,13 +410,14 @@ classDiagram
 
 ### Key Capstone Enhancements
 
-- **Live Multi-Provider AI Coaching (`coach_service.py`):**
-  - Connects to OpenAI-compatible LLM endpoints, prioritizing `GROQ_API_KEY` (using `openai/gpt-oss-20b` with `max_tokens=4096` so reasoning models never truncate or return empty output), with automatic fallback support for `GEMINI_API_KEY` (`gemini-2.5-flash`) and `OPENAI_API_KEY` (`gpt-4o-mini`).
-- **Resilient Intent-Aware Fallback (`NFR-C7`):**
-  - Automatically switches to deterministic, intent-aware coaching advice (`Status: fallback`) when no API key is configured, the external service is unreachable, or the API returns an empty string—guaranteeing that the web dashboard never crashes or displays an empty answer box.
-- **Operational Guardrails & Anti-Hallucination Rules:**
-  - Strictly protects essential building loads (`Server Room`, `Emergency Lighting`) and respects occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`).
-  - Explicitly states the evaluated time window (`24h`, `7d`, or `30d`) in every response and prohibits fabricating unverified energy-saving percentages or CO2 reduction numbers.
+- **Multi-Provider LLM Configuration & Rule-Based Fallback (`coach_service.py`):**
+  - Selects a single OpenAI-compatible LLM provider at initialization based on available environment variables in priority order (`GROQ_API_KEY` -> `GEMINI_API_KEY` -> `OPENAI_API_KEY`) and configures `max_tokens=4096` to allocate a larger output budget for reasoning models.
+  - Detects missing API keys, connection/API errors, or empty model responses and switches directly to deterministic, intent-aware rule-based coaching (`Status: fallback`), ensuring the dashboard always displays an actionable response.
+- **Web Integration & API Blueprint Status:**
+  - `CoachService` is directly integrated into the main Flask web dashboard (`smart_energy/web/app.py`) to power the interactive AI Coach panel.
+  - The standalone evaluation history REST blueprint (`coach_api.py`, `GET /api/coach/evaluations/<building_id>`) is implemented and verified via unit tests, though not yet registered in the main `app.py` factory.
+- **Prompt Rules & Operational Constraints:**
+  - Guides live LLM responses through explicit system prompt rules to respect essential building loads (`Server Room`, `Emergency Lighting`), occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`), and the evaluated time window (`24h`, `7d`, or `30d`), while instructing the model not to fabricate unverified savings or CO2 percentages.
 - **High-Precision Scoring & Missing-Data Safety (`score_calculator.py`):**
   - Calculates normalized sustainability scores (`0.0`–`100.0`), growth penalties ($P_g$), and off-hours penalties ($P_o$) using Python `Decimal` arithmetic.
   - Gracefully handles periods with missing or zero reference energy (`score: None`, displayed as `--/100` in the UI) while keeping interactive coaching operational.
@@ -431,12 +434,14 @@ python run_web.py
 # Windows (Command Prompt):
 set GROQ_API_KEY=your_groq_api_key_here
 python run_web.py
+
+
 ```
 
-To verify Subsystem C scoring, context constraints, fallback resilience, and web panel integration:
+To verify Subsystem C scoring bounds, domain exceptions, and evaluation API endpoints (tests/test_ha4_coach.py) along with dashboard coach panel rendering (tests/test_web_ha4.py):
 
 ```bash
-python -m pytest -k "coach or score or building_context" -v
+python -m pytest tests/test_ha4_coach.py tests/test_web_ha4.py -v
 ```
 
 Presentation Link:
@@ -447,8 +452,6 @@ Presentation Link:
  ## =====HA1=====
 `Capstone-Project` is the shared repository name and the local project folder
 name. The HA1 submission branch remains `Homeworkassignment001`.
-
-This tree lists the versioned project files in `Homeworkassignment004`. Local virtual environments and IDE settings are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports. A/C documentation is maintained by their respective authors.
 
 ## Run the current example
 
@@ -1354,11 +1357,12 @@ classDiagram
     CoachService ..> CoachError : raises on empty question
     CoachEvaluationRepository ..> BuildingNotFoundError : raises on missing context
 ```
+
 ### HA4 Implementation Highlights
 
-- **Domain-Specific Exceptions (`coach_exceptions.py`):**
+- **Domain-Specific Exceptions (`exceptions.py`):**
   - **`CoachError`:** Base exception for all coaching and sustainability evaluation domain anomalies.
-  - **`BuildingNotFoundError`:** Raised when attempting to fetch evaluations or answer questions for non-existent or unconfigured buildings.
+  - **`BuildingNotFoundError`:** Raised when attempting to fetch evaluations or context for non-existent or unconfigured buildings.
   - **`InvalidEvaluationDataError`:** Raised when sustainability metrics, allowance ratios, or penalty boundaries fall outside valid operational limits.
 
 - **Boundary & Guard Validations:**
@@ -1366,18 +1370,15 @@ classDiagram
   - Input sanitization guarding against negative power values, non-decimal inputs, and empty prompt queries.
 
 - **Automated Unit & Integration Tests (`tests/test_ha4_coach.py`):**
-  Subsystem C contributes **5 dedicated tests** to the team's comprehensive 15-test suite:
-  1. `test_score_calculator_valid_range`: Asserts that normal inputs yield accurate scores and penalty calculations.
-  2. `test_score_calculator_boundary_rejection`: Asserts that invalid inputs (e.g., negative allowance share or out-of-range figures) raise `InvalidEvaluationDataError`.
-  3. `test_coach_service_empty_question`: Verifies that blank or whitespace-only user questions raise `CoachError`.
-  4. `test_coach_repository_database_failure`: Uses `unittest.mock.patch` to simulate unexpected database dropouts and verifies safe error propagation.
-  5. `test_coach_api_building_not_found`: Verifies that requests for unrecorded building IDs yield a structured JSON error response with an HTTP `404` status code.
+  Subsystem C contributes **5 dedicated tests** to the team's automated test suite:
+  1. `test_invalid_score_exception`: Asserts that out-of-range inputs (such as an invalid allowance share) raise `InvalidEvaluationDataError`.
+  2. `test_building_not_found_exception`: Verifies that missing building records raise `BuildingNotFoundError` with the expected error code.
+  3. `test_score_calculator_valid_bounds`: Asserts that valid consumption inputs yield accurate scores and bounded penalties (`Pg` and `Po`).
+  4. `test_api_get_evaluations_success`: Verifies that `GET /api/coach/evaluations/<building_id>` returns HTTP `200` with serialized evaluation records.
+  5. `test_api_get_evaluations_empty`: Verifies that `GET /api/coach/evaluations/<building_id>` returns HTTP `200` with an empty list (`[]`) when a building has no recorded evaluation history.
 
 - **Environment-Agnostic Isolation:**
-  - Uses `unittest.mock` (`MagicMock`, `patch`) to mock database cursors and connections, enabling rapid, zero-dependency testing during CI/CD without spinning up local MySQL instances.
-
-
-
+  - Uses `unittest.mock` (`MagicMock`, `patch`) to mock database cursors and connections, enabling rapid, zero-dependency testing without spinning up local MySQL instances.
 
 ### Running Subsystem C Tests Standalone
 
@@ -1395,6 +1396,7 @@ pytest tests/test_ha4_coach.py -v
 ## HA4 Presentation Link
 
 [Watch the HA4 presentation on Google Drive](https://drive.google.com/file/d/11aNbz97Z6CoCFNOwMvcnHBVlrQ_1F1bV/view?usp=sharing)
+
 
 
 
