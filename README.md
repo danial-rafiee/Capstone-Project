@@ -404,16 +404,20 @@ classDiagram
     CoachService ..> CoachRequest : accepts
     CoachService ..> CoachResponse : returns
 ```
-
 ### Key Capstone Enhancements
 
-- **Live Multi-Provider AI Coaching (`coach_service.py`):**
-  - Connects to OpenAI-compatible LLM endpoints, prioritizing `GROQ_API_KEY` (using `openai/gpt-oss-20b` with `max_tokens=4096` so reasoning models never truncate or return empty output), with automatic fallback support for `GEMINI_API_KEY` (`gemini-2.5-flash`) and `OPENAI_API_KEY` (`gpt-4o-mini`).
-- **Resilient Intent-Aware Fallback (`NFR-C7`):**
-  - Automatically switches to deterministic, intent-aware coaching advice (`Status: fallback`) when no API key is configured, the external service is unreachable, or the API returns an empty string—guaranteeing that the web dashboard never crashes or displays an empty answer box.
+- **Multi-Provider LLM Configuration & Rule-Based Fallback (`coach_service.py`):**
+  - Selects an OpenAI-compatible LLM provider at initialization based on available environment variables in priority order: `GROQ_API_KEY` (`openai/gpt-oss-20b` with `max_tokens=4096`), `GEMINI_API_KEY` (`gemini-2.5-flash`), or `OPENAI_API_KEY` (`gpt-4o-mini`).
+  - Automatically falls back to deterministic, intent-aware rule-based coaching (`Status: fallback`) when no API key is configured, the selected provider request fails, or an empty response is returned—guaranteeing that the dashboard never crashes or displays an empty answer box.
+
+- **Web Integration & API Blueprint Status:**
+  - `CoachService` is directly integrated into the main Flask web dashboard (`smart_energy/web/app.py`) to power the interactive AI Coach panel.
+  - The standalone evaluation history REST blueprint (`coach_api.py`, `GET /api/coach/evaluations/<building_id>`) is implemented and verified via unit tests, though not yet registered in the main `app.py` factory.
+
 - **Operational Guardrails & Anti-Hallucination Rules:**
   - Strictly protects essential building loads (`Server Room`, `Emergency Lighting`) and respects occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`).
   - Explicitly states the evaluated time window (`24h`, `7d`, or `30d`) in every response and prohibits fabricating unverified energy-saving percentages or CO2 reduction numbers.
+
 - **High-Precision Scoring & Missing-Data Safety (`score_calculator.py`):**
   - Calculates normalized sustainability scores (`0.0`–`100.0`), growth penalties ($P_g$), and off-hours penalties ($P_o$) using Python `Decimal` arithmetic.
   - Gracefully handles periods with missing or zero reference energy (`score: None`, displayed as `--/100` in the UI) while keeping interactive coaching operational.
@@ -1353,11 +1357,12 @@ classDiagram
     CoachService ..> CoachError : raises on empty question
     CoachEvaluationRepository ..> BuildingNotFoundError : raises on missing context
 ```
+
 ### HA4 Implementation Highlights
 
-- **Domain-Specific Exceptions (`coach_exceptions.py`):**
+- **Domain-Specific Exceptions (`exceptions.py`):**
   - **`CoachError`:** Base exception for all coaching and sustainability evaluation domain anomalies.
-  - **`BuildingNotFoundError`:** Raised when attempting to fetch evaluations or answer questions for non-existent or unconfigured buildings.
+  - **`BuildingNotFoundError`:** Raised when attempting to fetch evaluations or context for non-existent or unconfigured buildings.
   - **`InvalidEvaluationDataError`:** Raised when sustainability metrics, allowance ratios, or penalty boundaries fall outside valid operational limits.
 
 - **Boundary & Guard Validations:**
@@ -1365,18 +1370,15 @@ classDiagram
   - Input sanitization guarding against negative power values, non-decimal inputs, and empty prompt queries.
 
 - **Automated Unit & Integration Tests (`tests/test_ha4_coach.py`):**
-  Subsystem C contributes **5 dedicated tests** to the team's comprehensive 15-test suite:
-  1. `test_score_calculator_valid_range`: Asserts that normal inputs yield accurate scores and penalty calculations.
-  2. `test_score_calculator_boundary_rejection`: Asserts that invalid inputs (e.g., negative allowance share or out-of-range figures) raise `InvalidEvaluationDataError`.
-  3. `test_coach_service_empty_question`: Verifies that blank or whitespace-only user questions raise `CoachError`.
-  4. `test_coach_repository_database_failure`: Uses `unittest.mock.patch` to simulate unexpected database dropouts and verifies safe error propagation.
-  5. `test_coach_api_building_not_found`: Verifies that requests for unrecorded building IDs yield a structured JSON error response with an HTTP `404` status code.
+  Subsystem C contributes **5 dedicated tests** to the team's automated test suite:
+  1. `test_invalid_score_exception`: Asserts that out-of-range inputs (such as an invalid allowance share) raise `InvalidEvaluationDataError`.
+  2. `test_building_not_found_exception`: Verifies that missing building records raise `BuildingNotFoundError` with the expected error code.
+  3. `test_score_calculator_valid_bounds`: Asserts that valid consumption inputs yield accurate scores and bounded penalties (`Pg` and `Po`).
+  4. `test_api_get_evaluations_success`: Verifies that `GET /api/coach/evaluations/<building_id>` returns HTTP `200` with serialized evaluation records.
+  5. `test_api_get_evaluations_empty`: Verifies that `GET /api/coach/evaluations/<building_id>` returns HTTP `200` with an empty list (`[]`) when a building has no recorded evaluation history.
 
 - **Environment-Agnostic Isolation:**
-  - Uses `unittest.mock` (`MagicMock`, `patch`) to mock database cursors and connections, enabling rapid, zero-dependency testing during CI/CD without spinning up local MySQL instances.
-
-
-
+  - Uses `unittest.mock` (`MagicMock`, `patch`) to mock database cursors and connections, enabling rapid, zero-dependency testing without spinning up local MySQL instances.
 
 ### Running Subsystem C Tests Standalone
 
