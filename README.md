@@ -411,6 +411,10 @@ To verify Subsystem C scoring, context constraints, fallback resilience, and web
 python -m pytest -k "coach or score or building_context" -v
 ```
 
+Presentation Link:
+
+(https://drive.google.com/file/d/15ZGGRnpW9hO_Yd0BC0s4JOuAKpwqiEy2/view)
+
 
  ## =====HA1=====
 `Capstone-Project` is the shared repository name and the local project folder
