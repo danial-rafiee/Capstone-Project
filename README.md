@@ -16,12 +16,20 @@ and AI advice. The current implementation is the initial OOP learning stage.
 
 ```text
 Capstone-Project/
+├── docker/
+│   └── analytics/
+│       ├── .env.example
+│       ├── 20-demo-readings.sql
+│       ├── Dockerfile
+│       ├── Dockerfile.dockerignore
+│       └── compose.yaml
 ├── docs/
 │   ├── uml/
 │   │   ├── analytics_classes.dot
 │   │   ├── analytics_classes.mmd
 │   │   ├── analytics_classes.png
 │   │   ├── analytics_classes.svg
+│   │   ├── capstone_b_period.mmd
 │   │   ├── generate_analytics_uml.py
 │   │   ├── generate_b_mermaid.py
 │   │   ├── generate_ha3_uml.py
@@ -42,6 +50,10 @@ Capstone-Project/
 │   │   ├── ha4_errors.mmd
 │   │   ├── ha4_errors.png
 │   │   └── ha4_errors.svg
+│   ├── capstone_b.md
+│   ├── capstone_b_docker.md
+│   ├── capstone_b_off_hours.md
+│   ├── demo_history_b.md
 │   ├── ha2_source.md
 │   ├── ha3_database.md
 │   └── ha4_analytics.md
@@ -52,16 +64,21 @@ Capstone-Project/
 │   │   ├── building.py
 │   │   ├── building_repository.py
 │   │   ├── database.py
+│   │   ├── demo_history.py
 │   │   ├── energy_settings.py
 │   │   ├── errors.py
 │   │   ├── meter.py
 │   │   ├── meter_repository.py
+│   │   ├── operating_schedule.py
+│   │   ├── period_analytics.py
 │   │   ├── reading.py
-│   │   └── reading_repository.py
+│   │   ├── reading_repository.py
+│   │   └── time_window.py
 │   ├── coach/
 │   │   ├── __init__.py
 │   │   ├── building_context.py
 │   │   ├── coach_api.py
+│   │   ├── coach_models.py
 │   │   ├── coach_repository.py
 │   │   ├── coach_service.py
 │   │   ├── exceptions.py
@@ -80,7 +97,7 @@ Capstone-Project/
 │   │   ├── domain/
 │   │   │   ├── __init__.py
 │   │   │   ├── coach_panel.py
-│   │   │   ├── dashboard_view.py   
+│   │   │   ├── dashboard_view.py
 │   │   │   ├── energy_summary.py
 │   │   │   └── time_range.py
 │   │   ├── templates/
@@ -94,22 +111,32 @@ Capstone-Project/
 │   └── schema_ha3.sql
 ├── tests/
 │   ├── test_analytics_ha4.py
+│   ├── test_demo_history_b.py
 │   ├── test_ha4_coach.py
+│   ├── test_off_hours_analytics.py
+│   ├── test_period_analytics.py
 │   └── test_web_ha4.py
 ├── .gitignore
 ├── README.md
+├── check_docker_database_b.py
 ├── demo.py
+├── demo_capstone_b.py
 ├── demo_coach.py
+├── demo_final_coach.py
 ├── demo_ha2.py
 ├── demo_ha2_coach.py
 ├── demo_ha2_pipeline..py
 ├── demo_ha3.py
 ├── demo_ha3_coach.py
 ├── demo_ha4.py
+├── demo_off_hours_b.py
+├── requirements-capstone-b.txt
 ├── requirements-ha3.txt
 ├── requirements-ha4.txt
 ├── requirements-web.txt
-└── run_web.py
+├── requirements.txt
+├── run_web.py
+└── seed_demo_history_b.py
 ```
 
 ## ===== Capstone Project =====
