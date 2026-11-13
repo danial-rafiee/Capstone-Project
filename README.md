@@ -10,7 +10,7 @@ and AI advice. The current implementation is the initial OOP learning stage.
 | --- | --- | --- | --- |
 | Saeid Rafiei Taghanaki | A | `smart_energy/web` | Dashboard, Flask routes, service integration and web tests |
 | Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation and energy/cost/carbon calculations |
-| Hananeh Hajari | C | `smart_energy/coach` | Sustainability scoring & penalties, real-time stream pipeline, MySQL evaluations persistence, Coach Web API, domain exceptions & mocked unit tests.|
+| Hananeh Hajari | C | `smart_energy/coach` | Sustainability scoring & penalties, real-time stream pipeline, MySQL evaluations persistence, Coach Web API, domain exceptions, mocked unit tests & LLM coaching with fallback. |
 
 ## Project Structure
 
@@ -80,6 +80,7 @@ Capstone-Project/
 │   │   ├── domain/
 │   │   │   ├── __init__.py
 │   │   │   ├── coach_panel.py
+│   │   │   ├── dashboard_view.py   
 │   │   │   ├── energy_summary.py
 │   │   │   └── time_range.py
 │   │   ├── templates/
@@ -110,7 +111,299 @@ Capstone-Project/
 ├── requirements-web.txt
 └── run_web.py
 ```
+## ===== Capstone Project =====
+## Capstone - Saeid: Web interface and Flask coordination (A)
 
+Branch: `capstone-saeid-a`. Subsystem A's capstone contribution implements the Flask web application interface (`smart_energy.web`), providing a production-ready dashboard, dynamic time-range filtering, UI state preservation for AI coaching, centralized error management, and comprehensive web testing, fulfilling FR-A1..FR-A10 and NFR-A1..NFR-A10.
+
+### Subsystem A Architecture (Mermaid Class Diagram)
+
+```mermaid
+classDiagram
+    class TimeRange {
+        #str _preset
+        #datetime _start
+        #datetime _end
+        +__init__(preset: str, start: datetime, end: datetime)
+        +configure(preset: str, start: datetime, end: datetime) None
+        +get_preset() str
+        +set_preset(value: str) None
+        +get_start() datetime
+        +set_start(value: datetime) None
+        +get_end() datetime
+        +set_end(value: datetime) None
+        +to_dict() dict
+    }
+
+    class EnergySummary {
+        #Decimal _totals
+        #Decimal _savings
+        #Decimal _reference
+        #Decimal _score
+        #str _penalties
+        +__init__(totals, savings, reference, score, penalties)
+        +configure(totals, savings, reference, score, penalties) None
+        +get_totals() Decimal
+        +set_totals(value) None
+        +get_savings() Decimal
+        +set_savings(value) None
+        +get_reference() Decimal
+        +set_reference(value) None
+        +get_score() Decimal
+        +set_score(value) None
+        +get_penalties() str
+        +set_penalties(value: str) None
+        +to_dict() dict
+    }
+
+    class CoachPanel {
+        #str _question
+        #str _answer
+        #str _status
+        +__init__(question: str, answer: str, status: str)
+        +configure(question: str, answer: str, status: str) None
+        +get_question() str
+        +set_question(value: str) None
+        +get_answer() str
+        +set_answer(value: str) None
+        +get_status() str
+        +set_status(value: str) None
+        +submit_question(question: str) None
+        +set_response(answer: str, status: str) None
+        +to_dict() dict
+    }
+
+    class DashboardView {
+        +int building_id
+        +__init__(building_id: int)
+        +handle_request(request_args: dict) dict
+    }
+
+    class WebAppError {
+        +str message
+        +str code
+        +__init__(message: str, code: str)
+    }
+
+    class FlaskApp {
+        <<module>>
+        +get_db_connection() Database
+        +create_app(test_config) Flask
+        +home() HTML
+        +api_latest() JSON
+        +api_analytics(building_id, meter_id) JSON
+    }
+
+    FlaskApp ..> TimeRange : configures presets & windows
+    FlaskApp ..> EnergySummary : formats summary & penalties
+    FlaskApp ..> CoachPanel : manages AI coach prompts
+    FlaskApp ..> DashboardView : parses query parameters
+    FlaskApp ..> WebAppError : catches and maps to HTTP status
+```
+
+### Subsystem A Implementation Highlights
+
+- **Web Dashboard & State Persistence (`dashboard.html` & `app.py`):**
+  - Implements the main Flask application factory (`create_app`) and handles rendering of the 6-card metrics overview, SVG trend charts, and real-time interval data.
+  - Integrates `DashboardView` to parse query parameters (`preset` and `question`), ensuring user input gracefully persists via Jinja2 template parameter injection when navigating between time presets (`24h`, `7d`, `30d`).
+  - Added real-time asynchronous auto-refresh intervals for interval energy metrics.
+- **Domain Model Encapsulation (`smart_energy.web.domain`):**
+  - **`TimeRange`:** Manages UTC-normalized datetime windows and presets (`24h`, `7d`, `30d`, `custom`) with strict type validation.
+  - **`EnergySummary`:** Encapsulates consumption totals, savings, baseline references, sustainability scores, and penalty strings using high-precision `Decimal` calculations.
+  - **`CoachPanel`:** Structures user prompts, AI responses, and real-time status flags with guard validations against empty queries.
+  - **`DashboardView`:** Decouples request query string parsing and default question fallback logic from the core routing controller.
+- **Centralized Cross-Layer Exception Handling (`errors.py`):**
+  - Introduces `WebAppError` custom exceptions and `WebAppErrorHandler` formatters.
+  - Registers centralized Flask error handlers (`register_web_error_handlers`) to map domain and web anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
+- **Comprehensive Automated Testing (`test_web_ha4.py`):**
+  - Includes robust unit and integration test coverage for route accessibility, JSON API serialization, time range boundary validation, and custom error handling behavior under isolated environments.
+
+### Running the Web Application
+
+To start the Flask-based web dashboard locally:
+
+```bash
+# On Windows:
+python run_web.py
+
+# On macOS / Linux:
+python3 run_web.py
+```
+To verify Subsystem A web dashboard routes, API serialization, and error handling tests:
+```bash
+python -m pytest tests/test_web_ha4.py -v
+```
+
+## Capstone - Danial: selected-period analytics (B)
+
+Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data, reference comparisons and configurable local-calendar off-hours energy (O). Ready E/R/O inputs are supplied for C; existing A/C code is unchanged and integration is pending.
+
+[B setup, data contract, limitations and integration instructions](docs/capstone_b.md)
+
+```mermaid
+classDiagram
+    class TimeWindow {
+        #datetime _start
+        #datetime _end
+        +__init__(start, end)
+        +datetime start
+        +datetime end
+        +Decimal seconds
+    }
+    class PeriodAnalyticsService {
+        #EnergySettings _settings
+        #OperatingSchedule _schedule
+        +__init__(settings, schedule)
+        +summarize(meter, readings, window) dict
+        +compare(meter, current_readings, reference_readings, current_window, reference_window) dict
+    }
+    class OperatingSchedule {
+        #ZoneInfo _timezone
+        #str _timezone_name
+        #dict _weekly_hours
+        #frozenset _closed_dates
+        +__init__(timezone_name, weekly_hours, closed_dates)
+        +get_timezone() str
+        +to_dict() dict
+        +occupied_intervals(window) list
+        +occupied_seconds(window) Decimal
+    }
+    class ReadingRepository {
+        #Database _database
+        +list_for_period(meter, start, end) list~Reading~
+        +list_for_meter(meter) list~Reading~
+        +add(reading)
+    }
+    PeriodAnalyticsService --> EnergySettings : supplied configuration
+    PeriodAnalyticsService "0..*" --> "0..1" OperatingSchedule : explicit local calendar
+    OperatingSchedule ..> TimeWindow : UTC occupied intervals
+    PeriodAnalyticsService ..> TimeWindow : validates selected periods
+    PeriodAnalyticsService ..> AnalyticsService : reuses reading validation
+    PeriodAnalyticsService ..> Reading : reads interval measurements
+    PeriodAnalyticsService ..> Meter : single meter per summary
+    ReadingRepository --> Database : connection factory
+    ReadingRepository ..> TimeWindow : validates query bounds
+    ReadingRepository ..> Reading : reconstructs full intervals
+```
+
+Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.py --mysql` to read existing MySQL sample data. Run `python -m pytest tests/test_period_analytics.py -v` for the new B checks. Run `python demo_off_hours_b.py` for the agreed simulated Monday-Friday 09:00-17:00 Europe/Berlin calendar and ready E/R/O handoff. See [the off-hours contract](docs/capstone_b_off_hours.md).
+
+
+### Danial B - Docker database package
+
+[Setup and verification instructions](docs/capstone_b_docker.md) cover the isolated MySQL service and a B-only Python test/demo image in `docker/analytics/`. The database uses localhost port 3307 and a separate persistent volume. Compose configuration, seed SQL and the B source payload have been checked. The B image built successfully, MySQL started healthy, and all 52 B tests passed inside Docker. The seeded E/R/O database check also passed. This does not package or change A/C application code.
+
+### Danial B — 60-day simulated demo history
+
+`seed_demo_history_b.py` previews or appends **SIMULATED** history to an existing
+demo meter. It fills only uncovered intervals, preserves all original readings,
+and supports complete 24-hour, 7-day and 30-day current/reference comparisons.
+It uses an explicit Monday-Friday 09:00-17:00 Europe/Berlin simulation calendar.
+
+```bash
+python seed_demo_history_b.py --env-file docker/analytics/.env
+# After checking the preview, append missing data:
+python seed_demo_history_b.py --env-file docker/analytics/.env --apply
+```
+
+See [the full data-generation and dashboard handoff guide](docs/demo_history_b.md),
+including how to pin the endpoint with `--end`. The dashboard must use the same
+completed-reading endpoint, not a later `now()`. Repeating a fixed window inserts
+zero rows; existing E=5/R=7/O=2 sample data is preserved. This tool does not modify
+web or coach code, and Git does not transfer generated database records.
+
+The history report shows both UTC and `Europe/Berlin` timestamps, including the
+latest interval's start and end. For a simulated update through the last completed
+minute instead of the hourly default, add `--end-resolution minute`. See the
+[B history guide](docs/demo_history_b.md) for the UTC/local-time explanation;
+database timestamps must remain UTC.
+
+
+## Capstone — Hananeh: Sustainability Scoring & AI Coach (C)
+
+Work in `capstone-hananeh-c` finalizes Subsystem C (`smart_energy/coach`), integrating deterministic sustainability scoring, operational constraint enforcement, and live LLM-powered interactive coaching with Subsystem A (Web Dashboard) and Subsystem B (Period Analytics), fulfilling `FR-C1..FR-C10` and `NFR-C1..NFR-C10`.
+
+### Subsystem C Capstone Architecture (Mermaid Class Diagram)
+
+```mermaid
+classDiagram
+    class BuildingContext {
+        #int _building_id
+        #str _occupied_hours
+        #list~str~ _essential_loads
+        +get_occupied_hours() str
+        +get_essential_loads() list~str~
+    }
+
+    class ScoreCalculator {
+        #Decimal _allowance_share
+        +calculate(current_energy, reference_energy, off_hours_energy) dict
+    }
+
+    class CoachRequest {
+        +str question
+        +BuildingContext context
+        +dict period_summary
+    }
+
+    class CoachResponse {
+        +str answer
+        +str status
+        +str period
+        +Optional~float~ score
+        +dict penalties
+    }
+
+    class CoachService {
+        #ScoreCalculator _calculator
+        #str _model_name
+        #str _last_status
+        +assess_sustainability(current_energy, reference_energy, off_hours_energy) dict
+        +answer_question(request: CoachRequest) CoachResponse
+        #_build_contextual_fallback(...) str
+    }
+
+    CoachService --> ScoreCalculator : delegates Python math
+    CoachService ..> BuildingContext : enforces constraints
+    CoachService ..> CoachRequest : accepts
+    CoachService ..> CoachResponse : returns
+```
+
+### Key Capstone Enhancements
+
+- **Live Multi-Provider AI Coaching (`coach_service.py`):**
+  - Connects to OpenAI-compatible LLM endpoints, prioritizing `GROQ_API_KEY` (using `openai/gpt-oss-20b` with `max_tokens=4096` so reasoning models never truncate or return empty output), with automatic fallback support for `GEMINI_API_KEY` (`gemini-2.5-flash`) and `OPENAI_API_KEY` (`gpt-4o-mini`).
+- **Resilient Intent-Aware Fallback (`NFR-C7`):**
+  - Automatically switches to deterministic, intent-aware coaching advice (`Status: fallback`) when no API key is configured, the external service is unreachable, or the API returns an empty string—guaranteeing that the web dashboard never crashes or displays an empty answer box.
+- **Operational Guardrails & Anti-Hallucination Rules:**
+  - Strictly protects essential building loads (`Server Room`, `Emergency Lighting`) and respects occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`).
+  - Explicitly states the evaluated time window (`24h`, `7d`, or `30d`) in every response and prohibits fabricating unverified energy-saving percentages or CO2 reduction numbers.
+- **High-Precision Scoring & Missing-Data Safety (`score_calculator.py`):**
+  - Calculates normalized sustainability scores (`0.0`–`100.0`), growth penalties ($P_g$), and off-hours penalties ($P_o$) using Python `Decimal` arithmetic.
+  - Gracefully handles periods with missing or zero reference energy (`score: None`, displayed as `--/100` in the UI) while keeping interactive coaching operational.
+
+### Configuration & Verification
+
+To enable live AI responses (`Status: ready`) when running the web dashboard:
+
+```bash
+# macOS / Linux:
+export GROQ_API_KEY="your_groq_api_key_here"
+python run_web.py
+
+# Windows (Command Prompt):
+set GROQ_API_KEY=your_groq_api_key_here
+python run_web.py
+```
+
+To verify Subsystem C scoring, context constraints, fallback resilience, and web panel integration:
+
+```bash
+python -m pytest -k "coach or score or building_context" -v
+```
+
+
+ ## =====HA1=====
 `Capstone-Project` is the shared repository name and the local project folder
 name. The HA1 submission branch remains `Homeworkassignment001`.
 
@@ -1064,87 +1357,3 @@ pytest tests/test_ha4_coach.py -v
 
 
 
-
-
-## Capstone - Danial: selected-period analytics (B)
-
-Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data, reference comparisons and configurable local-calendar off-hours energy (O). Ready E/R/O inputs are supplied for C; existing A/C code is unchanged and integration is pending.
-
-[B setup, data contract, limitations and integration instructions](docs/capstone_b.md)
-
-```mermaid
-classDiagram
-    class TimeWindow {
-        #datetime _start
-        #datetime _end
-        +__init__(start, end)
-        +datetime start
-        +datetime end
-        +Decimal seconds
-    }
-    class PeriodAnalyticsService {
-        #EnergySettings _settings
-        #OperatingSchedule _schedule
-        +__init__(settings, schedule)
-        +summarize(meter, readings, window) dict
-        +compare(meter, current_readings, reference_readings, current_window, reference_window) dict
-    }
-    class OperatingSchedule {
-        #ZoneInfo _timezone
-        #str _timezone_name
-        #dict _weekly_hours
-        #frozenset _closed_dates
-        +__init__(timezone_name, weekly_hours, closed_dates)
-        +get_timezone() str
-        +to_dict() dict
-        +occupied_intervals(window) list
-        +occupied_seconds(window) Decimal
-    }
-    class ReadingRepository {
-        #Database _database
-        +list_for_period(meter, start, end) list~Reading~
-        +list_for_meter(meter) list~Reading~
-        +add(reading)
-    }
-    PeriodAnalyticsService --> EnergySettings : supplied configuration
-    PeriodAnalyticsService "0..*" --> "0..1" OperatingSchedule : explicit local calendar
-    OperatingSchedule ..> TimeWindow : UTC occupied intervals
-    PeriodAnalyticsService ..> TimeWindow : validates selected periods
-    PeriodAnalyticsService ..> AnalyticsService : reuses reading validation
-    PeriodAnalyticsService ..> Reading : reads interval measurements
-    PeriodAnalyticsService ..> Meter : single meter per summary
-    ReadingRepository --> Database : connection factory
-    ReadingRepository ..> TimeWindow : validates query bounds
-    ReadingRepository ..> Reading : reconstructs full intervals
-```
-
-Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.py --mysql` to read existing MySQL sample data. Run `python -m pytest tests/test_period_analytics.py -v` for the new B checks. Run `python demo_off_hours_b.py` for the agreed simulated Monday-Friday 09:00-17:00 Europe/Berlin calendar and ready E/R/O handoff. See [the off-hours contract](docs/capstone_b_off_hours.md).
-
-
-### Danial B - Docker database package
-
-[Setup and verification instructions](docs/capstone_b_docker.md) cover the isolated MySQL service and a B-only Python test/demo image in `docker/analytics/`. The database uses localhost port 3307 and a separate persistent volume. Compose configuration, seed SQL and the B source payload have been checked. The B image built successfully, MySQL started healthy, and all 52 B tests passed inside Docker. The seeded E/R/O database check also passed. This does not package or change A/C application code.
-
-### Danial B — 60-day simulated demo history
-
-`seed_demo_history_b.py` previews or appends **SIMULATED** history to an existing
-demo meter. It fills only uncovered intervals, preserves all original readings,
-and supports complete 24-hour, 7-day and 30-day current/reference comparisons.
-It uses an explicit Monday-Friday 09:00-17:00 Europe/Berlin simulation calendar.
-
-```bash
-python seed_demo_history_b.py --env-file docker/analytics/.env
-# After checking the preview, append missing data:
-python seed_demo_history_b.py --env-file docker/analytics/.env --apply
-```
-
-See [the full data-generation and dashboard handoff guide](docs/demo_history_b.md),
-including how to pin the endpoint with `--end`. The dashboard must use the same
-completed-reading endpoint, not a later `now()`. Repeating a fixed window inserts
-zero rows; existing E=5/R=7/O=2 sample data is preserved. This tool does not modify
-web or coach code, and Git does not transfer generated database records.
-
-The history report shows both UTC and `Europe/Berlin` timestamps, including the
-latest interval's start and end. For a simulated update through the last completed
-minute instead of the hourly default, add `--end-resolution minute`. See the
-guide's UTC/local-time explanation; database timestamps must remain UTC.

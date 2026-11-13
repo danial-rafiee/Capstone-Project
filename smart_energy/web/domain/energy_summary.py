@@ -78,3 +78,6 @@ class EnergySummary:
         return {"totals": self._totals, "savings": self._savings,
                 "reference": self._reference, "score": self._score,
                 "penalties": self._penalties}
+
+    def __str__(self) -> str:
+        return f"EnergySummary(totals={self._totals}, savings={self._savings}, score={self._score})"

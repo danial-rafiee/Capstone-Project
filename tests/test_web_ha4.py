@@ -1,3 +1,5 @@
+# Subsystem A tests (Saeid)
+
 import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone, timedelta
@@ -14,11 +16,13 @@ from smart_energy.analytics.meter import Meter
 
 @pytest.fixture
 def client():
+    # Configure test client with testing config enabled
     app = create_app({"TESTING": True})
     with app.test_client() as client:
         yield client
 
 
+# Web Routes Testing
 def test_dashboard_route_status(client):
     mock_building = MagicMock(spec=Building)
     mock_building.get_building_id.return_value = 1
@@ -28,11 +32,35 @@ def test_dashboard_route_status(client):
     mock_meter.get_meter_id.return_value = 101
     mock_meter.get_name.return_value = "Test Meter"
 
+    # Mock a valid complete reading to prevent NoneType formatting errors
+    mock_reading = MagicMock()
+    mock_reading.get_interval.return_value = (datetime.now(timezone.utc) - timedelta(hours=1), datetime.now(timezone.utc))
+    mock_reading.get_energy_kwh.return_value = 5.0
+
+    mock_summary = {
+        "energy_kwh": "10.0",
+        "estimated_cost_eur": "3.0",
+        "estimated_co2_kg": "4.0",
+        "coverage_fraction": 1.0,
+        "series": [{"energy_kwh": 5.0}]
+    }
+
+    mock_comparison_result = {
+        "current": mock_summary,
+        "reference": {"energy_kwh": "12.0"},
+        "comparison": {"status": "available", "energy_saved_percent": 16.6}
+    }
+
+    # Patch repositories and analytics services with complete mocking
     with patch('smart_energy.web.app.BuildingRepository.get_by_id', return_value=mock_building), \
             patch('smart_energy.web.app.MeterRepository.get_by_id', return_value=mock_meter), \
-            patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[]), \
-            patch('smart_energy.web.app.AnalyticsService.totals',
-                  return_value={'energy_kwh': 10, 'cost_eur': 3, 'co2_kg': 4}):
+            patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[mock_reading]), \
+            patch('smart_energy.web.app.ReadingRepository.list_for_period', return_value=[mock_reading]), \
+            patch('smart_energy.web.app.PeriodAnalyticsService') as mock_analytics:
+        instance = mock_analytics.return_value
+        instance.summarize.return_value = mock_summary
+        instance.compare.return_value = mock_comparison_result
+
         response = client.get('/')
         assert response.status_code == 200
 
@@ -40,25 +68,62 @@ def test_dashboard_route_status(client):
 def test_api_analytics_endpoint(client):
     mock_building = MagicMock(spec=Building)
     mock_building.get_building_id.return_value = 1
-    mock_building.get_name.return_value = "Test Building"
 
     mock_meter = MagicMock(spec=Meter)
     mock_meter.get_meter_id.return_value = 101
-    mock_meter.get_name.return_value = "Test Meter"
 
+    mock_summary = {
+        "energy_kwh": "10.0",
+        "estimated_cost_eur": "3.0",
+        "estimated_co2_kg": "4.0",
+        "coverage_fraction": 1.0,
+        "series": []
+    }
+
+    mock_comparison_result = {
+        "current": mock_summary,
+        "reference": {"energy_kwh": "12.0"},
+        "comparison": {"status": "available", "energy_saved_percent": 16.6}
+    }
+
+    # Patch repositories and analytics compare service for API endpoint
     with patch('smart_energy.web.app.BuildingRepository.get_by_id', return_value=mock_building), \
             patch('smart_energy.web.app.MeterRepository.get_by_id', return_value=mock_meter), \
             patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[]), \
-            patch('smart_energy.web.app.AnalyticsService.totals',
-                  return_value={'energy_kwh': 10, 'cost_eur': 3, 'co2_kg': 4}):
+            patch('smart_energy.web.app.ReadingRepository.list_for_period', return_value=[]), \
+            patch('smart_energy.web.app.PeriodAnalyticsService') as mock_analytics:
+        instance = mock_analytics.return_value
+        instance.summarize.return_value = mock_summary
+        instance.compare.return_value = mock_comparison_result
+
         response = client.get('/api/analytics/1/101')
         assert response.status_code == 200
-        assert response.json["building_id"] == 1
+        assert response.json["energy_kwh"] == "10.0"
 
 
-def test_time_range_and_energy_summary():
+def test_api_latest_endpoint(client):
+    mock_building = MagicMock(spec=Building)
+    mock_building.get_building_id.return_value = 1
+
+    mock_meter = MagicMock(spec=Meter)
+    mock_meter.get_meter_id.return_value = 101
+
+    mock_reading = MagicMock()
+    mock_reading.get_energy_kwh.return_value = 4.75
+
+    with patch('smart_energy.web.app.BuildingRepository.get_by_id', return_value=mock_building), \
+            patch('smart_energy.web.app.MeterRepository.get_by_id', return_value=mock_meter), \
+            patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[mock_reading]):
+        response = client.get('/api/latest')
+        assert response.status_code == 200
+        assert response.json["latest_interval_kwh"] == 4.75
+
+
+# Presets & Domain Logic Testing
+def test_time_range_presets_and_energy_summary():
     end = datetime.now(timezone.utc)
     start = end - timedelta(hours=1)
+
     tr = TimeRange("custom", start=start, end=end)
     assert tr.to_dict()["preset"] == "custom"
 
@@ -77,6 +142,7 @@ def test_coach_panel_interactions():
     assert isinstance(panel.to_dict(), dict)
 
 
+# Service Errors & Routing Error Handling
 def test_web_app_error_handling_and_routing(client):
     error = WebAppError("Resource not found", code="not_found")
     handled = WebAppErrorHandler.handle(error)

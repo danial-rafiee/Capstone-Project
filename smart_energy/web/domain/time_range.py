@@ -62,3 +62,6 @@ class TimeRange:
     def to_dict(self) -> dict:
         return {"preset": self._preset, "start": self._start.isoformat(),
                 "end": self._end.isoformat()}
+
+    def __str__(self) -> str:
+        return f"TimeRange(preset='{self._preset}', start='{self._start.isoformat()}', end='{self._end.isoformat()}')"

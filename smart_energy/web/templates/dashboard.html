@@ -3,40 +3,261 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Smart Energy — HA1 example</title>
+  <title>Smart Energy — Management Dashboard</title>
   <style>
-    body { font: 17px/1.6 system-ui, sans-serif; color: #19302d; background: #f4f7f6; max-width: 960px; margin: 32px auto; padding: 0 20px; }
+    body { font: 17px/1.6 system-ui, sans-serif; color: #19302d; background: #f4f7f6; max-width: 1000px; margin: 32px auto; padding: 0 20px; }
     section { background: white; border: 1px solid #d4e1dd; border-radius: 10px; padding: 20px; margin: 20px 0; }
-    h1,h2 { line-height: 1.25; } dt { font-weight: 600; } dd { margin: 0 0 12px; }
-    .note { color: #495b55; } .score { font-size: 32px; font-weight: 700; }
+    h1, h2 { line-height: 1.25; }
+    .note { color: #495b55; font-size: 14px; }
+    .preset-nav a { text-decoration: none; padding: 6px 12px; border-radius: 4px; background: #eef2f1; color: #19302d; font-size: 14px; }
+    .preset-nav a.active { background: #19302d; color: white; font-weight: bold; }
+
+    /* Grid layout for the 6 metrics cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .metric-card {
+      border: 1px solid #d4e1dd;
+      border-radius: 8px;
+      padding: 12px 15px;
+      background: #fafbfc;
+    }
+    .metric-card h3 {
+      font-size: 13px;
+      margin: 0 0 6px 0;
+      color: #495b55;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-card .value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #19302d;
+      margin: 0;
+    }
+    .metric-card .subtext {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+
+    /* SVG line chart styling with horizontal scroll support */
+    .chart-container { background: #fafbfc; border: 1px solid #d4e1dd; border-radius: 8px; padding: 20px 15px 35px 15px; margin-top: 15px; overflow-x: auto; }
   </style>
 </head>
 <body>
+
+  <!-- Dashboard header section -->
   <h1>Smart Energy Management</h1>
-  <p>{{ building_name }} · Group 18 · HA1</p>
-  <p class="note">Illustrative data for one ten-minute interval. Reference and off-hours energy are supplied sample inputs. This example has no live meter, MySQL or OpenAI connection.</p>
-  <section>
-    <h2>Time range</h2>
-    <p>{{ time_range.preset }}: {{ time_range.start.isoformat() }} to {{ time_range.end.isoformat() }}</p>
+  <p>{{ building_name }} · Group 18 · Capstone Project</p>
+
+  <!-- Navigation bar for time range presets (Preserves active question) -->
+  <section class="preset-nav">
+    <strong>Time range:</strong>
+    <a href="/?preset=24h{% if coach.question %}&question={{ coach.question }}{% endif %}" class="{% if time_range.preset == '24h' %}active{% endif %}">24 Hours</a> &nbsp;|&nbsp;
+    <a href="/?preset=7d{% if coach.question %}&question={{ coach.question }}{% endif %}" class="{% if time_range.preset == '7d' %}active{% endif %}">7 Days</a> &nbsp;|&nbsp;
+    <a href="/?preset=30d{% if coach.question %}&question={{ coach.question }}{% endif %}" class="{% if time_range.preset == '30d' %}active{% endif %}">30 Days</a>
   </section>
+
+  <!-- Selected time window details -->
   <section>
-    <h2>Energy summary</h2>
-    <dl>
-      <dt>Consumption</dt><dd>{{ summary.totals }} kWh</dd>
-      <dt>Reference consumption (sample)</dt><dd>{{ summary.reference }} kWh</dd>
-      <dt>Savings against reference</dt><dd>{{ summary.savings }} kWh (negative means higher consumption)</dd>
-      <dt>Estimated cost</dt><dd>{{ '%.2f'|format(estimated_cost_eur) }} EUR</dd>
-      <dt>Estimated CO2</dt><dd>{{ '%.2f'|format(estimated_co2_kg) }} kg</dd>
-      <dt>Off-hours consumption (sample)</dt><dd>{{ off_hours_energy_kwh }} kWh</dd>
-      <dt>Sustainability score</dt><dd class="score">{{ summary.score if summary.score is not none else 'Unavailable' }} /100</dd>
-      <dt>Penalty points</dt><dd>{{ summary.penalties }}</dd>
-    </dl>
+    <h2>Selected period</h2>
+    <p>{{ time_range.preset }}: {{ time_range.start }} to {{ time_range.end }}</p>
+    <p class="note">Latest reading timestamp: {{ latest_reading_time }}</p>
   </section>
+
+  <!-- 6 Metric Cards Section -->
   <section>
-    <h2>Coach panel — sample response</h2>
-    <p><strong>Question:</strong> {{ coach.question }}</p>
-    <p><strong>Answer:</strong> {{ coach.answer }}</p>
-    <p class="note">The current coach returns a template response. A live AI integration is future work.</p>
+    <h2>Metrics Overview</h2>
+    <div class="cards-grid">
+      <!-- Card 1: Latest interval -->
+      <div class="metric-card">
+        <h3>Latest interval</h3>
+        <p class="value">
+          {% if latest_interval_kwh is not none %}
+            {{ '%.2f'|format(latest_interval_kwh) }} kWh
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Card 2: Energy consumption -->
+      <div class="metric-card">
+        <h3>Energy</h3>
+        <p class="value">
+          {% if summary.energy_kwh is not none %}
+            {{ '%.2f'|format(summary.energy_kwh) }} kWh
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+        <p class="subtext">Based on selected period</p>
+      </div>
+
+      <!-- Card 3: Estimated cost -->
+      <div class="metric-card">
+        <h3>Est. cost</h3>
+        <p class="value">
+          {% if estimated_cost_eur is not none %}
+            EUR {{ '%.2f'|format(estimated_cost_eur) }}
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+        <p class="subtext">0.30 EUR/kWh</p>
+      </div>
+
+      <!-- Card 4: CO2 emissions -->
+      <div class="metric-card">
+        <h3>CO2 / change</h3>
+        <p class="value">
+          {% if estimated_co2_kg is not none %}
+            {{ '%.1f'|format(estimated_co2_kg) }} kg
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+        <p class="subtext">Carbon footprint</p>
+      </div>
+
+      <!-- Card 5: Energy change -->
+      <div class="metric-card">
+        <h3>Energy change</h3>
+        <p class="value">
+          {% if energy_change_percent is not none %}
+            {{ '%.1f'|format(energy_change_percent) }}%
+          {% else %}
+            --
+          {% endif %}
+        </p>
+        <p class="subtext">vs reference period</p>
+      </div>
+
+      <!-- Card 6: Score with Penalties -->
+      <div class="metric-card" style="border-color: #19302d; background: #f0f7f4;">
+        <h3>Score</h3>
+        <p class="value">
+          {% if sustainability_score is not none %}
+            {{ '%.1f'|format(sustainability_score) }} / 100
+          {% else %}
+            -- / 100
+          {% endif %}
+        </p>
+        <p class="subtext" style="color: #2c4a45; font-weight: 600;">
+          Growth pen: {{ '%.1f'|format(growth_penalty) if growth_penalty is not none else '0.0' }}<br>
+          Off-hours pen: {{ '%.1f'|format(off_hours_penalty) if off_hours_penalty is not none else '0.0' }}
+        </p>
+      </div>
+    </div>
   </section>
+
+  <!-- SVG Line Chart section with sparse clean date labels -->
+  <section>
+    <h2>Energy Consumption Trend</h2>
+    {% if energy_series %}
+      <div class="chart-container">
+        <svg viewBox="0 0 1200 260" width="100%" height="260" style="overflow: visible; min-width: 900px;">
+          <text x="60" y="15" font-size="11" font-weight="bold" fill="#495b55">Energy (kWh)</text>
+          <text x="1170" y="240" font-size="11" font-weight="bold" text-anchor="end" fill="#495b55">Time</text>
+
+          <line x1="60" y1="25" x2="60" y2="180" stroke="#d4e1dd" stroke-width="2" />
+          <line x1="60" y1="180" x2="1170" y2="180" stroke="#d4e1dd" stroke-width="2" />
+
+          <line x1="60" y1="25" x2="1170" y2="25" stroke="#eef2f1" stroke-dasharray="4" />
+          <line x1="60" y1="102" x2="1170" y2="102" stroke="#eef2f1" stroke-dasharray="4" />
+
+          <text x="50" y="29" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy) }}</text>
+          <text x="50" y="106" font-size="10" text-anchor="end" fill="#6c757d">{{ '%.1f'|format(max_energy / 2) }}</text>
+          <text x="50" y="184" font-size="10" text-anchor="end" fill="#6c757d">0.0</text>
+
+          {% set count = energy_series | length %}
+          {% set points_list = [] %}
+          {% for pt in energy_series %}
+            {% set val = pt.energy_kwh | float %}
+            {% if count > 1 %}
+              {% set x = 60 + (loop.index0 / (count - 1)) * 1110 %}
+            {% else %}
+              {% set x = 615 %}
+            {% endif %}
+            {% set y = 180 - (val / max_energy) * 155 %}
+            {% if points_list.append(x ~ ',' ~ y) %}{% endif %}
+
+            {% if loop.first or loop.last or loop.index0 == (count * 0.25)|int or loop.index0 == (count * 0.50)|int or loop.index0 == (count * 0.75)|int %}
+              <text x="{{ x }}" y="200" font-size="10" fill="#6c757d" text-anchor="middle">
+                {{ pt.start | replace('T', ' ') | truncate(16, True, '') }}
+              </text>
+              <line x1="{{ x }}" y1="180" x2="{{ x }}" y2="185" stroke="#6c757d" stroke-width="1.5" />
+            {% endif %}
+          {% endfor %}
+
+          <!-- Main trend polyline -->
+          <polyline fill="none" stroke="#007bff" stroke-width="2" points="{{ points_list | join(' ') }}" />
+
+          <!-- Data points with clean datetime tooltips -->
+          {% for pt in energy_series %}
+            {% set val = pt.energy_kwh | float %}
+            {% if count > 1 %}
+              {% set x = 60 + (loop.index0 / (count - 1)) * 1110 %}
+            {% else %}
+              {% set x = 615 %}
+            {% endif %}
+            {% set y = 180 - (val / max_energy) * 155 %}
+            <circle cx="{{ x }}" cy="{{ y }}" r="3.5" fill="#007bff">
+              <title>{{ pt.start | replace('T', ' ') | truncate(16, True, '') }}: {{ '%.2f'|format(val) }} kWh</title>
+            </circle>
+          {% endfor %}
+        </svg>
+      </div>
+    {% else %}
+      <p class="note">No time-series data available for this period.</p>
+    {% endif %}
+  </section>
+
+  <!-- AI Sustainability Coach section -->
+  <section>
+    <h2>AI Sustainability Coach</h2>
+
+    <form method="GET" action="/" style="margin: 15px 0;">
+      <input type="hidden" name="preset" value="{{ time_range.preset }}">
+      <div style="display: flex; gap: 10px;">
+        <input type="text" name="question" value="{{ coach.question }}" placeholder="Ask a question..." style="flex: 1; padding: 10px; border: 1px solid #d4e1dd; border-radius: 6px; font-size: 14px;">
+        <button type="submit" style="padding: 10px 20px; background: #19302d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Ask Coach</button>
+      </div>
+    </form>
+
+    <div style="background: #fafbfc; padding: 15px; border-radius: 6px; border-left: 4px solid #19302d; margin-top: 10px;">
+      <p style="margin: 0 0 8px 0;"><strong>Question:</strong> {{ coach.question }}</p>
+      {% if coach.status %}
+      <p style="margin: 0 0 8px 0; font-size: 12px; color: #526763;"><strong>Status:</strong> {{ coach.status }}</p>
+      {% endif %}
+      <p style="margin: 0; white-space: pre-line;"><strong>Answer:</strong> {{ coach.answer }}</p>
+    </div>
+  </section>
+
+  <script>
+    // Periodic fetch to update the latest interval energy card dynamically every 10 minutes
+    setInterval(async function() {
+      try {
+        let response = await fetch('/api/latest');
+        if (response.ok) {
+          let data = await response.json();
+          let cards = document.querySelectorAll('.metric-card');
+          if (cards.length > 0 && data.latest_interval_kwh !== undefined && data.latest_interval_kwh !== null) {
+            let valueEl = cards[0].querySelector('.value');
+            if (valueEl) {
+              valueEl.innerText = data.latest_interval_kwh.toFixed(2) + ' kWh';
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching latest interval data:', error);
+      }
+    }, 600000);
+  </script>
+
 </body>
 </html>

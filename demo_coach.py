@@ -10,6 +10,7 @@ from smart_energy.coach import (
 )
 
 
+
 def run_subsystem_c_demo():
     print("\n" + "=" * 50)
     print("Subsystem C: Sustainability Scoring & AI Coach Demo")
