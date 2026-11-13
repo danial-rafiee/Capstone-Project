@@ -216,10 +216,10 @@ classDiagram
   - Introduces `WebAppError` custom exceptions and `WebAppErrorHandler` formatters.
   - Registers centralized Flask error handlers (`register_web_error_handlers`) to map domain and web anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
 - **Comprehensive Automated Testing (`test_web_ha4.py`):**
-  - Implements robust unit and integration test suites using `pytest` and Flask's test client (`client fixture`) under isolated mock environments[cite: 1].
-  - Validates core web routes, HTTP status codes, and JSON API serialization behavior (including `/api/analytics/{building_id}/{meter_id}` and `/api/latest`)[cite: 1].
-  - Tests domain logic encapsulation and boundary validations for `TimeRange` presets, high-precision `EnergySummary` calculations, and interactive `CoachPanel` prompts[cite: 1].
-  - Verifies centralized cross-layer error handling mechanisms, ensuring custom `WebAppError` anomalies map correctly to standard HTTP error codes (`400`, `404`, `500`)[cite: 1].
+  - Implements robust unit and integration test suites using `pytest` and Flask's test client (`client fixture`) under isolated mock environments.
+  - Validates core web routes, HTTP status codes, and JSON API serialization behavior (including `/api/analytics/{building_id}/{meter_id}` and `/api/latest`).
+  - Tests domain logic encapsulation and boundary validations for `TimeRange` presets, high-precision `EnergySummary` calculations, and interactive `CoachPanel` prompts.
+  - Verifies centralized cross-layer error handling mechanisms, ensuring custom `WebAppError` anomalies map correctly to standard HTTP error codes (`400`, `404`, `500`).
 - **Timezone Aware Localized Display & Chart Synchronization(`app.py`):**
   - Standardizes backend data storage in UTC while automatically converting timestamps to *Europe/Berlin (CET/CEST)* using Python's `zoneinfo` module for precise user facing reporting.
   - Implements smart series alignment logic in `app.py` to match the exact end-time of the latest reading interval with the final data point on the time series SVG chart, eliminating visual gaps and timestamp inconsistencies.
