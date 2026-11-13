@@ -143,7 +143,7 @@ This tree lists files tracked on main. Local virtual environments, IDE settings,
 ## ===== Capstone Project =====
 ## Capstone - Saeid: Web interface and Flask coordination (A)
 
-Branch: `capstone-saeid-a`. Subsystem A's capstone contribution implements the Flask web application interface (`smart_energy.web`), providing a production-ready dashboard, dynamic time-range filtering, UI state preservation for AI coaching, centralized error management, and comprehensive web testing, fulfilling FR-A1..FR-A10 and NFR-A1..NFR-A10.
+Branch: `capstone-saeid-a`. Subsystem A's capstone contribution implements the Flask web application interface (`smart_energy.web`), providing a integrated capstone dashboard, dynamic time-range filtering, UI state preservation for AI coaching, centralized error management, and comprehensive web testing, fulfilling FR-A1..FR-A10 and NFR-A1..NFR-A10.
 
 ### Subsystem A Architecture (Mermaid Class Diagram)
 
@@ -235,13 +235,13 @@ classDiagram
 - **Web Dashboard & State Persistence (`dashboard.html` & `app.py`):**
   - Implements the main Flask application factory (`create_app`) and handles rendering of the 6-card metrics overview, SVG trend charts, and real-time interval data.
   - Integrates `DashboardView` to parse query parameters (`preset` and `question`), ensuring user input gracefully persists via Jinja2 template parameter injection when navigating between time presets (`24h`, `7d`, `30d`).
-  - Added real-time asynchronous auto-refresh intervals for interval energy metrics.
+  - Added real-time asynchronous auto-refresh intervals for the latest energy metrics card every 10 minutes.
 - **Domain Model Encapsulation (`smart_energy.web.domain`):**
   - **`TimeRange`:** Manages UTC-normalized datetime windows and presets (`24h`, `7d`, `30d`, `custom`) with strict type validation.
   - **`EnergySummary`:** Encapsulates consumption totals, savings, baseline references, sustainability scores, and penalty strings using high-precision `Decimal` calculations.
   - **`CoachPanel`:** Structures user prompts, AI responses, and real-time status flags with guard validations against empty queries.
   - **`DashboardView`:** Decouples request query string parsing and default question fallback logic from the core routing controller.
-- **Centralized Cross-Layer Exception Handling (`errors.py`):**
+- **Centralized WebAppError Exception Handling (`errors.py`):**
   - Introduces `WebAppError` custom exceptions and `WebAppErrorHandler` formatters.
   - Registers centralized Flask error handlers (`register_web_error_handlers`) to map domain and web anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
 - **Comprehensive Automated Testing (`test_web_ha4.py`):**
