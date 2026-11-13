@@ -1063,7 +1063,7 @@ pytest tests/test_ha4_coach.py -v
 [Watch the HA4 presentation on Google Drive](https://drive.google.com/file/d/11aNbz97Z6CoCFNOwMvcnHBVlrQ_1F1bV/view?usp=sharing)
 
 ## ===== Capstone Project =====
-## Saeid — Subsystem A: Web Dashboard, State Persistence & Exception Handling
+## Capstone - Saeid — Subsystem A: Web Dashboard, State Persistence & Exception Handling
 
 Branch: `capstone-saeid-a`. Subsystem A's capstone contribution implements the Flask web application interface (`smart_energy.web`), providing a production-ready dashboard, dynamic time-range filtering, UI state preservation for AI coaching, centralized error management, and comprehensive web testing.
 
