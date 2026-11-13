@@ -1213,7 +1213,7 @@ Branch: `Homeworkassignment004` (or current active branch). Subsystem implementa
     * **Web Tests (`test_web_ha4.py`):** Validates dashboard route accessibility, API analytics endpoints, time range & decimal conversions, coach panel interactions, and custom WebAppError status code integration.
 * **Environment-Agnostic Mocking:** Leveraged `unittest.mock` (`MagicMock` and `patch`) in test suites to ensure complete test isolation, high execution speed, and stability without requiring an active local MySQL database connection during test runs.
 
-### Subsystem A Error-Handling Class Diagram
+### Subsystem A — Saeid:Error-Handling Class Diagram
 ```mermaid
 classDiagram
     class WebAppError {
@@ -1232,7 +1232,7 @@ classDiagram
     WebAppErrorHandler ..> WebAppError : formats
     FlaskApp ..> WebAppError : catches and maps to HTTP status
 ```
-### Subsystem A Implementation Highlights
+### Subsystem A — Saeid:Implementation Highlights
 - **Web Tests (`test_web_ha4.py`):** 
       - Implemented a robust suite of **5 distinct unit and integration tests** in `tests/test_web_ha4.py` covering:
         - Dashboard route accessibility (`test_dashboard_route_status`).
