@@ -48,7 +48,7 @@ class CoachService:
         self._api_key = groq_key or gemini_key or openai_key
         if groq_key:
             base_url = "https://api.groq.com/openai/v1"
-            default_model = "llama-3.3-70b-versatile"
+            default_model = "openai/gpt-oss-20b"
         elif gemini_key:
             base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
             default_model = "gemini-2.5-flash"
@@ -191,7 +191,7 @@ class CoachService:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    max_tokens=1024,
+                    max_tokens=4096,
                     temperature=0.3
                 )
                 raw_content = response.choices[0].message.content if response.choices else None
