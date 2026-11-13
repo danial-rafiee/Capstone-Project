@@ -81,6 +81,40 @@ Other options: `--days` (60..366), `--building-id`, `--meter-id`, `--timezone`,
 `--seed`. New data follows the selected simulation timezone; align the dashboard
 calendar with it. Switching the seed does not replace already saved data.
 
+### UTC storage, German display time, and minute-level demo updates
+
+In November, **11:40 Europe/Berlin = 10:40 UTC**. The default hourly endpoint is
+therefore **10:00 UTC = 11:00 Europe/Berlin**. The last hourly interval starts
+at **09:00 UTC = 10:00 Europe/Berlin** and ends an hour later. Showing its UTC
+start as "latest timestamp" without a timezone can look two hours old even
+though its end is the last completed hour. This is not a two-hour data-generation
+delay. In summer the UTC offset is different; always use `ZoneInfo` conversion.
+
+Reports now include `dashboard_start_local`, `dashboard_end_local`, and
+`latest_interval_in_window` with separate start/end UTC and local ISO strings.
+The stored timestamps and existing UTC fields are unchanged. Preview local
+fields describe the projected history; they are not claims of existing rows.
+
+For simulated readings through the latest **completed minute**, including the
+elapsed part of the current hour:
+
+```bash
+python seed_demo_history_b.py --env-file docker/analytics/.env --end-resolution minute
+python seed_demo_history_b.py --env-file docker/analytics/.env --end-resolution minute --apply
+```
+
+At 11:40:23 Berlin in November this ends at **11:40 local / 10:40 UTC**; it does
+not generate the rest of the hour or any future data. To use the exact same
+endpoint for preview and apply, copy the preview's UTC `end` into `--end`.
+This option only extends explicitly simulated history, not a real sensor stream.
+Repeating the same endpoint still creates no duplicates. The hourly default is
+preserved. `--end` overrides `--end-resolution` and must include a timezone.
+
+Saeid must convert aware UTC timestamps to `Europe/Berlin` **for display only**,
+label the timezone, and distinguish interval start from interval end in his web
+code. Do not add one/two hours to stored data. Selecting minute resolution does
+not automatically change the web's timestamp labels; A's files are untouched.
+
 ## Handoff to Saeid (Subsystem A)
 
 1. Use this history only as explicitly labelled simulated demo data.

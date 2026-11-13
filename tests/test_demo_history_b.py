@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -10,7 +10,7 @@ from smart_energy.analytics import Building, Meter, Reading, EnergySettings
 from smart_energy.analytics.demo_history import DemoHistoryGenerator, DemoHistorySeeder
 from smart_energy.analytics.period_analytics import PeriodAnalyticsService
 from smart_energy.analytics.time_window import TimeWindow
-from seed_demo_history_b import load_database_env
+from seed_demo_history_b import load_database_env, resolve_end
 
 
 @pytest.fixture
@@ -159,17 +159,15 @@ def test_unknown_meter_does_not_create_or_insert_records(sample):
     connection.commit.assert_not_called()
 
 
-def test_explicit_env_file_loads_database_values_not_root_secret(tmp_path,monkeypatch):
-    for key in ("HOST","PORT","USER","NAME","PASSWORD"):
-        monkeypatch.delenv("SMART_ENERGY_DB_"+key,raising=False)
-    monkeypatch.delenv("MYSQL_ROOT_PASSWORD",raising=False)
+def test_explicit_env_file_loads_database_values_not_root_secret(tmp_path):
     path=tmp_path/".env"
     path.write_text("SMART_ENERGY_DB_PASSWORD='demo value # literal'\nMYSQL_ROOT_PASSWORD=never_export\n")
-    load_database_env(path)
     import os
-    assert os.environ["SMART_ENERGY_DB_PASSWORD"] == "demo value # literal"
-    assert os.environ["SMART_ENERGY_DB_PORT"] == "3307"
-    assert "MYSQL_ROOT_PASSWORD" not in os.environ
+    with patch.dict(os.environ, {}, clear=True):
+        load_database_env(path)
+        assert os.environ["SMART_ENERGY_DB_PASSWORD"] == "demo value # literal"
+        assert os.environ["SMART_ENERGY_DB_PORT"] == "3307"
+        assert "MYSQL_ROOT_PASSWORD" not in os.environ
 
 
 def test_invalid_short_window_rejected_without_connecting(sample):
@@ -178,3 +176,47 @@ def test_invalid_short_window_rejected_without_connecting(sample):
     with pytest.raises(ValueError,match="at least 60"):
         DemoHistorySeeder(database).run(1,101,TimeWindow(window.start,window.start+timedelta(days=30)))
     database.connect.assert_not_called()
+
+
+def test_german_clock_1140_matches_utc_1040_not_a_two_hour_lag():
+    from zoneinfo import ZoneInfo
+    berlin = ZoneInfo("Europe/Berlin")
+    now = datetime(2026,11,13,11,40,23,tzinfo=berlin)
+    hourly = resolve_end(now)
+    minute = resolve_end(now,resolution="minute")
+    assert hourly == datetime(2026,11,13,10,tzinfo=timezone.utc)
+    assert hourly.astimezone(berlin).hour == 11
+    assert minute == datetime(2026,11,13,10,40,tzinfo=timezone.utc)
+    assert minute.astimezone(berlin).strftime("%H:%M") == "11:40"
+
+
+def test_minute_endpoint_fills_elapsed_hour_and_remains_idempotent(sample):
+    meter, window, rows = sample
+    new_end=window.end+timedelta(minutes=40)
+    extended=TimeWindow(window.start,new_end)
+    generator=DemoHistoryGenerator()
+    old=rows+generator.plan(meter,rows,window)
+    additions=generator.plan(meter,old,extended)
+    assert len(additions)==1
+    assert additions[0].get_interval()==(window.end,new_end)
+    assert generator.plan(meter,old+additions,extended)==[]
+
+
+def test_preview_reports_local_start_and_end_without_shifting_stored_utc(sample):
+    database, connection, cursor, window = connection_fixture(sample)
+    result=DemoHistorySeeder(database).run(1,101,window)
+    assert result['dashboard_end_utc']==window.end
+    assert result['dashboard_end_local']=='2026-11-12T11:00:00+01:00'
+    latest=result['latest_interval_in_window']
+    assert latest['start_utc']==window.end-timedelta(hours=1)
+    assert latest['start_local']=='2026-11-12T10:00:00+01:00'
+    assert latest['end_local']=='2026-11-12T11:00:00+01:00'
+
+
+def test_explicit_local_endpoint_is_respected_and_future_endpoint_rejected():
+    now=datetime(2026,11,13,10,40,30,tzinfo=timezone.utc)
+    assert resolve_end(now,'2026-11-13T11:35:00+01:00')==now.replace(minute=35,second=0)
+    with pytest.raises(ValueError,match='Future'):
+        resolve_end(now,'2026-11-13T11:41:00+01:00')
+    with pytest.raises(ValueError,match='timezone'):
+        resolve_end(now,'2026-11-13T11:35:00')

@@ -1143,3 +1143,8 @@ including how to pin the endpoint with `--end`. The dashboard must use the same
 completed-reading endpoint, not a later `now()`. Repeating a fixed window inserts
 zero rows; existing E=5/R=7/O=2 sample data is preserved. This tool does not modify
 web or coach code, and Git does not transfer generated database records.
+
+The history report shows both UTC and `Europe/Berlin` timestamps, including the
+latest interval's start and end. For a simulated update through the last completed
+minute instead of the hourly default, add `--end-resolution minute`. See the
+guide's UTC/local-time explanation; database timestamps must remain UTC.

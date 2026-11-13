@@ -4,6 +4,7 @@ from contextlib import closing
 from datetime import timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from hashlib import sha256
+from zoneinfo import ZoneInfo
 
 from .building import Building
 from .energy_settings import EnergySettings
@@ -131,6 +132,8 @@ class DemoHistorySeeder:
                     connection.commit()
                 else:
                     connection.rollback()  # End the read-only preview transaction.
+                zone = ZoneInfo(self.generator.schedule.get_timezone())
+                latest = after["series"][-1]
                 return {
                     "mode": "applied" if apply else "preview_no_writes",
                     "data_kind": "SIMULATED gap-fill; existing readings preserved",
@@ -145,6 +148,14 @@ class DemoHistorySeeder:
                     "coverage_after" if apply else "projected_coverage": after["coverage_fraction"],
                     "comparisons_after" if apply else "projected_comparisons": comparisons,
                     "dashboard_end_utc": window.end,
+                    "dashboard_start_local": window.start.astimezone(zone).isoformat(),
+                    "dashboard_end_local": window.end.astimezone(zone).isoformat(),
+                    "latest_interval_in_window": {
+                        "start_utc": latest["start"], "end_utc": latest["end"],
+                        "start_local": latest["start"].astimezone(zone).isoformat(),
+                        "end_local": latest["end"].astimezone(zone).isoformat(),
+                        "energy_kwh": latest["energy_kwh"],
+                    },
                 }
             except Exception:
                 connection.rollback()

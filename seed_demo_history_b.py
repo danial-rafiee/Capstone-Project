@@ -47,11 +47,34 @@ def load_database_env(path):
     os.environ.update(values)
 
 
+def resolve_end(now, explicit_end=None, resolution="hour"):
+    """Keep storage in UTC; optionally simulate through the completed minute."""
+    if now.utcoffset() is None:
+        raise ValueError("Current time must include a timezone.")
+    now = now.astimezone(timezone.utc)
+    if resolution not in ("hour", "minute"):
+        raise ValueError("End resolution must be hour or minute.")
+    if explicit_end:
+        end = datetime.fromisoformat(explicit_end)
+        if end.utcoffset() is None:
+            raise ValueError("--end must include a timezone.")
+        end = end.astimezone(timezone.utc)
+    else:
+        end = now.replace(second=0, microsecond=0)
+        if resolution == "hour":
+            end = end.replace(minute=0)
+    if end > now:
+        raise ValueError("Future simulation endpoints are not supported.")
+    return end
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file", help="Explicit .env file; contents/passwords are not printed.")
     parser.add_argument("--days", type=int, default=60, help="Elapsed UTC days; 60..366.")
     parser.add_argument("--end", help="ISO timestamp with timezone; default is latest completed UTC hour.")
+    parser.add_argument("--end-resolution", choices=("hour", "minute"), default="hour",
+                        help="Default endpoint precision; minute fills the elapsed partial hour. --end overrides it.")
     parser.add_argument("--building-id", type=int, default=1)
     parser.add_argument("--meter-id", type=int, default=101)
     parser.add_argument("--timezone", default="Europe/Berlin", help="Simulation's business calendar.")
@@ -62,13 +85,7 @@ def main():
         parser.error("--days must be between 60 and 366.")
     now = datetime.now(timezone.utc)
     try:
-        end = datetime.fromisoformat(args.end) if args.end else now.replace(
-            minute=0, second=0, microsecond=0)
-        if end.utcoffset() is None:
-            raise ValueError("--end must include a timezone.")
-        end = end.astimezone(timezone.utc)
-        if end > now:
-            raise ValueError("Future simulation endpoints are not supported.")
+        end = resolve_end(now, args.end, args.end_resolution)
         if args.env_file:
             load_database_env(args.env_file)
         database = Database()
@@ -90,6 +107,10 @@ def main():
         "port": os.environ.get("SMART_ENERGY_DB_PORT", "3306"),
         "database": os.environ.get("SMART_ENERGY_DB_NAME", "smart_energy_ha3"),
     }
+    report["end_selection"] = "explicit" if args.end else "completed_" + args.end_resolution
+    report["display_note"] = (
+        "UTC storage is unchanged. Use *_local fields for display; latest interval start is not its end."
+    )
     print(json.dumps(to_json_ready(report), indent=2))
     return 0
 
