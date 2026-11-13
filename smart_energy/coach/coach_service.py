@@ -48,7 +48,7 @@ class CoachService:
         self._api_key = groq_key or gemini_key or openai_key
         if groq_key:
             base_url = "https://api.groq.com/openai/v1"
-            default_model = "openai/gpt-oss-20b"
+            default_model = "llama-3.3-70b-versatile"
         elif gemini_key:
             base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
             default_model = "gemini-2.5-flash"
@@ -191,10 +191,13 @@ class CoachService:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    max_tokens=350,
+                    max_tokens=1024,
                     temperature=0.3
                 )
-                answer_content = response.choices[0].message.content.strip()
+                raw_content = response.choices[0].message.content if response.choices else None
+                answer_content = raw_content.strip() if isinstance(raw_content, str) else ""
+                if not answer_content:
+                    raise ValueError("AI provider returned an empty response.")
                 self._last_status = "ready"
                 return CoachResponse(
                     answer=answer_content,
