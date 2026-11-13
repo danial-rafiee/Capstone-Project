@@ -407,20 +407,17 @@ classDiagram
     CoachService ..> CoachRequest : accepts
     CoachService ..> CoachResponse : returns
 ```
+
 ### Key Capstone Enhancements
 
 - **Multi-Provider LLM Configuration & Rule-Based Fallback (`coach_service.py`):**
-  - Selects an OpenAI-compatible LLM provider at initialization based on available environment variables in priority order: `GROQ_API_KEY` (`openai/gpt-oss-20b` with `max_tokens=4096`), `GEMINI_API_KEY` (`gemini-2.5-flash`), or `OPENAI_API_KEY` (`gpt-4o-mini`).
-  - Automatically falls back to deterministic, intent-aware rule-based coaching (`Status: fallback`) when no API key is configured, the selected provider request fails, or an empty response is returned—guaranteeing that the dashboard never crashes or displays an empty answer box.
-
+  - Selects a single OpenAI-compatible LLM provider at initialization based on available environment variables in priority order (`GROQ_API_KEY` -> `GEMINI_API_KEY` -> `OPENAI_API_KEY`) and configures `max_tokens=4096` to allocate a larger output budget for reasoning models.
+  - Detects missing API keys, connection/API errors, or empty model responses and switches directly to deterministic, intent-aware rule-based coaching (`Status: fallback`), ensuring the dashboard always displays an actionable response.
 - **Web Integration & API Blueprint Status:**
   - `CoachService` is directly integrated into the main Flask web dashboard (`smart_energy/web/app.py`) to power the interactive AI Coach panel.
   - The standalone evaluation history REST blueprint (`coach_api.py`, `GET /api/coach/evaluations/<building_id>`) is implemented and verified via unit tests, though not yet registered in the main `app.py` factory.
-
-- **Operational Guardrails & Anti-Hallucination Rules:**
-  - Strictly protects essential building loads (`Server Room`, `Emergency Lighting`) and respects occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`).
-  - Explicitly states the evaluated time window (`24h`, `7d`, or `30d`) in every response and prohibits fabricating unverified energy-saving percentages or CO2 reduction numbers.
-
+- **Prompt Rules & Operational Constraints:**
+  - Guides live LLM responses through explicit system prompt rules to respect essential building loads (`Server Room`, `Emergency Lighting`), occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`), and the evaluated time window (`24h`, `7d`, or `30d`), while instructing the model not to fabricate unverified savings or CO2 percentages.
 - **High-Precision Scoring & Missing-Data Safety (`score_calculator.py`):**
   - Calculates normalized sustainability scores (`0.0`–`100.0`), growth penalties ($P_g$), and off-hours penalties ($P_o$) using Python `Decimal` arithmetic.
   - Gracefully handles periods with missing or zero reference energy (`score: None`, displayed as `--/100` in the UI) while keeping interactive coaching operational.
@@ -437,12 +434,14 @@ python run_web.py
 # Windows (Command Prompt):
 set GROQ_API_KEY=your_groq_api_key_here
 python run_web.py
+
+
 ```
 
-To verify Subsystem C scoring, context constraints, fallback resilience, and web panel integration:
+To verify Subsystem C scoring bounds, domain exceptions, and evaluation API endpoints (tests/test_ha4_coach.py) along with dashboard coach panel rendering (tests/test_web_ha4.py):
 
 ```bash
-python -m pytest -k "coach or score or building_context" -v
+python -m pytest tests/test_ha4_coach.py tests/test_web_ha4.py -v
 ```
 
 Presentation Link:
