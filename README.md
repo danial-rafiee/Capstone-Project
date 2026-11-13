@@ -1062,9 +1062,128 @@ pytest tests/test_ha4_coach.py -v
 
 [Watch the HA4 presentation on Google Drive](https://drive.google.com/file/d/11aNbz97Z6CoCFNOwMvcnHBVlrQ_1F1bV/view?usp=sharing)
 
+## ===== Capstone Project =====
+## Saeid — Subsystem A: Web Dashboard, State Persistence & Exception Handling
 
+Branch: `capstone-saeid-a`. Subsystem A's capstone contribution implements the Flask web application interface (`smart_energy.web`), providing a production-ready dashboard, dynamic time-range filtering, UI state preservation for AI coaching, centralized error management, and comprehensive web testing.
 
+### Subsystem A Architecture (Mermaid Class Diagram)
 
+```mermaid
+classDiagram
+    class TimeRange {
+        #str _preset
+        #datetime _start
+        #datetime _end
+        +__init__(preset: str, start: datetime, end: datetime)
+        +configure(preset: str, start: datetime, end: datetime) None
+        +get_preset() str
+        +set_preset(value: str) None
+        +get_start() datetime
+        +set_start(value: datetime) None
+        +get_end() datetime
+        +set_end(value: datetime) None
+        +to_dict() dict
+    }
+
+    class EnergySummary {
+        #Decimal _totals
+        #Decimal _savings
+        #Decimal _reference
+        #Decimal _score
+        #str _penalties
+        +__init__(totals, savings, reference, score, penalties)
+        +configure(totals, savings, reference, score, penalties) None
+        +get_totals() Decimal
+        +set_totals(value) None
+        +get_savings() Decimal
+        +set_savings(value) None
+        +get_reference() Decimal
+        +set_reference(value) None
+        +get_score() Decimal
+        +set_score(value) None
+        +get_penalties() str
+        +set_penalties(value: str) None
+        +to_dict() dict
+    }
+
+    class CoachPanel {
+        #str _question
+        #str _answer
+        #str _status
+        +__init__(question: str, answer: str, status: str)
+        +configure(question: str, answer: str, status: str) None
+        +get_question() str
+        +set_question(value: str) None
+        +get_answer() str
+        +set_answer(value: str) None
+        +get_status() str
+        +set_status(value: str) None
+        +submit_question(question: str) None
+        +set_response(answer: str, status: str) None
+        +to_dict() dict
+    }
+
+    class DashboardView {
+        +int building_id
+        +__init__(building_id: int)
+        +handle_request(request_args: dict) dict
+    }
+
+    class WebAppError {
+        +str message
+        +str code
+        +__init__(message: str, code: str)
+    }
+
+    class FlaskApp {
+        <<module>>
+        +get_db_connection() Database
+        +create_app(test_config) Flask
+        +home() HTML
+        +api_latest() JSON
+        +api_analytics(building_id, meter_id) JSON
+    }
+
+    FlaskApp ..> TimeRange : configures presets & windows
+    FlaskApp ..> EnergySummary : formats summary & penalties
+    FlaskApp ..> CoachPanel : manages AI coach prompts
+    FlaskApp ..> DashboardView : parses query parameters
+    FlaskApp ..> WebAppError : catches and maps to HTTP status
+```
+
+### Subsystem A Implementation Highlights
+
+- **Web Dashboard & State Persistence (`dashboard.html` & `app.py`):**
+  - Implements the main Flask application factory (`create_app`) and handles rendering of the 6-card metrics overview, SVG trend charts, and real-time interval data.
+  - Integrates `DashboardView` to parse query parameters (`preset` and `question`), ensuring user input gracefully persists via Jinja2 template parameter injection when navigating between time presets (`24h`, `7d`, `30d`).
+  - Added real-time asynchronous auto-refresh intervals for interval energy metrics.
+- **Domain Model Encapsulation (`smart_energy.web.domain`):**
+  - **`TimeRange`:** Manages UTC-normalized datetime windows and presets (`24h`, `7d`, `30d`, `custom`) with strict type validation.
+  - **`EnergySummary`:** Encapsulates consumption totals, savings, baseline references, sustainability scores, and penalty strings using high-precision `Decimal` calculations.
+  - **`CoachPanel`:** Structures user prompts, AI responses, and real-time status flags with guard validations against empty queries.
+  - **`DashboardView`:** Decouples request query string parsing and default question fallback logic from the core routing controller.
+- **Centralized Cross-Layer Exception Handling (`errors.py`):**
+  - Introduces `WebAppError` custom exceptions and `WebAppErrorHandler` formatters.
+  - Registers centralized Flask error handlers (`register_web_error_handlers`) to map domain and web anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
+- **Comprehensive Automated Testing (`test_web_ha4.py`):**
+  - Includes robust unit and integration test coverage for route accessibility, JSON API serialization, time range boundary validation, and custom error handling behavior under isolated environments.
+
+### Running the Web Application
+
+To start the Flask-based web dashboard locally:
+
+```bash
+# On Windows:
+python run_web.py
+
+# On macOS / Linux:
+python3 run_web.py
+```
+To verify Subsystem A web dashboard routes, API serialization, and error handling tests:
+```bash
+python -m pytest tests/test_web_ha4.py -v
+```
 
 ## Capstone - Danial: selected-period analytics (B)
 
