@@ -1227,3 +1227,5 @@ To verify Subsystem C scoring, context constraints, fallback resilience, and web
 ```bash
 python -m pytest -k "coach or score or building_context" -v
 ```
+
+
