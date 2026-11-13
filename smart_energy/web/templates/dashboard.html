@@ -54,12 +54,12 @@
   <h1>Smart Energy Management</h1>
   <p>{{ building_name }} · Group 18 · Capstone Project</p>
 
-  <!-- Navigation bar for time range presets -->
+  <!-- Navigation bar for time range presets (Preserves active question) -->
   <section class="preset-nav">
     <strong>Time range:</strong>
-    <a href="/?preset=24h" class="{% if time_range.preset == '24h' %}active{% endif %}">24 Hours</a> &nbsp;|&nbsp;
-    <a href="/?preset=7d" class="{% if time_range.preset == '7d' %}active{% endif %}">7 Days</a> &nbsp;|&nbsp;
-    <a href="/?preset=30d" class="{% if time_range.preset == '30d' %}active{% endif %}">30 Days</a>
+    <a href="/?preset=24h{% if coach.question %}&question={{ coach.question }}{% endif %}" class="{% if time_range.preset == '24h' %}active{% endif %}">24 Hours</a> &nbsp;|&nbsp;
+    <a href="/?preset=7d{% if coach.question %}&question={{ coach.question }}{% endif %}" class="{% if time_range.preset == '7d' %}active{% endif %}">7 Days</a> &nbsp;|&nbsp;
+    <a href="/?preset=30d{% if coach.question %}&question={{ coach.question }}{% endif %}" class="{% if time_range.preset == '30d' %}active{% endif %}">30 Days</a>
   </section>
 
   <!-- Selected time window details -->
@@ -137,7 +137,7 @@
         <p class="subtext">vs reference period</p>
       </div>
 
-      <!-- Card 6: Score with Penalties (FR-A7 fulfillment) -->
+      <!-- Card 6: Score with Penalties -->
       <div class="metric-card" style="border-color: #19302d; background: #f0f7f4;">
         <h3>Score</h3>
         <p class="value">
