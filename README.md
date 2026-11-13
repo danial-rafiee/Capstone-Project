@@ -80,6 +80,7 @@ Capstone-Project/
 │   │   ├── domain/
 │   │   │   ├── __init__.py
 │   │   │   ├── coach_panel.py
+│   │   │   ├── dashboard_view.py   
 │   │   │   ├── energy_summary.py
 │   │   │   └── time_range.py
 │   │   ├── templates/
