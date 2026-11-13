@@ -76,27 +76,51 @@
       <!-- Card 1: Latest interval -->
       <div class="metric-card">
         <h3>Latest interval</h3>
-        <p class="value">{{ '%.2f'|format(latest_interval_kwh) }} kWh</p>
+        <p class="value">
+          {% if latest_interval_kwh is not none %}
+            {{ '%.2f'|format(latest_interval_kwh) }} kWh
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
       </div>
 
       <!-- Card 2: Energy consumption -->
       <div class="metric-card">
         <h3>Energy</h3>
-        <p class="value">{{ '%.2f'|format(summary.energy_kwh) if summary.energy_kwh is not none else '0.00' }} kWh</p>
+        <p class="value">
+          {% if summary.energy_kwh is not none %}
+            {{ '%.2f'|format(summary.energy_kwh) }} kWh
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
         <p class="subtext">Based on selected period</p>
       </div>
 
       <!-- Card 3: Estimated cost -->
       <div class="metric-card">
         <h3>Est. cost</h3>
-        <p class="value">EUR {{ '%.2f'|format(estimated_cost_eur) }}</p>
+        <p class="value">
+          {% if estimated_cost_eur is not none %}
+            EUR {{ '%.2f'|format(estimated_cost_eur) }}
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
         <p class="subtext">0.30 EUR/kWh</p>
       </div>
 
       <!-- Card 4: CO2 emissions -->
       <div class="metric-card">
         <h3>CO2 / change</h3>
-        <p class="value">{{ '%.1f'|format(estimated_co2_kg) }} kg</p>
+        <p class="value">
+          {% if estimated_co2_kg is not none %}
+            {{ '%.1f'|format(estimated_co2_kg) }} kg
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
         <p class="subtext">Carbon footprint</p>
       </div>
 
@@ -117,7 +141,11 @@
       <div class="metric-card" style="border-color: #19302d; background: #f0f7f4;">
         <h3>Score</h3>
         <p class="value">
-          {{ '%.1f'|format(sustainability_score) if sustainability_score is not none else '--' }} / 100
+          {% if sustainability_score is not none %}
+            {{ '%.1f'|format(sustainability_score) }} / 100
+          {% else %}
+            -- / 100
+          {% endif %}
         </p>
         <p class="subtext" style="color: #2c4a45; font-weight: 600;">
           Growth pen: {{ '%.1f'|format(growth_penalty) if growth_penalty is not none else '0.0' }}<br>
@@ -218,7 +246,7 @@
         if (response.ok) {
           let data = await response.json();
           let cards = document.querySelectorAll('.metric-card');
-          if (cards.length > 0 && data.latest_interval_kwh !== undefined) {
+          if (cards.length > 0 && data.latest_interval_kwh !== undefined && data.latest_interval_kwh !== null) {
             let valueEl = cards[0].querySelector('.value');
             if (valueEl) {
               valueEl.innerText = data.latest_interval_kwh.toFixed(2) + ' kWh';

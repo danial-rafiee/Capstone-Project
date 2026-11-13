@@ -16,6 +16,7 @@ from smart_energy.analytics.meter import Meter
 
 @pytest.fixture
 def client():
+    # Configure test client with testing config enabled
     app = create_app({"TESTING": True})
     with app.test_client() as client:
         yield client
@@ -31,20 +32,34 @@ def test_dashboard_route_status(client):
     mock_meter.get_meter_id.return_value = 101
     mock_meter.get_name.return_value = "Test Meter"
 
+    # Mock a valid complete reading to prevent NoneType formatting errors
+    mock_reading = MagicMock()
+    mock_reading.get_interval.return_value = (datetime.now(timezone.utc) - timedelta(hours=1), datetime.now(timezone.utc))
+    mock_reading.get_energy_kwh.return_value = 5.0
+
     mock_summary = {
-        "totals": "10.0",
-        "cost": "3.0",
-        "co2": "4.0",
-        "score": 85.0,
-        "status": "Good"
+        "energy_kwh": "10.0",
+        "estimated_cost_eur": "3.0",
+        "estimated_co2_kg": "4.0",
+        "coverage_fraction": 1.0,
+        "series": [{"energy_kwh": 5.0}]
     }
 
+    mock_comparison_result = {
+        "current": mock_summary,
+        "reference": {"energy_kwh": "12.0"},
+        "comparison": {"status": "available", "energy_saved_percent": 16.6}
+    }
+
+    # Patch repositories and analytics services with complete mocking
     with patch('smart_energy.web.app.BuildingRepository.get_by_id', return_value=mock_building), \
             patch('smart_energy.web.app.MeterRepository.get_by_id', return_value=mock_meter), \
-            patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[]), \
+            patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[mock_reading]), \
+            patch('smart_energy.web.app.ReadingRepository.list_for_period', return_value=[mock_reading]), \
             patch('smart_energy.web.app.PeriodAnalyticsService') as mock_analytics:
         instance = mock_analytics.return_value
         instance.summarize.return_value = mock_summary
+        instance.compare.return_value = mock_comparison_result
 
         response = client.get('/')
         assert response.status_code == 200
@@ -58,24 +73,32 @@ def test_api_analytics_endpoint(client):
     mock_meter.get_meter_id.return_value = 101
 
     mock_summary = {
-        "totals": "10.0",
-        "cost": "3.0",
-        "co2": "4.0",
-        "score": 85.0,
-        "status": "Good"
+        "energy_kwh": "10.0",
+        "estimated_cost_eur": "3.0",
+        "estimated_co2_kg": "4.0",
+        "coverage_fraction": 1.0,
+        "series": []
     }
 
+    mock_comparison_result = {
+        "current": mock_summary,
+        "reference": {"energy_kwh": "12.0"},
+        "comparison": {"status": "available", "energy_saved_percent": 16.6}
+    }
+
+    # Patch repositories and analytics compare service for API endpoint
     with patch('smart_energy.web.app.BuildingRepository.get_by_id', return_value=mock_building), \
             patch('smart_energy.web.app.MeterRepository.get_by_id', return_value=mock_meter), \
             patch('smart_energy.web.app.ReadingRepository.list_for_meter', return_value=[]), \
+            patch('smart_energy.web.app.ReadingRepository.list_for_period', return_value=[]), \
             patch('smart_energy.web.app.PeriodAnalyticsService') as mock_analytics:
         instance = mock_analytics.return_value
         instance.summarize.return_value = mock_summary
-        instance.compare.return_value = (mock_summary, mock_summary, 5.0)
+        instance.compare.return_value = mock_comparison_result
 
         response = client.get('/api/analytics/1/101')
         assert response.status_code == 200
-        assert response.json["status"] == "Good"
+        assert response.json["energy_kwh"] == "10.0"
 
 
 def test_api_latest_endpoint(client):
@@ -101,7 +124,6 @@ def test_time_range_presets_and_energy_summary():
     end = datetime.now(timezone.utc)
     start = end - timedelta(hours=1)
 
-    # Testing TimeRange presets
     tr = TimeRange("custom", start=start, end=end)
     assert tr.to_dict()["preset"] == "custom"
 
