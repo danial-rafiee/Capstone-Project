@@ -3,6 +3,7 @@
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 import os
 
 from smart_energy.analytics.database import Database
@@ -21,6 +22,8 @@ from smart_energy.web.errors import register_web_error_handlers
 from smart_energy.coach import evaluate_period
 from smart_energy.coach import CoachService, BuildingContext, ScoreCalculator
 from smart_energy.coach.coach_models import CoachRequest
+
+BERLIN_TZ = ZoneInfo("Europe/Berlin")
 
 
 def get_db_connection() -> Database:
@@ -82,8 +85,11 @@ def create_app(test_config: dict | None = None):
         if all_meter_readings:
             latest_reading = all_meter_readings[-1]
             start_time_interval = latest_reading.get_interval()[0]
-            latest_reading_time = start_time_interval.strftime('%Y-%m-%d %H:%M')
             end_time = latest_reading.get_interval()[1]
+
+            # convert to berlin timezone for display
+            end_berlin = end_time.astimezone(BERLIN_TZ)
+            latest_reading_time = end_berlin.strftime('%Y-%m-%d %H:%M %Z')
         else:
             end_time = datetime.now(timezone.utc)
             latest_reading_time = "-"
@@ -166,6 +172,33 @@ def create_app(test_config: dict | None = None):
         coverage_percent = float(coverage_fraction_val) * 100 if coverage_fraction_val is not None else 0.0
 
         series_list = summary_payload.get('series', [])
+
+        # convert series timestamps to berlin timezone and align last point
+        for i, item in enumerate(series_list):
+            raw_start = item.get('start')
+            if raw_start:
+                try:
+                    if isinstance(raw_start, datetime):
+                        dt_utc = raw_start
+                    else:
+                        cleaned = str(raw_start).replace('Z', '+00:00')
+                        dt_utc = datetime.fromisoformat(cleaned)
+
+                    if dt_utc.tzinfo is None:
+                        dt_utc = dt_utc.replace(tzinfo=timezone.utc)
+                    else:
+                        dt_utc = dt_utc.astimezone(timezone.utc)
+
+                    dt_berlin = dt_utc.astimezone(BERLIN_TZ)
+
+                    # force last point to match exact reading completion time
+                    if i == len(series_list) - 1 and all_meter_readings:
+                        dt_berlin = end_berlin
+
+                    item['start'] = dt_berlin.strftime('%Y-%m-%d %H:%M %Z')
+                except Exception:
+                    pass
+
         max_energy = max([float(item.get('energy_kwh', 0)) for item in series_list], default=1.0)
         if max_energy == 0:
             max_energy = 1.0
@@ -191,8 +224,12 @@ def create_app(test_config: dict | None = None):
                 growth_penalty_val = coach_data.get("growth_penalty", 0.0)
                 off_hours_penalty_val = coach_data.get("off_hours_penalty", 0.0)
 
-        start_str = current_window.start.strftime("%Y-%m-%d %H:%M")
-        end_str = current_window.end.strftime("%Y-%m-%d %H:%M")
+        # convert window start/end to berlin timezone for display
+        start_berlin = current_window.start.astimezone(BERLIN_TZ)
+        end_berlin_window = current_window.end.astimezone(BERLIN_TZ)
+
+        start_str = start_berlin.strftime("%Y-%m-%d %H:%M %Z")
+        end_str = end_berlin_window.strftime("%Y-%m-%d %H:%M %Z")
         period_label = f"{preset}: {start_str} to {end_str}"
 
         period_summary_for_coach = {
@@ -242,8 +279,8 @@ def create_app(test_config: dict | None = None):
             meter=meter,
             time_range={
                 "preset": preset,
-                "start": current_window.start.strftime('%Y-%m-%d %H:%M'),
-                "end": current_window.end.strftime('%Y-%m-%d %H:%M')
+                "start": start_str,
+                "end": end_str
             },
             latest_reading_time=latest_reading_time,
             estimated_cost_eur=float(est_cost) if est_cost is not None else None,
