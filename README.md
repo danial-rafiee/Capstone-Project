@@ -217,6 +217,9 @@ classDiagram
   - Registers centralized Flask error handlers (`register_web_error_handlers`) to map domain and web anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
 - **Comprehensive Automated Testing (`test_web_ha4.py`):**
   - Includes robust unit and integration test coverage for route accessibility, JSON API serialization, time range boundary validation, and custom error handling behavior under isolated environments.
+- **Timezone Aware Localized Display & Chart Synchronization:**
+  - Standardizes backend data storage in UTC while automatically converting timestamps to *Europe/Berlin (CET/CEST)* using Python's `zoneinfo` module for precise user facing reporting.
+  - Implements smart series alignment logic in `app.py` to match the exact end-time of the latest reading interval with the final data point on the time series SVG chart, eliminating visual gaps and timestamp inconsistencies.
 
 ### Running the Web Application
 
