@@ -225,6 +225,7 @@ classDiagram
   - Standardizes backend data storage in UTC while automatically converting timestamps to *Europe/Berlin (CET/CEST)* using Python's `zoneinfo` module for precise user facing reporting.
   - Implements smart series alignment logic in `app.py` to match the exact end-time of the latest reading interval with the final data point on the time series SVG chart, eliminating visual gaps and timestamp inconsistencies.
 
+
 ### Running the Web Application
 
 To start the Flask-based web dashboard locally:
