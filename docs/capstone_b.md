@@ -1,9 +1,12 @@
 # Capstone - Danial's selected-period data contract
 
-Branch: `capstone-danial-b`. This increment changes B only. Existing A/C code and
-the submitted homework branches are unchanged. The Flask routes do not call the
-new service until Saeid integrates it. This is a data layer, not an automatic
-dashboard, OpenAI connection, Docker deployment or complete final product.
+Branch: `capstone-danial-b`. This document describes B's selected-period data
+layer and its contract with A/C. In the current checkout, the Flask dashboard
+uses `PeriodAnalyticsService` and `OperatingSchedule` for the 24h, 7d and 30d
+presets, then passes the comparison payload to C's `evaluate_period`. B owns
+energy/cost/carbon calculations and E/R/O inputs; A owns dashboard presentation,
+and C owns sustainability scoring and AI advice. The standalone B demos and
+Docker runner verify the data layer separately from the complete web application.
 
 ## Scope and compatibility
 
@@ -140,7 +143,9 @@ If your local root account has an empty password, set
 `SMART_ENERGY_DB_PASSWORD` to an explicitly empty environment value for this run.
 Do not change the database password or commit local credentials.
 
-The updated verification run passed all 62 tests (15 existing + 47 new B tests).
+An earlier increment verification recorded 62 passing tests. The current local
+checkout passed all 79 tests with `python -m pytest tests -q` on 2026-11-13;
+this run does not verify a live MySQL connection or an external AI provider.
 The read-only MySQL run returned two readings, 5 kWh, EUR 1.50 and 2 kg CO2.
 With `--schedule-demo`, their local 10:00-10:10 Berlin period is occupied time,
 so O is measured zero for this fully covered period. The separate off-hours demo
@@ -154,8 +159,9 @@ It abbreviates existing classes to the methods involved in this increment.
 
 B's local demo calendar has been agreed as Monday-Friday 09:00-17:00,
 Europe/Berlin, with no additional closed dates. This is illustrative, not a real
-building configuration. A/C still need to call this B service and use its flags;
-the code in their packages is unchanged. Coordinate Docker database settings
+building configuration. The current dashboard calls B's period service and
+passes its comparison payload to C for scoring. Live database, external AI and
+complete deployment checks remain separate from the B unit tests. Coordinate Docker database settings
 with the group's deployment owner. [B's Docker database and B-only runner](capstone_b_docker.md)
 are now verified in actual Docker: MySQL started healthy, 52 B-only tests passed
 inside the B runner, and seeded E/R/O queries succeeded across the container
