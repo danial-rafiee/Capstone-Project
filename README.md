@@ -14,6 +14,8 @@ and AI advice. The current implementation is the initial OOP learning stage.
 
 ## Project Structure
 
+This tree lists all files tracked in the current repository checkout, including the Capstone additions. Local environments, caches and generated database data are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports.
+
 ```text
 Capstone-Project/
 ├── docker/
@@ -272,7 +274,7 @@ python -m pytest tests/test_web_ha4.py -v
 
 ## Capstone - Danial: selected-period analytics (B)
 
-Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data, reference comparisons and configurable local-calendar off-hours energy (O). Ready E/R/O inputs are supplied for C; existing A/C code is unchanged and integration is pending.
+Work in `capstone-danial-b` adds MySQL period queries, coverage-aware energy/cost/carbon totals, interval chart data, reference comparisons and configurable local-calendar off-hours energy (O). The current Flask dashboard uses B's period queries and comparisons for the 24h, 7d and 30d presets, and passes the comparison payload to C's `evaluate_period` for sustainability scoring. B supplies current energy (E), reference energy (R) and off-hours energy (O); C owns the scoring logic and AI advice.
 
 [B setup, data contract, limitations and integration instructions](docs/capstone_b.md)
 
@@ -451,8 +453,6 @@ Presentation Link:
  ## =====HA1=====
 `Capstone-Project` is the shared repository name and the local project folder
 name. The HA1 submission branch remains `Homeworkassignment001`.
-
-This tree lists the versioned project files in `Homeworkassignment004`. Local virtual environments and IDE settings are omitted. B diagrams use Mermaid; DOT/PNG/SVG files are retained as supplementary exports. A/C documentation is maintained by their respective authors.
 
 ## Run the current example
 
