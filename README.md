@@ -149,72 +149,10 @@ Branch: `capstone-saeid-a`. Subsystem A's capstone contribution implements the F
 
 ### Subsystem A Architecture (Mermaid Class Diagram)
 
+#### 1. Internal Structure of Subsystem A
 ```mermaid
 classDiagram
-    class TimeRange {
-        #str _preset
-        #datetime _start
-        #datetime _end
-        +__init__(preset: str, start: datetime, end: datetime)
-        +configure(preset: str, start: datetime, end: datetime) None
-        +get_preset() str
-        +set_preset(value: str) None
-        +get_start() datetime
-        +set_start(value: datetime) None
-        +get_end() datetime
-        +set_end(value: datetime) None
-        +to_dict() dict
-    }
-
-    class EnergySummary {
-        #Decimal _totals
-        #Decimal _savings
-        #Decimal _reference
-        #Decimal _score
-        #str _penalties
-        +__init__(totals, savings, reference, score, penalties)
-        +configure(totals, savings, reference, score, penalties) None
-        +get_totals() Decimal
-        +set_totals(value) None
-        +get_savings() Decimal
-        +set_savings(value) None
-        +get_reference() Decimal
-        +set_reference(value) None
-        +get_score() Decimal
-        +set_score(value) None
-        +get_penalties() str
-        +set_penalties(value: str) None
-        +to_dict() dict
-    }
-
-    class CoachPanel {
-        #str _question
-        #str _answer
-        #str _status
-        +__init__(question: str, answer: str, status: str)
-        +configure(question: str, answer: str, status: str) None
-        +get_question() str
-        +set_question(value: str) None
-        +get_answer() str
-        +set_answer(value: str) None
-        +get_status() str
-        +set_status(value: str) None
-        +submit_question(question: str) None
-        +set_response(answer: str, status: str) None
-        +to_dict() dict
-    }
-
-    class DashboardView {
-        +int building_id
-        +__init__(building_id: int)
-        +handle_request(request_args: dict) dict
-    }
-
-    class WebAppError {
-        +str message
-        +str code
-        +__init__(message: str, code: str)
-    }
+    direction TB
 
     class FlaskApp {
         <<module>>
@@ -225,13 +163,133 @@ classDiagram
         +api_analytics(building_id, meter_id) JSON
     }
 
-    FlaskApp ..> TimeRange : configures presets & windows
-    FlaskApp ..> EnergySummary : formats summary & penalties
-    FlaskApp ..> CoachPanel : manages AI coach prompts
-    FlaskApp ..> DashboardView : parses query parameters
-    FlaskApp ..> WebAppError : catches and maps to HTTP status
+    class DashboardView {
+        +int building_id
+        +handle_request(request_args) dict
+    }
+
+    class CoachPanel {
+        #str _question
+        #str _answer
+        #str _status
+        +configure(question, answer, status)
+        +submit_question(question)
+        +set_response(answer, status)
+        +to_dict() dict
+    }
+
+    class WebErrors {
+        <<module>>
+        +register_web_error_handlers(app)
+    }
+
+    class WebAppError {
+        +str message
+        +str code
+    }
+
+    class WebAppErrorHandler {
+        +handle(error) dict$
+    }
+
+    class Exception
+
+    FlaskApp ..> DashboardView : parses request
+    FlaskApp ..> CoachPanel : prepares panel
+    FlaskApp ..> WebErrors : registers handler
+    WebErrors ..> WebAppError : catches
+    WebErrors ..> WebAppErrorHandler : formats response
+    WebAppErrorHandler ..> WebAppError : reads
+    Exception <|-- WebAppError
+```
+(Note: TimeRange and EnergySummary remain in smart_energy.web.domain from the initial HA1 OOP design stage, but app.py now delegates period and summary calculations directly to Subsystem B services.)
+
+#### 2. Subsystem A Dependencies on Subsystem B (smart_energy.analytics)
+```mermaid
+classDiagram
+    direction TB
+
+    class FlaskApp {
+        <<module>>
+    }
+
+    class Database {
+        <<external B>>
+    }
+
+    class BuildingRepository {
+        <<external B>>
+    }
+
+    class MeterRepository {
+        <<external B>>
+    }
+
+    class ReadingRepository {
+        <<external B>>
+    }
+
+    class EnergySettings {
+        <<external B>>
+    }
+
+    class TimeWindow {
+        <<external B>>
+    }
+
+    class OperatingSchedule {
+        <<external B>>
+    }
+
+    class PeriodAnalyticsService {
+        <<external B>>
+    }
+
+    FlaskApp ..> Database : creates connection
+    FlaskApp ..> BuildingRepository : loads building
+    FlaskApp ..> MeterRepository : loads meter
+    FlaskApp ..> ReadingRepository : queries interval readings
+    FlaskApp ..> EnergySettings : configures tariff & carbon factors
+    FlaskApp ..> TimeWindow : configures query windows
+    FlaskApp ..> OperatingSchedule : applies schedule rules
+    FlaskApp ..> PeriodAnalyticsService : fetches analytics & comparisons
 ```
 
+#### 3. Subsystem A Dependencies on Subsystem C (smart_energy.coach)
+```mermaid
+classDiagram
+    direction TB
+
+    class FlaskApp {
+        <<module>>
+    }
+
+    class CoachService {
+        <<external C>>
+    }
+
+    class BuildingContext {
+        <<external C>>
+    }
+
+    class ScoreCalculator {
+        <<external C>>
+    }
+
+    class CoachRequest {
+        <<external C>>
+    }
+
+    class evaluate_period {
+        <<external C function>>
+    }
+
+    FlaskApp ..> evaluate_period : computes period score & penalties
+    FlaskApp ..> CoachService : coordinates AI coaching
+    FlaskApp ..> BuildingContext : loads building metadata
+    FlaskApp ..> ScoreCalculator : supplies score calculator
+    FlaskApp ..> CoachRequest : passes prompt payload
+```
 ### Subsystem A Implementation Highlights
 
 - **Web Dashboard & State Persistence (`dashboard.html` & `app.py`):**
@@ -239,23 +297,20 @@ classDiagram
   - Integrates `DashboardView` to parse query parameters (`preset` and `question`), ensuring user input gracefully persists via Jinja2 template parameter injection when navigating between time presets (`24h`, `7d`, `30d`).
   - Added real-time asynchronous auto-refresh intervals for the latest energy metrics card every 10 minutes.
 - **Domain Model Encapsulation (`smart_energy.web.domain`):**
-  - **`TimeRange`:** Manages UTC-normalized datetime windows and presets (`24h`, `7d`, `30d`, `custom`) with strict type validation.
-  - **`EnergySummary`:** Encapsulates consumption totals, savings, baseline references, sustainability scores, and penalty strings using high-precision `Decimal` calculations.
+  - **`TimeRange` & `EnergySummary`:** Domain model classes retained for structural encapsulation, while core period and window management in `app.py` delegates directly to Subsystem B services (`TimeWindow`, `PeriodAnalyticsService`).
   - **`CoachPanel`:** Structures user prompts, AI responses, and real-time status flags with guard validations against empty queries.
   - **`DashboardView`:** Decouples request query string parsing and default question fallback logic from the core routing controller.
 - **Centralized WebAppError Exception Handling (`errors.py`):**
   - Introduces `WebAppError` custom exceptions and `WebAppErrorHandler` formatters.
-  - Registers centralized Flask error handlers (`register_web_error_handlers`) to map domain and web anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
+  - Registers centralized Flask error handlers (`register_web_error_handlers`) to map web and domain anomalies cleanly to standard HTTP error codes (`404` for missing entities, `400` for bad requests, and `500` for internal errors).
 - **Comprehensive Automated Testing (`test_web_ha4.py`):**
   - Implements robust unit and integration test suites using `pytest` and Flask's test client (`client fixture`) under isolated mock environments.
   - Validates core web routes, HTTP status codes, and JSON API serialization behavior (including `/api/analytics/{building_id}/{meter_id}` and `/api/latest`).
-  - Tests domain logic encapsulation and boundary validations for `TimeRange` presets, high-precision `EnergySummary` calculations, and interactive `CoachPanel` prompts.
-  - Verifies centralized cross-layer error handling mechanisms, ensuring custom `WebAppError` anomalies map correctly to standard HTTP error codes (`400`, `404`, `500`).
-- **Timezone Aware Localized Display & Chart Synchronization(`app.py`):**
-  - Standardizes backend data storage in UTC while automatically converting timestamps to *Europe/Berlin (CET/CEST)* using Python's `zoneinfo` module for precise user facing reporting.
+  - Tests domain logic encapsulation and boundary validations for time presets, high-precision calculations, and interactive `CoachPanel` prompts.
+  - Verifies centralized exception handling mechanisms, ensuring custom `WebAppError` anomalies map correctly to standard HTTP error codes (`400`, `404`, `500`).
+- **Timezone Aware Localized Display & Chart Synchronization (`app.py`):**
+  - Standardizes backend data storage in UTC while automatically converting timestamps to *Europe/Berlin (CET/CEST)* using Python's `zoneinfo` module for precise user-facing reporting.
   - Implements smart series alignment logic in `app.py` to match the exact end-time of the latest reading interval with the final data point on the time series SVG chart, eliminating visual gaps and timestamp inconsistencies.
-
-
 ### Running the Web Application
 
 To start the Flask-based web dashboard locally:
