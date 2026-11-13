@@ -10,7 +10,7 @@ and AI advice. The current implementation is the initial OOP learning stage.
 | --- | --- | --- | --- |
 | Saeid Rafiei Taghanaki | A | `smart_energy/web` | Dashboard, Flask routes, service integration and web tests |
 | Danial Rafiee | B | `smart_energy/analytics` | Data models, MySQL, reading validation and energy/cost/carbon calculations |
-| Hananeh Hajari | C | `smart_energy/coach` | Sustainability scoring & penalties, real-time stream pipeline, MySQL evaluations persistence, Coach Web API, domain exceptions & mocked unit tests.|
+| Hananeh Hajari | C | `smart_energy/coach` | Sustainability scoring & penalties, real-time stream pipeline, MySQL evaluations persistence, Coach Web API, domain exceptions, mocked unit tests & LLM coaching with fallback. |
 
 ## Project Structure
 
@@ -1143,3 +1143,89 @@ including how to pin the endpoint with `--end`. The dashboard must use the same
 completed-reading endpoint, not a later `now()`. Repeating a fixed window inserts
 zero rows; existing E=5/R=7/O=2 sample data is preserved. This tool does not modify
 web or coach code, and Git does not transfer generated database records.
+
+
+## Capstone — Hananeh: Sustainability Scoring & AI Coach (C)
+
+Work in `capstone-hananeh-c` finalizes Subsystem C (`smart_energy/coach`), integrating deterministic sustainability scoring, operational constraint enforcement, and live LLM-powered interactive coaching with Subsystem A (Web Dashboard) and Subsystem B (Period Analytics), fulfilling `FR-C1..FR-C10` and `NFR-C1..NFR-C10`.
+
+### Subsystem C Capstone Architecture (Mermaid Class Diagram)
+
+```mermaid
+classDiagram
+    class BuildingContext {
+        #int _building_id
+        #str _occupied_hours
+        #list~str~ _essential_loads
+        +get_occupied_hours() str
+        +get_essential_loads() list~str~
+    }
+
+    class ScoreCalculator {
+        #Decimal _allowance_share
+        +calculate(current_energy, reference_energy, off_hours_energy) dict
+    }
+
+    class CoachRequest {
+        +str question
+        +BuildingContext context
+        +dict period_summary
+    }
+
+    class CoachResponse {
+        +str answer
+        +str status
+        +str period
+        +Optional~float~ score
+        +dict penalties
+    }
+
+    class CoachService {
+        #ScoreCalculator _calculator
+        #str _model_name
+        #str _last_status
+        +assess_sustainability(current_energy, reference_energy, off_hours_energy) dict
+        +answer_question(request: CoachRequest) CoachResponse
+        #_build_contextual_fallback(...) str
+    }
+
+    CoachService --> ScoreCalculator : delegates Python math
+    CoachService ..> BuildingContext : enforces constraints
+    CoachService ..> CoachRequest : accepts
+    CoachService ..> CoachResponse : returns
+```
+
+### Key Capstone Enhancements
+
+- **Live Multi-Provider AI Coaching (`coach_service.py`):**
+  - Connects to OpenAI-compatible LLM endpoints, prioritizing `GROQ_API_KEY` (using `openai/gpt-oss-20b` with `max_tokens=4096` so reasoning models never truncate or return empty output), with automatic fallback support for `GEMINI_API_KEY` (`gemini-2.5-flash`) and `OPENAI_API_KEY` (`gpt-4o-mini`).
+- **Resilient Intent-Aware Fallback (`NFR-C7`):**
+  - Automatically switches to deterministic, intent-aware coaching advice (`Status: fallback`) when no API key is configured, the external service is unreachable, or the API returns an empty string—guaranteeing that the web dashboard never crashes or displays an empty answer box.
+- **Operational Guardrails & Anti-Hallucination Rules:**
+  - Strictly protects essential building loads (`Server Room`, `Emergency Lighting`) and respects occupied operating hours (`Mon-Fri 09:00-17:00 Europe/Berlin`).
+  - Explicitly states the evaluated time window (`24h`, `7d`, or `30d`) in every response and prohibits fabricating unverified energy-saving percentages or CO2 reduction numbers.
+- **High-Precision Scoring & Missing-Data Safety (`score_calculator.py`):**
+  - Calculates normalized sustainability scores (`0.0`–`100.0`), growth penalties ($P_g$), and off-hours penalties ($P_o$) using Python `Decimal` arithmetic.
+  - Gracefully handles periods with missing or zero reference energy (`score: None`, displayed as `--/100` in the UI) while keeping interactive coaching operational.
+
+### Configuration & Verification
+
+To enable live AI responses (`Status: ready`) when running the web dashboard:
+
+```bash
+# macOS / Linux:
+export GROQ_API_KEY="your_groq_api_key_here"
+python run_web.py
+
+# Windows (Command Prompt):
+set GROQ_API_KEY=your_groq_api_key_here
+python run_web.py
+```
+
+To verify Subsystem C scoring, context constraints, fallback resilience, and web panel integration:
+
+```bash
+python -m pytest -k "coach or score or building_context" -v
+```
+
+
