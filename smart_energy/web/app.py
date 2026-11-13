@@ -1,4 +1,4 @@
-# Flask app setup for dashboard
+# Flask app setup for dashboard (subsystem A)
 
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime, timezone, timedelta
@@ -261,7 +261,7 @@ def create_app(test_config: dict | None = None):
 
     @app.get("/api/latest")
     def api_latest():
-        # get latest reading for auto-refresh
+        # get latest reading for auto refresh
         db = get_db_connection()
         building = BuildingRepository(db).get_by_id(1)
         meter = MeterRepository(db).get_by_id(101, building) if building else None
