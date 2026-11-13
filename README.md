@@ -20,9 +20,9 @@ Capstone-Project/
 │   └── analytics/
 │       ├── .env.example
 │       ├── 20-demo-readings.sql
+│       ├── compose.yaml
 │       ├── Dockerfile
-│       ├── Dockerfile.dockerignore
-│       └── compose.yaml
+│       └── Dockerfile.dockerignore
 ├── docs/
 │   ├── uml/
 │   │   ├── analytics_classes.dot
@@ -117,7 +117,6 @@ Capstone-Project/
 │   ├── test_period_analytics.py
 │   └── test_web_ha4.py
 ├── .gitignore
-├── README.md
 ├── check_docker_database_b.py
 ├── demo.py
 ├── demo_capstone_b.py
@@ -130,6 +129,7 @@ Capstone-Project/
 ├── demo_ha3_coach.py
 ├── demo_ha4.py
 ├── demo_off_hours_b.py
+├── README.md
 ├── requirements-capstone-b.txt
 ├── requirements-ha3.txt
 ├── requirements-ha4.txt
@@ -138,6 +138,7 @@ Capstone-Project/
 ├── run_web.py
 └── seed_demo_history_b.py
 ```
+This tree lists files tracked on main. Local virtual environments, IDE settings, caches, database volumes, and secret .env files are intentionally excluded.
 
 ## ===== Capstone Project =====
 ## Capstone - Saeid: Web interface and Flask coordination (A)
