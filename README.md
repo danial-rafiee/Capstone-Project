@@ -204,6 +204,7 @@ classDiagram
 ```
 (Note: TimeRange and EnergySummary remain in smart_energy.web.domain from the initial HA1 OOP design stage, but app.py now delegates period and summary calculations directly to Subsystem B services.)
 
+
 #### 2. Subsystem A Dependencies on Subsystem B (smart_energy.analytics)
 ```mermaid
 classDiagram
@@ -254,6 +255,7 @@ classDiagram
     FlaskApp ..> OperatingSchedule : applies schedule rules
     FlaskApp ..> PeriodAnalyticsService : fetches analytics & comparisons
 ```
+
 
 #### 3. Subsystem A Dependencies on Subsystem C (smart_energy.coach)
 ```mermaid
