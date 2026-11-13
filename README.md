@@ -476,7 +476,7 @@ Open your browser and navigate to http://127.0.0.1:5000.
 ## System Design
 
 
-### Subsystem A class diagram
+### HA1 — Saeid: Subsystem A class diagram
 
 ```mermaid
 classDiagram
@@ -539,7 +539,7 @@ The diagram shows the core implemented domain and mock data classes for Subsyste
 - `+` marks public methods, including `__init__`.
 - `#` marks underscore-prefixed attributes, following Python's non-public convention.
 
-### Implemented classes for Subsystem A
+### HA1 — Saeid:Implemented classes for Subsystem A
 
 Current implemented classes and components in `smart_energy.web`:
 
