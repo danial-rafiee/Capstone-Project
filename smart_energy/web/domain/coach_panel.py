@@ -54,3 +54,6 @@ class CoachPanel:
         if self._status:
             data["status"] = self._status
         return data
+
+    def __str__(self) -> str:
+        return f"CoachPanel(status='{self._status}', question='{self._question[:30]}...')"
