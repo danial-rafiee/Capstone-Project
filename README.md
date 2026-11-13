@@ -111,6 +111,7 @@ Capstone-Project/
 ├── requirements-web.txt
 └── run_web.py
 ```
+
 ## ===== Capstone Project =====
 ## Capstone - Saeid: Web interface and Flask coordination (A)
 
@@ -293,6 +294,7 @@ classDiagram
 ```
 
 Run `python demo_capstone_b.py` for simulated data, or `python demo_capstone_b.py --mysql` to read existing MySQL sample data. Run `python -m pytest tests/test_period_analytics.py -v` for the new B checks. Run `python demo_off_hours_b.py` for the agreed simulated Monday-Friday 09:00-17:00 Europe/Berlin calendar and ready E/R/O handoff. See [the off-hours contract](docs/capstone_b_off_hours.md).
+
 
 
 ### Danial B - Docker database package
