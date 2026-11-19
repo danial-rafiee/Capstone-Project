@@ -2,7 +2,7 @@
 
 Integrates Python-based sustainability scoring with OpenAI interactive coaching
 and robust rule-based fallback capabilities.
-Complies with FR-C1..FR-C10 and NFR-C1..NFR-C10 (asl.pdf).
+Complies with FR-C1..FR-C10 and NFR-C1..NFR-C10 .
 """
 
 import os
